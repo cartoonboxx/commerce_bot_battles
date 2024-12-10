@@ -14,6 +14,7 @@ from states.classes_states import *
 from aiogram.types import InputMediaPhoto
 from functions.admin_functions import *
 from database.db import *
+import datetime
 
 
 
@@ -137,9 +138,7 @@ async def active_battle_settings_handler(callback: types.CallbackQuery, state: F
 
 @dp.callback_query(lambda c: c.data.startswith('approveactivebattlesettings'))
 async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
-    print('НОВЫЙ ПОСТ ВЫЛОЖИЛСЯ 1')
     battle_id = callback.data.split(';')[1]
-    print('Создался новый батл под айди', battle_id)
     await callback.answer('Батл успешно начался', show_alert=True)
     await db.update_status_battle(battle_id, Status.ENDROUND.value)
     await active_battle_func(callback, battle_id)
@@ -464,7 +463,130 @@ async def reload_results_handler(callback: types.CallbackQuery):
         await callback.message.edit_reply_markup(reply_markup=kb.as_markup())
     except Exception as e:
         print(e)
-    
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;iagree'))
+async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+    kb = InlineKeyboardBuilder()
+    kb.button(text="✅ Запомнил(а)", callback_data=f"firstround;publish;{battle_id}")
+    kb.adjust(1)
+    await call.message.edit_text('''<b>⚠️ Внимание</b>\n\nПосты будут выкладываться в канал сразу после того, как вы одобрите количество фото, которое указали на втором шаге в поле «Участников в посте»''', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;publish'))
+async def firstround_createbattle_publish(callback: types.CallbackQuery, state: FSMContext):
+    battle_id = callback.data.split(';')[-1]
+
+    battle_info = await db.check_battle_info(battle_id)
+
+    await callback.message.edit_text('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
+
+    tg_id = callback.from_user.id
+    await db.update_battle_statistic_plus_1(tg_id)
+    await db.update_admin_count_minus_1(tg_id)
+    channel_id = battle_info[1]
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    channel_tg_id = channel_info[2]
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
+    try:
+        post_id = battle_info[17]
+        if post_id is not None:
+            await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
+                               message_id=battle_info[17], reply_markup=kb.as_markup()
+                               )
+    except Exception as e:
+        print(e)
+        await callback.message.answer('Ошибка отправки поста о батле')
+
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;createbattle'))
+async def start_first_round(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+    battle_info = await db.check_battle_info(battle_id)
+
+    if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
+        await call.answer('Заполните все поля', show_alert=True)
+        return
+
+    post_id = battle_info[17]
+    if post_id is not None:
+        kb = InlineKeyboardBuilder()
+        kb.button(text='✅ Продолжить', callback_data=f"firstround;iagree;{battle_id}")
+        kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
+        kb.adjust(1)
+
+        await call.message.answer(text=f'''<b>Данный пост будет публиковаться вместе с фото участников 📷</b>\n\n<i><b>✅ Всё верно? Проверьте данные поста, шаблон поста поменять не сможете</b></i>
+        ''', reply_markup=kb.as_markup())
+    else:
+        await call.message.edit_text('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;returnstep2'))
+async def return_step_2_page_battle(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+    await call.message.delete()
+    await firstround_menu_setting(call.message, battle_id)
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;users_in_post'))
+async def set_users_in_post(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+
+    await call.message.edit_text(
+            '<b>⚙️ Введите кол-во участников. в одном посте от 2 до 10.</b> \n\nУказывайте только число.',
+    reply_markup=await kb_return_2page_battlecreate(battle_id))
+    await state.set_state(AddActiveBattleParticipants.q1)
+    await state.update_data(battle_id=battle_id)
+    await state.update_data(round=1)
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;end_time_round'))
+async def set_end_time_round(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+
+    await call.message.edit_text(
+        '<b>⚙️ Введите время конца раунда в формате: “сегодня в 12:00"</b>\n\nУказывайте время по московскому времени.',
+    reply_markup=await kb_return_2page_battlecreate(battle_id))
+    await state.set_state(AddActiveBattleEnd.q1)
+    await state.update_data(battle_id=battle_id)
+    await state.update_data(round=1)
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;min_votes_win'))
+async def set_min_votes_win(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+
+    await call.message.edit_text(
+        '<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
+    reply_markup=await kb_return_2page_battlecreate(battle_id))
+    await state.set_state(AddVoicesToWin.q1)
+    await state.update_data(battle_id=battle_id)
+    await state.update_data(round=1)
+
+@dp.callback_query(lambda c: c.data.startswith('firstround;returnback'))
+async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[-1]
+
+    battle_info = await db.check_battle_info(battle_id)
+    channel_id = battle_info[1]
+    post_start_battle = battle_info[17]
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    channel_tg_id = channel_info[5]
+    time_now = datetime.datetime.now().strftime("%H:%M")
+
+    await db.update_battle_channel_link_by_battle_id(battle_id, channel_tg_id)
+    if post_start_battle == 0:
+        post_start_battle = 'Не нужен'
+    else:
+        post_start_battle = f'Нужен'
+
+    await call.message.edit_text(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
+
+- Название:  {battle_info[3]}
+- Ссылка на канал: {channel_tg_id}
+- Пост о начале батла: {post_start_battle}
+- Приз: {battle_info[6]}
+- Время начала: {time_now}
+- Время завершения: {battle_info[9]}
+- Минимальное кол-во участников: {battle_info[10]}                                                    
+    ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
+
 
     
 

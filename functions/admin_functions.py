@@ -154,6 +154,37 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
 - Минимальное кол-во участников: {battle_info[10]}                                                    
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
 
+async def kb_return_2page_battlecreate(battle_id):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
+    kb.adjust(1)
+    return kb.as_markup()
+
+async def firstround_menu_setting(message: types.Message, battle_id):
+
+    battle_info = await db.check_battle_info(battle_id)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Создать батл', callback_data=f'firstround;createbattle;{battle_id}')
+
+    if battle_info[13] == 0:
+        kb.button(text='❌ Участников в посте', callback_data=f'firstround;users_in_post;{battle_id}')
+    else:
+        kb.button(text='✅ Участников в посте', callback_data=f'firstround;users_in_post;{battle_id}')
+
+    if battle_info[15] == "-":
+        kb.button(text='❌ Время завершения раунда', callback_data=f'firstround;end_time_round;{battle_id}')
+    else:
+        kb.button(text='✅ Время завершения раунда', callback_data=f'firstround;end_time_round;{battle_id}')
+
+    if battle_info[11] == 0:
+        kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+    else:
+        kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+
+    kb.button(text='🔙 Назад', callback_data=f'firstround;returnback;{battle_id}')
+    kb.adjust(1)
+    await message.answer(f'''<b>🛠 Создание фото-батла (2 ШАГ ИЗ 2):\n\n⚙️ Введение настроек для 1 раунда:</b>\n\nВремя завершения раунда: {battle_info[13]}\nМинимальное кол-во голосов для победы в раунде: {battle_info[15]}\nУчастников в одном посте: {battle_info[11]}''', reply_markup=kb.as_markup())
 
 
 async def battle_settings_func(callback: types.CallbackQuery, battle_id, action, state):
@@ -170,25 +201,28 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
 
             await callback.message.delete()
             
-            await callback.message.answer('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
+            # await callback.message.answer('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
+            #
+            # tg_id = callback.from_user.id
+            # await db.update_battle_statistic_plus_1(tg_id)
+            # await db.update_admin_count_minus_1(tg_id)
+            # channel_id = battle_info[1]
+            # channel_info = await db.check_channel_info_by_id(channel_id)
+            # channel_tg_id = channel_info[2]
+            # kb = InlineKeyboardBuilder()
+            # kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
+            # try:
+            #     post_id = battle_info[17]
+            #     if post_id is not None:
+            #         await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
+            #                            message_id=battle_info[17], reply_markup=kb.as_markup()
+            #                            )
+            # except Exception as e:
+            #     print(e)
+            #     await callback.message.answer('Ошибка отправки поста о батле')
 
-            tg_id = callback.from_user.id
-            await db.update_battle_statistic_plus_1(tg_id)
-            await db.update_admin_count_minus_1(tg_id)
-            channel_id = battle_info[1]
-            channel_info = await db.check_channel_info_by_id(channel_id)
-            channel_tg_id = channel_info[2]
-            kb = InlineKeyboardBuilder()
-            kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
-            try:
-                post_id = battle_info[17]
-                if post_id is not None:
-                    await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
-                                       message_id=battle_info[17], reply_markup=kb.as_markup()
-                                       )
-            except Exception as e:
-                print(e)
-                await callback.message.answer('Ошибка отправки поста о батле')
+            await firstround_menu_setting(callback.message, battle_id)
+
     if action == 'channel_link':
         await state.set_state(AddLinkToBattle.q1)
         await state.update_data(battle_id=battle_id)

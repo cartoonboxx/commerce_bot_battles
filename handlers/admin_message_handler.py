@@ -239,8 +239,12 @@ async def add_active_battle_end_time(message: types.Message, state: FSMContext):
     time = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    round = data.get('round')
     await db.update_end_round_battle(battle_id, time)
-    await active_battle_answer_func(message, battle_id)
+    if round is None:
+        await active_battle_answer_func(message, battle_id)
+    else:
+        await firstround_menu_setting(message, battle_id)
     await state.clear()
     
 
@@ -253,13 +257,17 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
     participants = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    round = data.get('round')
     if participants.isdigit():
         if int(participants)<2 or int(participants)>10:
             await message.answer("Минимальное кол-во участников должно быть от 2х до 10", reply_markup=await back_battle__active_setting_kb(battle_id))
             return
         
         await db.update_round_users_battle(battle_id, participants)
-        await active_battle_answer_func(message, battle_id)
+        if round is None:
+            await active_battle_answer_func(message, battle_id)
+        else:
+            await firstround_menu_setting(message, battle_id)
         await state.clear()
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -275,12 +283,16 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     voices = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    round = data.get('round')
     if voices.isdigit():
-        if int(voices)<1:
+        if int(voices) < 1:
             await message.answer("Минимальное кол-во голосов должно быть больше 1", reply_markup=await back_battle__active_setting_kb(battle_id))
             return
         await db.update_min_golos_battle(battle_id, voices)
-        await active_battle_answer_func(message, battle_id)
+        if round is None:
+            await active_battle_answer_func(message, battle_id)
+        else:
+            await firstround_menu_setting(message, battle_id)
         await state.clear()
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -305,6 +317,7 @@ async def admitPostData(call: types.CallbackQuery, state: FSMContext):
     battle_id = data.get('battle_id')
     message = data.get('message')
     post_id = message.message_id
+    await call.message.delete()
     await db.update_post_id(post_id, battle_id)
     await battle_answer_func_message(message, battle_id, state)
 
