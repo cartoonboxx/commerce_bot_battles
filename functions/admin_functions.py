@@ -138,10 +138,11 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
     battle_info = await db.check_battle_info(battle_id)
     post_start_battle = battle_info[17]
     time_now = datetime.datetime.now().strftime("%H:%M")
-    if post_start_battle == 0:
-            post_start_battle = 'Отсутствует'
+    print('post_id', post_start_battle)
+    if post_start_battle == 0 or post_start_battle is None:
+        post_start_battle = 'Не нужен'
     else:
-            post_start_battle = f'Создан'
+        post_start_battle = f'Нужен'
     await message.answer(f'''<b>🛠️ Создание фото-батла:</b>
 
 - Название:  {battle_info[3]}
@@ -180,11 +181,11 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
             kb = InlineKeyboardBuilder()
             kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
             try:
-                print(battle_info[17])
-                await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
+                post_id = battle_info[17]
+                if post_id is not None:
+                    await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
                                        message_id=battle_info[17], reply_markup=kb.as_markup()
                                        )
-                #comment
             except Exception as e:
                 print(e)
                 await callback.message.answer('Ошибка отправки поста о батле')

@@ -131,8 +131,7 @@ async def create_battle_kb(battle_id, channel_id):
      kb.button(text='❌ Минимальное кол-во участников', callback_data=f'battlesettings;participants;{battle_id}')
     else:
        kb.button(text='✅ Минимальное кол-во участников', callback_data=f'battlesettings;participants;{battle_id}')
-    kb.button(text='✅ Создать батл', callback_data=f'battlesettings;createbattle;{battle_id}; {channel_id}')
+    kb.button(text='✅ Перейти к следующему шагу', callback_data=f'battlesettings;createbattle;{battle_id}; {channel_id}')
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1,1,2,2,1,1,1)
     return kb.as_markup()
-print('hello')
