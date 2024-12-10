@@ -184,6 +184,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
                 await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
                                        message_id=battle_info[17], reply_markup=kb.as_markup()
                                        )
+                #comment
             except Exception as e:
                 print(e)
                 await callback.message.answer('Ошибка отправки поста о батле')
