@@ -135,3 +135,4 @@ async def create_battle_kb(battle_id, channel_id):
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1,1,2,2,1,1,1)
     return kb.as_markup()
+print('hello')
