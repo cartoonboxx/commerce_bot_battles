@@ -107,3 +107,6 @@ class FormFirstBattle(StatesGroup):
     countUsersInBattle = State()
     timeEndRouns = State()
     minVotes = State()
+
+class DeleteBattleFromDB(StatesGroup):
+    password = State()

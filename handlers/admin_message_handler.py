@@ -311,6 +311,21 @@ async def add_battle_post(message: types.Message, state: FSMContext):
     await message.answer(f'Ваш пост будет выглядеть так:\n\n{message.text}\n\nВсе верно?', reply_markup=kb.as_markup())
 
 
+@dp.message(DeleteBattleFromDB.password)
+async def deleteBattleFromDB(message: types.Message, state: FSMContext):
+    await message.delete()
+    if message.text != '1234':
+        await message.answer('Введено некорректное значение, попробуйте еще раз')
+        await state.set_state(DeleteBattleFromDB.password)
+        return
+
+    data = await state.get_data()
+    battle_id = data.get('battle_id')
+
+    await state.clear()
+    await db.delete_battle_by_id(battle_id)
+    await bot.edit_message_text(text='Батл был успешно удален!', chat_id=message.chat.id, message_id=message.message_id - 1)
+
 @dp.callback_query(lambda c: c.data.startswith('admitPostData'))
 async def admitPostData(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()

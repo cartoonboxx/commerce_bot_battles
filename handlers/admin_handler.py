@@ -132,6 +132,14 @@ async def active_battle_settings_handler(callback: types.CallbackQuery, state: F
     battle_id = callback.data.split(';')[2]
     await active_battle_options_func(callback, battle_id, action, state)
 
+@dp.callback_query(lambda c: c.data.startswith('saveRoundParam'))
+async def saveRoundParam(callback: types.CallbackQuery, state: FSMContext):
+    data = callback.data.split(';')
+    post = data[-2]
+    battle_id = data[-1]
+    await state.clear()
+    await db.updatePostFieldBattles(post, battle_id)
+    await active_battle_func(callback, battle_id)
 
 @dp.callback_query(lambda c: c.data.startswith('approveactivebattlesettings'))
 async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
@@ -211,7 +219,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             try:
                 kb = InlineKeyboardBuilder()
                 kb.button(text='Ссылка на пост', url=new_channel_link)
-                kb.button(text='Ссылка на голосование', url=f'https://t.me/{bot_name}/start=vote{battle_id}')
+                kb.button(text='Ссылка на голосование', url=new_channel_link)
                 kb.button(text='Ссылка на канал', url=battle_info[5])
                 kb.adjust(1)
 
@@ -237,9 +245,10 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
     battle_id = callback.data.split(';')[1]
     await callback.answer('Батл успешно продолжается', show_alert=True)
     await db.update_status_battle(battle_id, Status.ENDROUND.value)
+
     await active_battle_func(callback, battle_id)
     battle_info = await db.check_battle_info(battle_id)
-    
+
     channel_id = battle_info[1]
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = channel_info[2]
@@ -397,12 +406,26 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
                 await db.delete_user_from_battle_photos(user[0])
 
         if winners:
-            await callback.message.answer(f'Пост {i}: победители - {[user[1] for user in winners]} с {max_votes} голосами')
+            # await callback.message.answer(f'Пост {i}: победители - {[user[1] for user in winners]} с {max_votes} голосами')
+            kb = InlineKeyboardBuilder()
+            kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
+            kb.adjust(1)
+            await callback.message.answer(f'⚔️ Итоги раунда: проходит {len(winners)} человек в следующий раунд', reply_markup=kb.as_markup())
+
     await db.update_battles_descr_round_users_min_golos_end_round_by_id(battle_id)
-    await active_battle_answer_func(callback.message, battle_id)
     await db.delete_all_battle_voices_where_battle_id(battle_id)
 
+@dp.callback_query(lambda c: c.data.startswith('continueToNextRound'))
+async def continueToNextRound(call: types.CallbackQuery):
 
+    battle_id = call.data.split(';')[-1]
+
+    battle_info = await db.check_battle_info(battle_id)
+    current_round = battle_info[22]
+    print('current round', current_round)
+    await db.update_number_round(current_round + 1, battle_id)
+
+    await active_battle_answer_func(call.message, battle_id)
 
 
 @dp.callback_query(lambda c: c.data.startswith('secapprovedeletebattle'))
@@ -517,7 +540,7 @@ async def start_first_round(call: types.CallbackQuery, state: FSMContext):
         kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
         kb.adjust(1)
 
-        await call.message.answer(text=f'''<b>Данный пост будет публиковаться вместе с фото участников 📷</b>\n\n<i><b>✅ Всё верно? Проверьте данные поста, шаблон поста поменять не сможете</b></i>
+        await call.message.edit_text(text=f'''<b>Данный пост будет публиковаться вместе с фото участников 📷</b>\n\n<i><b>✅ Всё верно? Проверьте данные поста, шаблон поста поменять не сможете</b></i>
         ''', reply_markup=kb.as_markup())
     else:
         await call.message.edit_text('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')

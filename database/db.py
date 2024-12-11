@@ -648,3 +648,13 @@ async def get_all_posts_by_battle(battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM posts_correcting WHERE battle_id = ?', (battle_id, ))
         return await cursor.fetchall()
+
+async def updatePostFieldBattles(post, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET post = ? WHERE id = ?', (post, battle_id))
+        await db.commit()
+
+async def update_number_round(current_round, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET current_round = ? WHERE id = ?', (current_round, battle_id))
+        await db.commit()

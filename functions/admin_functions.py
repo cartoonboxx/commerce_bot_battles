@@ -70,7 +70,7 @@ async def active_battle_settings_kb(battle_id, status):
 
     # Кнопки только для статуса NEXTROUND
     if status == Status.NEXTROUND.value:
-        kb.button(text='▶️ Следующий раунд', callback_data=f'activebattlesettings;next;{battle_id}')
+        kb.button(text='✅ Запустить следующий раунд', callback_data=f'activebattlesettings;next;{battle_id}')
 
     # Кнопки для статусов CREATED и NEXTROUND
     if status == Status.CREATED.value or status == Status.NEXTROUND.value:
@@ -106,8 +106,7 @@ async def active_battle_settings_kb(battle_id, status):
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
 
     # Общие кнопки
-
-    kb.button(text='🔄', callback_data=f'activebattlesettings;reload;{battle_id}')
+    # kb.button(text='🔄', callback_data=f'activebattlesettings;reload;{battle_id}')
     kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
 
     kb.adjust(1, 1, 2, 1, 1, 1, 1)
@@ -121,6 +120,15 @@ async def back_battle__active_setting_kb(battle_id):
     kb = InlineKeyboardBuilder()
     
     kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
+    return kb.as_markup()
+
+async def round_buttons_battle(battle_id):
+    kb = InlineKeyboardBuilder()
+    battle_info = await db.check_battle_info(battle_id)
+    kb.button(text=f'{battle_info[22] + 1} РАУНД', callback_data=f'saveRoundParam;{battle_info[22] + 1} РАУНД;{battle_id}')
+    kb.button(text='Финал', callback_data=f'saveRoundParam;Финал;{battle_id}')
+    kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
+    kb.adjust(1)
     return kb.as_markup()
 
 
@@ -456,9 +464,8 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         kb.adjust(1)
         await call.message.edit_text('Начать раунд?', reply_markup=kb.as_markup())
     if action == 'descr':
-        await call.message.edit_text('<b>⚙️ Отправьте текстом раунд по счёту</b>. \n\nПример: "1 РАУНД" или "ПОЛУФИНАЛ" или "ФИНАЛ"\n\nЭтот текст будет использоваться в посте.', reply_markup=await back_battle__active_setting_kb(battle_id))
-        await state.set_state(AddActiveBattleDescr.q1)
-        await state.update_data(battle_id=battle_id)
+        await call.message.edit_text('<b>⚙️ Введите раунд по счёту, нажав на кнопки ниже</b>.', reply_markup=await round_buttons_battle(battle_id))
+
     if action == 'participants':
         await call.message.edit_text('<b>⚙️ Введите кол-во участников. в одном посте от 2 до 10.</b> \n\nУказывайте только число.', reply_markup=await back_battle__active_setting_kb(battle_id))
         await state.set_state(AddActiveBattleParticipants.q1)
@@ -515,7 +522,10 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 pass
             else:
                 await db.add_new_battle_winner(battle_id, post_info[1])
-            await call.message.answer_photo(post_info[3], caption=f'Победитель: {post_info[1]} \n{first_name}\n@{username}')
+            kb = InlineKeyboardBuilder()
+            kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
+            kb.adjust(1)
+            await call.message.answer_photo(post_info[3], caption=f'🎉 Победитель: {first_name}\n@{username}\n{post_info[1]} ', reply_markup=kb.as_markup())
             return
         if battle_info[13] == 0:
             await call.answer('Нельзя начать раунд, пока не установлено количество участников в посте', show_alert=True)
@@ -536,10 +546,12 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await call.message.edit_text('Начать раунд?', reply_markup=kb.as_markup())
     if action == 'delete':
         kb = InlineKeyboardBuilder()
-        kb.button(text='✅ Подтверждаю', callback_data=f'secapprovedeletebattle;{battle_id}')
-        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')   
+        # kb.button(text='✅ Подтверждаю', callback_data=f'secapprovedeletebattle;{battle_id}')
+        await state.set_state(DeleteBattleFromDB.password)
+        await state.update_data(battle_id=battle_id)
+        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
-        await call.message.edit_text('Удалить батл?', reply_markup=kb.as_markup())
+        await call.message.edit_text('Вы точно хотите удалить батл? Введите "1234", чтобы удалить', reply_markup=kb.as_markup())
     if action == 'fake':
         await call.message.edit_text('<b>⚙️ Отправьте фото, чтобы добавить фото в батл.</b> \n\n Используйте этот метод загрузки фото только в крайних случаях, за раз можно отправить несколько фото.', reply_markup=await back_battle__active_setting_kb(battle_id))
         await state.set_state(AddFakePhoto.q1)
