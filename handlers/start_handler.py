@@ -142,6 +142,11 @@ async def cmd_start(message: types.Message, state: FSMContext):
                         await message.answer('Вы заблокированы в этом батле')
                         return
 
+                    battle_info = await db.check_battle_info(battle_id)
+                    if battle_info[21] == 0:
+                        await message.answer('❌ Набор фото пока что прекращен, попробуйте позже')
+                        return
+
                     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(
                         battle_id, message.from_user.id)
                     if is_user_exist:

@@ -105,7 +105,14 @@ async def db_start():
                 post_id INTEGER DEFAULT 0,
                 error_battle INTEGER DEFAULT 0,
                 error_post INTEGER DEFAULT 0,
-                post_text TEXT DEFAULT '-')''')
+                post_text TEXT DEFAULT '-',
+                photo_send INTEGER DEFAULT 1,
+                current_round INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS posts_correcting (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                battle_id INTEGER,
+                post_id INTEGER)''')
         await db.commit()
 
 
@@ -172,6 +179,11 @@ async def update_channels_post_link_where_id(post_link, id):
 async def update_post_id(post_id, id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battles SET post_id = ? WHERE id = ?', (post_id, id))
+        await db.commit()
+
+async def update_photo_send_battle(photo_send, id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET photo_send = ? WHERE id = ?', (photo_send, id))
         await db.commit()
 
 async def update_blocked_count(count):
@@ -587,6 +599,13 @@ async def check_channel_info_by_id(id):
         rows = await cursor.fetchone()
         await cursor.close()
         return rows
+
+async def check_channel_info_by_link(url):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM channels WHERE channel_link = ?', (url, ))
+        rows = await cursor.fetchone()
+        await cursor.close()
+        return rows
     
 async def check_channel_duplicate(channel_id):  # Исправлено название функции для ясности
     async with aiosqlite.connect(name_db) as db:
@@ -618,4 +637,14 @@ async def checkk_all_channels_where_tg_id(tg_id):
 async def all_photo_by_battle(battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE battle_id = ?', (battle_id, ))
+        return await cursor.fetchall()
+
+async def update_id_post(message_id_post, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO posts_correcting (post_id, battle_id) VALUES (?, ?)', (message_id_post, battle_id))
+        await db.commit()
+
+async def get_all_posts_by_battle(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM posts_correcting WHERE battle_id = ?', (battle_id, ))
         return await cursor.fetchall()

@@ -449,7 +449,10 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         except Exception as e:
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
-        await db.update_photo_approved_time(photo_battle_id)
+        try:
+            await db.update_photo_approved_time(photo_battle_id)
+        except Exception as e:
+            print(e)
         kb.button(text='✅ Принят', callback_data='nonefsafs')
         await call.message.edit_reply_markup(reply_markup=kb.as_markup())
     else:

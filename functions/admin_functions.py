@@ -96,15 +96,21 @@ async def active_battle_settings_kb(battle_id, status):
 
     # Кнопки для других статусов
     if status == Status.ENDROUND.value:
-        kb.button(text='⭕️ Завершить раунд', callback_data=f'activebattlesettings;end;{battle_id}')
+        kb.button(text='⛔️ Завершить раунд и подвести итоги', callback_data=f'activebattlesettings;end;{battle_id}')
+        if battle_info[21] == 0:
+            kb.button(text='✅ Открыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
+        else:
+            kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
+
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
 
     # Общие кнопки
+
     kb.button(text='🔄', callback_data=f'activebattlesettings;reload;{battle_id}')
     kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
 
-    kb.adjust(1, 2, 1, 1, 1, 1, 1)
+    kb.adjust(1, 1, 2, 1, 1, 1, 1)
     return kb.as_markup()
 
 
@@ -143,7 +149,7 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
         post_start_battle = 'Не нужен'
     else:
         post_start_battle = f'Нужен'
-    await message.answer(f'''<b>🛠️ Создание фото-батла:</b>
+    await message.answer(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
 
 - Название:  {battle_info[3]}
 - Ссылка на канал: {battle_info[5]}
@@ -361,22 +367,21 @@ async def active_battle_func(call: types.CallbackQuery, battle_id):
     count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
     time_now = datetime.datetime.now().strftime("%H:%M:%S")
     status = battle_info[14]
+    photo_send = "Открыт" if battle_info[21] else "Закрыт"
     battle_info_text = f'''
-<b>{battle_info[3]}</b>
+<b>⚔️ Батл: {battle_info[3]}</b>
 
-Раунд по счёту: {battle_info[7]}
-Ссылка на вступление: {battle_info[5]}
-Приз: {battle_info[6]}
-Время конца набора фото: {battle_info[9]}
+- Раунд: {battle_info[7]}
+- Итоги раунда: {battle_info[15]}
+- Минимум для прохождения: {battle_info[11]}
 
-Время завершения раунда: {battle_info[15]}
-Голосов для победы в раунде: {battle_info[11]}
-Участников в одном посте: {battle_info[13]}
+- Участников в одном посте: {battle_info[13]}
+- Приз: {battle_info[6]}
+- Всего участников в батле
+- Текущее количество участников: {count_users_in_battle}
 
-Количество участников для старта батла: {battle_info[10]}
-Текущее количество участников: {count_users_in_battle}
-
-Время: {time_now}'''
+- Набор фото: {photo_send}
+'''
     await call.message.edit_text(battle_info_text, disable_web_page_preview=True, reply_markup=await active_battle_settings_kb(battle_id, status))
 
 async def active_battle_answer_func(msg: types.Message, battle_id):
@@ -384,23 +389,42 @@ async def active_battle_answer_func(msg: types.Message, battle_id):
     count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
     time_now = datetime.datetime.now().strftime("%H:%M:%S")
     status = battle_info[14]
+    photo_send = "Открыт" if battle_info[21] else "Закрыт"
     battle_info_text = f'''
-<b>{battle_info[3]}</b>
+<b>⚔️ Батл: {battle_info[3]}</b>
 
-Раунд по счёту: {battle_info[7]}
-Ссылка на вступление: {battle_info[5]}
-Приз: {battle_info[6]}
-Время конца набора фото: {battle_info[9]}
+- Раунд: {battle_info[7]}
+- Итоги раунда: {battle_info[15]}
+- Минимум для прохождения: {battle_info[11]}
 
-Время завершения раунда: {battle_info[15]}
-Голосов для победы в раунде: {battle_info[11]}
-Участников в одном посте: {battle_info[13]}
+- Участников в одном посте: {battle_info[13]}
+- Приз: {battle_info[6]}
+- Всего участников в батле
+- Текущее количество участников: {count_users_in_battle}
 
-Количество участников для старта батла: {battle_info[10]}
-Текущее количество участников: {count_users_in_battle}
-
-Время: {time_now}'''
+- Набор фото: {photo_send}
+'''
     await msg.answer(battle_info_text, disable_web_page_preview=True, reply_markup=await active_battle_settings_kb(battle_id, status))
+
+
+async def redact_all_status_posts(battle_id, photo_send):
+    '''photo send необходимо для понимания, закрыт или открыт набор'''
+    battle_info = await db.check_battle_info(battle_id)
+    channel_link = battle_info[5]
+    channel_info = await db.check_channel_info_by_link(channel_link)
+    channel_id = channel_info[2]
+
+    posts = await db.get_all_posts_by_battle(battle_id)
+    for index, post in enumerate(posts):
+        kb = InlineKeyboardBuilder()
+        kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{index+1}')
+        kb.adjust(1)
+        if photo_send:
+            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
+        ''', chat_id=channel_id, message_id=post[2], reply_markup=kb.as_markup())
+        else:
+            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
+                    ''', chat_id=channel_id, message_id=post[2], reply_markup=kb.as_markup())
 
 
 
@@ -447,6 +471,23 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await call.message.edit_text('<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.', reply_markup=await back_battle__active_setting_kb(battle_id))
         await state.set_state(AddVoicesToWin.q1)
         await state.update_data(battle_id=battle_id)
+    if action == 'photo_send':
+        await call.answer('✅ Записи постов были успешно изменены!')
+        battle_info = await db.check_battle_info(battle_id)
+        photo_send = battle_info[21]
+        if photo_send:
+            photo_send = 0
+        else:
+            photo_send = 1
+
+        await db.update_photo_send_battle(photo_send, battle_id)
+
+        await redact_all_status_posts(battle_id, photo_send)
+
+        await active_battle_func(call, battle_id)
+        await state.update_data(battle_id=battle_id)
+
+
     if action =='reload':
         await active_battle_func(call, battle_id)
     if action == 'end':

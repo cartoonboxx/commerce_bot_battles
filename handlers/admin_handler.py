@@ -46,10 +46,10 @@ async def create_battle(call: types.CallbackQuery, battle_id):
     battle_info = await db.check_battle_info(battle_id)
     post_start_battle = battle_info[17]
     if post_start_battle == 0:
-            post_start_battle = 'Отсутствует'
+            post_start_battle = 'Не нужен'
     else:
-            post_start_battle = f'Создан'
-    await call.message.edit_text(f'''🛠️ Создание фото-батла:
+            post_start_battle = f'Нужен'
+    await call.message.edit_text(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
 
 - Название:  {battle_info[3]}
 - Ссылка на канал: {battle_info[5]}
@@ -98,9 +98,6 @@ async def channel_setting_handler(callback: types.CallbackQuery, state:FSMContex
     action = callback.data.split(';')[1]
     channel_id = callback.data.split(';')[2]
     await chennelsetting_func(callback,channel_id, action, state )
-
-
-
 
 @dp.callback_query(lambda c: c.data.startswith('approvedelete'))
 async def approve_delete_channel_handler(callback: types.CallbackQuery):
@@ -166,7 +163,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
-<b>✅ ГОЛОСОВАТЬ ЗДЕСЬ </b>
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
@@ -193,6 +190,8 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             kb.adjust(1)
             message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
             message_id = message.message_id
+            await db.update_id_post(message_id, battle_id)
+
             
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
@@ -494,6 +493,9 @@ async def firstround_createbattle_publish(callback: types.CallbackQuery, state: 
             await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
                                message_id=battle_info[17], reply_markup=kb.as_markup()
                                )
+
+
+
     except Exception as e:
         print(e)
         await callback.message.answer('Ошибка отправки поста о батле')
