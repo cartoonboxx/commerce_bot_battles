@@ -141,6 +141,8 @@ async def saveRoundParam(callback: types.CallbackQuery, state: FSMContext):
     await db.updatePostFieldBattles(post, battle_id)
     await active_battle_func(callback, battle_id)
 
+
+'''колбек начала раунда'''
 @dp.callback_query(lambda c: c.data.startswith('approveactivebattlesettings'))
 async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
     battle_id = callback.data.split(';')[1]
@@ -533,6 +535,7 @@ async def start_first_round(call: types.CallbackQuery, state: FSMContext):
         await call.answer('Заполните все поля', show_alert=True)
         return
 
+    await db.update_status_battle(battle_id, Status.ENDROUND.value)
     post_id = battle_info[17]
     if post_id is not None:
         kb = InlineKeyboardBuilder()

@@ -658,3 +658,8 @@ async def update_number_round(current_round, battle_id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battles SET current_round = ? WHERE id = ?', (current_round, battle_id))
         await db.commit()
+
+async def get_photos_where_status_1(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (battle_id = ? AND status = 1)', (battle_id, ))
+        return await cursor.fetchall()

@@ -449,6 +449,10 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         except Exception as e:
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
+        photos = await db.get_photos_where_status_1(battle_id)
+        if len(photos) % battle_info[13] == 0:
+            print('Надо выпускать пост')
+
         try:
             await db.update_photo_approved_time(photo_battle_id)
         except Exception as e:
