@@ -293,13 +293,7 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
         kb.button(text=f'✅ Проголосовать', url=f'https://t.me/{config.bot_name}?start=vote{battle_id}')
         kb.adjust(1)
         if battle_info[20] == '-':
-            text = f'''⚔️ <b>{battle_info[7].split()[0]} РАУНД</b>
-            💰 <b>ПРИЗ — {battle_info[6]}</b>
-
-            <b>✅ ГОЛОСОВАТЬ ЗДЕСЬ </b>
-
-            📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
-            ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
             text = battle_info[20]
         await asyncio.sleep(5)
