@@ -311,8 +311,8 @@ async def vote_in_battle(callback: types.CallbackQuery):
                                    caption='<b>Вы хотите проголосовать? Изменить или отменить голос уже не будет возможным</b>',
                                    reply_markup=get_my_voice_kb(accound_id))
     else:
-        await callback.message.answer("<b>Чтобы проголосовать, необходимо подписаться на канал</b>",
-                             reply_markup=subscribe_kb(channel_link, accound_id))
+        await callback.answer("Чтобы проголосовать, необходимо подписаться на канал",
+                             show_alert=True)
     return
 
 
@@ -894,7 +894,7 @@ async def statics(message: types.Message, state: FSMContext):
         items = await db.check_all_battles_where_status_1()
         # Приветственное сообщение для обычного пользователя
         await message.answer(f"""
-<b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n\n
+<b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n
 - Количество активных батлов: {len(items)}\n
 - Количество пользователей: {users}\n
 - Заблокировало из них бота: {blocked}\n
@@ -1023,7 +1023,7 @@ async def subcribed_handler(callback: types.CallbackQuery):
         await callback.message.delete()
         await callback.message.answer_photo(photo=battle_photos_info[3], caption='<b>Вы хотите проголосовать? Изменить или отменить голос уже не будет возможным</b>', reply_markup=get_my_voice_kb(accound_id))
     else:
-        await callback.message.answer("<b>Чтобы проголосовать, необходимо подписаться на канал</b>", reply_markup=subscribe_kb(channel_link, accound_id))
+        await callback.answer("Чтобы проголосовать, необходимо подписаться на канал", show_alert=True)
         
 @dp.callback_query(lambda c: c.data.startswith('getmyvoice'))
 async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext):
