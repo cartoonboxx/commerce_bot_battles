@@ -102,7 +102,15 @@ async def active_battle_settings_kb(battle_id, status):
         else:
             kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
         kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
-        kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo;{battle_id}')
+        kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
+
+
+
+
+
+
+
+
 
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
@@ -123,7 +131,7 @@ async def active_battle_settings_kb(battle_id, status):
 
 async def back_battle__active_setting_kb(battle_id):
     kb = InlineKeyboardBuilder()
-    
+
     kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
     return kb.as_markup()
 
@@ -150,7 +158,7 @@ async def round_buttons_battle(battle_id):
 
 
 
-    
+
 
 async def battle_answer_func_message(message: types.Message, battle_id,state:FSMContext):
     await state.clear()
@@ -184,7 +192,7 @@ async def firstround_menu_setting(message: types.Message, battle_id):
     battle_info = await db.check_battle_info(battle_id)
 
     kb = InlineKeyboardBuilder()
-    kb.button(text='✅ Создать батл', callback_data=f'firstround;createbattle;{battle_id}')
+    kb.button(text='✅ Создать батл', callback_data=f'firstround;iagree;{battle_id}')
 
     if battle_info[13] == 0:
         kb.button(text='❌ Участников в посте', callback_data=f'firstround;users_in_post;{battle_id}')
@@ -219,7 +227,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
         else:
 
             await callback.message.delete()
-            
+
             # await callback.message.answer('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
             #
             # tg_id = callback.from_user.id
@@ -290,7 +298,7 @@ async def delete_channel_func2(call: types.CallbackQuery, channel_id):
 def generate_support_link(channel_id):
     base_url = f"https://t.me/{config.bot_name}?start=support_{channel_id}"  # Ссылка для запуска бота
     return base_url
-	 
+
 async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, state:FSMContext):
     tg_id = call.from_user.id
     if action == 'delete':
@@ -313,7 +321,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 
 1. Добавьте бота в нужный чат.
 2. Перешлите сообщение от имени чата. 
-3. Назначьте бота администратором с правами на публикацию!''', 
+3. Назначьте бота администратором с правами на публикацию!''',
 reply_markup=await back_main_menu_add_channel(channel_id) )
     if action == 'create':
       channel_info = await db.check_channel_info_by_id(channel_id)
@@ -443,7 +451,7 @@ async def redact_all_status_posts(battle_id, photo_send):
 
 
 async def active_battle_options_func(call: types.CallbackQuery, battle_id, action, state: FSMContext):
-    
+
     if action =='start':
         battle_info = await db.check_battle_info(battle_id)
         count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
@@ -462,10 +470,10 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         if int(count_users_in_battle) < int(battle_info[13]):
             await call.answer('Нельзя начать раунд, участников в посте больше текущего количества участников', show_alert=True)
             return
-        
+
         kb = InlineKeyboardBuilder()
         kb.button(text='✅ Подтверждаю', callback_data=f'approveactivebattlesettings;{battle_id}')
-        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')   
+        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
         await call.message.edit_text('Начать раунд?', reply_markup=kb.as_markup())
     if action == 'descr':
@@ -524,6 +532,9 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await call.answer(f'Количество новых фото: {resultation}. {post_text}')
 
     if action == 'update_photo':
+
+        await active_battle_func(call, battle_id)
+
         from handlers.admin_handler import replace_last_digits, check_battle_info
         battle_info = await db.check_battle_info(battle_id)
 
@@ -563,6 +574,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 media = types.InputMediaPhoto(media=all_battle_users[index][3])
                 media_group.append(media)
                 all_battle_users.pop(index)
+                await db.update_number_post_in_battle_photos_by_id(all_battle_users[index][0], start_page)
             index = start_page
             print()
             text = f'''⚔️ <b>{battle_info[7]}</b>
@@ -585,12 +597,31 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         if len(posts) == 0:
             await call.answer('Одобренных фото нет')
             return
+        else:
+            '''проверка и вывешиваем предупреждение'''
+            resultation1 = 0
+            for post in posts:
+                for user in post:
+                    resultation1 += 1
 
-        await call.answer('Выставляются новые фото')
+            resultation2 = 0
+            for post in posts_posted:
+                for user in post:
+                    resultation2 += 1
+
+            post_text = ''
+            if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
+                post_text = 'Можете выкладывать новые фотографии'
+            else:
+                post_text = 'Выкладывать новые фотографии не рекомендуется'
+
+            await call.answer(f'Количество новых фото: {resultation1}. {post_text}')
+
+
         count = 0
 
         for index, post in enumerate(posts):
-            index += start_page
+            index += start_page + 1
             count += 1
             media_group = []
             for user in post:
@@ -665,12 +696,69 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     print(e)
             await db.update_count_in_posts(battle_id, count)
 
+    if action == 'update_photo_before':
+        battle_info = await db.check_battle_info(battle_id)
+
+        channel_id = battle_info[1]
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        channel_tg_id = channel_info[2]
+        members_in_post = battle_info[13]
+
+        all_battle_users_posted = await db.check_all_battle_photos_where_status_1_and_battle_id(battle_id)
+        posts_posted = [all_battle_users_posted[i:i + members_in_post] for i in range(0, len(all_battle_users_posted),
+                                                                                      members_in_post)]
+
+        for post in posts_posted:
+            for index, user in enumerate(post):
+                if user[6] == 0:
+                    post.pop(index)
+
+        start_page = 0
+        if len(posts_posted) != 0:
+            start_page = posts_posted[-2][-1][6]
+
+        need_photos = battle_info[13] - len(posts_posted[-2])
+        if need_photos != 0:
+            start_page -= 1
+
+        all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
+        print('all', all_battle_users)
+
+        posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
+
+        if len(posts) == 0:
+            await call.answer('Одобренных фото нет')
+            return
+        else:
+            '''проверка и вывешиваем предупреждение'''
+            resultation1 = 0
+            for post in posts:
+                for user in post:
+                    resultation1 += 1
+
+            resultation2 = 0
+            for post in posts_posted:
+                for user in post:
+                    resultation2 += 1
+
+            post_text = ''
+            if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
+                post_text = 'Можете выкладывать новые фотографии'
+            else:
+                kb = InlineKeyboardBuilder()
+                kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
+                kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
+                kb.adjust(1)
+                await call.message.edit_text('⚠️ Новые посты с фотографиями могут выйти не так, как должны. Продолжить?', reply_markup=kb.as_markup())
+
+
+
     if action =='reload':
         await active_battle_func(call, battle_id)
     if action == 'end':
         kb = InlineKeyboardBuilder()
         kb.button(text='Подтверждаю', callback_data=f'endapproveactivebattle;{battle_id}')
-        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')   
+        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
         await call.message.edit_text('Завершить раунд?', reply_markup=kb.as_markup())
     if action == 'next':
@@ -711,7 +799,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             return
         kb = InlineKeyboardBuilder()
         kb.button(text='✅ Подтверждаю', callback_data=f'approveactivebattlesettings;{battle_id}')
-        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')   
+        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
         await call.message.edit_text('Начать раунд?', reply_markup=kb.as_markup())
     if action == 'delete':
