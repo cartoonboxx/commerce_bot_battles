@@ -60,11 +60,12 @@ async def user_menu_handler(message: types.Message, state: FSMContext):
    if message.chat.type == 'private':
     await state.clear()
     tg_id = message.from_user.id
+    print('tg_id', tg_id)
     admin_exist = await db.check_admin_exist_return_bool(tg_id)
     active_battles = await db.check_battles_where_status_1_and_tg_id(tg_id)
     print(active_battles)
-    if tg_id in admins and admin_exist:
-     await message.answer ('<b>🔠 Выберите нужный батл для управления: \n\n</b> 💁 Вы не можете участвовать в батлах, так как вы админ. \nОтправляйте фото с других аккаунтов.', reply_markup=await active_battles_kb(active_battles))
+    if tg_id in admins or admin_exist:
+     await message.answer('<b>🔠 Выберите нужный батл для управления: \n\n</b> 💁 Вы не можете участвовать в батлах, так как вы админ. \nОтправляйте фото с других аккаунтов.', reply_markup=await active_battles_kb(active_battles))
      return  
     categories, total_items = await get_paginated_items33(0)
     items_kb = build_items_kb33(categories, 0, total_items)

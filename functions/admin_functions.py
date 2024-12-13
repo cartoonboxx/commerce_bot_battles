@@ -529,7 +529,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         else:
             post_text = 'Выкладывать новые фотографии не рекомендуется'
 
-        await call.answer(f'Количество новых фото: {resultation}. {post_text}')
+        await call.message.answer(f'Количество новых фото: {resultation}. {post_text}')
 
     if action == 'update_photo':
 
@@ -615,7 +615,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             else:
                 post_text = 'Выкладывать новые фотографии не рекомендуется'
 
-            await call.answer(f'Количество новых фото: {resultation1}. {post_text}')
+            await call.message.answer(f'Количество новых фото: {resultation1}. {post_text}')
 
 
         count = 0
