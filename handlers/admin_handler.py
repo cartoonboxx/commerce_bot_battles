@@ -221,7 +221,6 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             try:
                 kb = InlineKeyboardBuilder()
                 kb.button(text='Ссылка на пост', url=new_channel_link)
-                kb.button(text='Ссылка на голосование', url=new_channel_link)
                 kb.button(text='Ссылка на канал', url=battle_info[5])
                 kb.adjust(1)
 

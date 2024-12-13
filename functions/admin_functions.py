@@ -543,9 +543,9 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
         start_page = 0
         if len(posts_posted) != 0:
-            start_page = posts_posted[-1][-1][6]
+            start_page = posts_posted[-2][-1][6]
 
-        need_photos = battle_info[13] - len(posts_posted[-1])
+        need_photos = battle_info[13] - len(posts_posted[-2])
         if need_photos != 0:
             start_page -= 1
 
@@ -555,6 +555,10 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
         if need_photos != 0:
             media_group = []
+            print(need_photos, 'need_photos')
+            if len(all_battle_users) < need_photos:
+                need_photos = len(all_battle_users)
+                print('попал сюда')
             for index in range(need_photos):
                 media = types.InputMediaPhoto(media=all_battle_users[index][3])
                 media_group.append(media)
