@@ -1043,7 +1043,7 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.add_one_voice_to_battle_photos_by_id(accound_id)
     await db.update_users_today_voices_and_all_voices(battle_photos_info[1])
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
-    await callback.message.answer('<b>✅ Вы успешно проголосовали</b>')
+    await callback.answer('<b>✅ Вы успешно проголосовали</b>', show_alert=True)
     time_now = datetime.datetime.now()
     await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'))
     min_votes = battle_info[11]
