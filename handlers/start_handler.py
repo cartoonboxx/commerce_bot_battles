@@ -722,9 +722,11 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
 async def add_voices_handler(message: types.Message, state: FSMContext):
     count = message.text
     if count.isdigit():
-        if int(count) >0 and int(count) < 4:
+        count = int(count)
+        if count > 0 and count < 4:
             data = await state.get_data()
-            tg_id = data['tg_id']
+            tg_id = data.get('tg_id')
+            print(tg_id, count)
             await db.add_battle_photos_votes_where_tg_id(tg_id, count)
             await message.answer(f'{count} голосов добавлено')
             await state.clear()

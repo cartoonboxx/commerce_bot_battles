@@ -621,7 +621,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         count = 0
 
         for index, post in enumerate(posts):
-            index += start_page + 1
+            index += start_page
             count += 1
             media_group = []
             for user in post:
@@ -683,7 +683,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 try:
                     kb = InlineKeyboardBuilder()
                     kb.button(text='Ссылка на пост', url=new_channel_link)
-                    kb.button(text='Ссылка на голосование', url=new_channel_link)
                     kb.button(text='Ссылка на канал', url=battle_info[5])
                     kb.adjust(1)
 
