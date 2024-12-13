@@ -60,10 +60,10 @@ async def user_menu_handler(message: types.Message, state: FSMContext):
    if message.chat.type == 'private':
     await state.clear()
     tg_id = message.from_user.id
-    print('tg_id', tg_id)
+
     admin_exist = await db.check_admin_exist_return_bool(tg_id)
     active_battles = await db.check_battles_where_status_1_and_tg_id(tg_id)
-    print(active_battles)
+
     if tg_id in admins or admin_exist:
      await message.answer('<b>🔠 Выберите нужный батл для управления: \n\n</b> 💁 Вы не можете участвовать в батлах, так как вы админ. \nОтправляйте фото с других аккаунтов.', reply_markup=await active_battles_kb(active_battles))
      return  
@@ -378,7 +378,7 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
         await call.answer('Вы заблокированы в этом батле', show_alert=True)
         return
     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(battle_id, call.from_user.id)
-    print(is_user_exist)
+
     is_user_exist_battle = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_0_return_bool(battle_id, call.from_user.id)
     if is_user_exist_battle:
         await call.answer('Вы уже отправили фото на проверку, ожидайте...', show_alert=True)
@@ -476,7 +476,6 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
 async def reject_photo(message: types.Message, state: FSMContext):
     await state.update_data(reason=message.text)
     data = await state.get_data()
-    print(data)
 
 
     try:
@@ -501,7 +500,6 @@ async def reject_photo(message: types.Message, state: FSMContext):
 async def block_photo(message: types.Message, state: FSMContext):
     await state.update_data(reason=message.text)
     data = await state.get_data()
-    print(data)
 
     kb = InlineKeyboardBuilder()
 

@@ -90,8 +90,7 @@ async def scheduled_task():
                         if user[1] == tg_id:
                             user_voices = user[4]
 
-                    print(battle_id)
-                    print('max_user', max_user_voices)
+
                     if current_voices == 0:
                         current_voices = min_voice
 
@@ -102,7 +101,7 @@ async def scheduled_task():
 
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд"
                     if user_voices != max_user_voices:
-                        print('корректный батл айди', battle_id)
+
                         kb = InlineKeyboardBuilder()
                         kb.button(text="Ссылка на голосование",
                                   url=f"https://t.me/{config.bot_name}/start=vote{battle_id}")

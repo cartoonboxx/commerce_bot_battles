@@ -62,10 +62,10 @@ def encode_url(accound_id):
 
 #проверка подписки на каналы
 async def check_sub_cahnnels(channels, user_id):
-    print('\nchannels and user_id\n', channels, user_id)
+
     for channel in channels:
         chat_member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-        print('chat_member', chat_member, chat_member.status)
+
         if chat_member.status in ['left', 'kicked']:
             return False
     return True
@@ -115,7 +115,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
         # Обрабатываем аргументы команды /start
         accound_id = message.text.split()
-        print(accound_id)
+
         try:
             if len(accound_id) > 1:
                 accound_id = accound_id[1]
@@ -179,14 +179,14 @@ async def cmd_start(message: types.Message, state: FSMContext):
                             battle_id = battle_id[0:i]
                             break
 
-                    print(battle_id)
+
 
                     battle_info = await db.check_battle_info(battle_id)
-                    print(battle_info)
+
                     available_count_photo_in_post = battle_info[13]
 
                     media = await db.all_photo_by_battle(battle_id)
-                    print(media)
+
 
                     current_media = []
                     for i in range((current_page - 1) * available_count_photo_in_post,
@@ -201,7 +201,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     posts = [all_battle_users[i:i + members_in_post] for i in
                              range(0, len(all_battle_users), members_in_post)]
 
-                    print(posts)
+
 
                     count = 0
 
@@ -240,7 +240,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                             kbr.button(text=f'{emoji} - {user[4]}', callback_data=f"voteby;{battle_id};{user[0]}")
                         kbr.adjust(1,2,3,4)
                         break
-                    print('accid', accound_id)
+
                     await bot.send_media_group(chat_id=message.chat.id, media=media_group)
 
                     await bot.send_message(chat_id=message.chat.id, text="Голосование за определенного кандидата", reply_markup=kbr.as_markup())
@@ -334,7 +334,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
 #кнопка создать батл
 @dp.callback_query(lambda c: c.data.startswith('create_battle'))
 async def go_create_battle(call: types.CallbackQuery):
-    print('Создание батла')
+
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
     await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла:</b>', reply_markup=back_main_menu_channels(channels))
@@ -455,7 +455,7 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     channel_info = await db.check_channel_info_by_id(channel_id)
     name = channel_info[3]  
     link = channel_info[5]
-    print(channel_id)
+
     kb.button(text='⚔️ Активные наборы на фото-батлы', callback_data=f'channel_battles;{channel_id}')
     kb.button(text='🗑️ Удалить канал', callback_data=f'channel_delete;{channel_id}')
     kb.button(text='🔙 Назад', callback_data=f'backtochannel_list')
@@ -491,7 +491,7 @@ async def show_current_battle(call: types.CallbackQuery):
     title = current_battle[3]
     status = current_battle[14]
     channel_id = current_battle[1]
-    print(title, status)
+
 
     kb = InlineKeyboardBuilder()
 
@@ -528,7 +528,7 @@ async def start_password(call: types.CallbackQuery, state: FSMContext):
 async def process_password(message: types.Message, state: FSMContext):
     password = message.text
     await bot.delete_message(message.chat.id, message.message_id - 1)
-    # print("current", current_message)
+
     await message.delete()
 
     if password == "1234":
@@ -554,7 +554,7 @@ async def go_home(call: types.CallbackQuery):
 
 async def update_status(battle_id, status, typeDo):
 
-    print(battle_id, status)
+
     async with aiosqlite.connect(name_db) as db:
         if typeDo == "2":
             '''Удаление из таблицы'''
@@ -726,7 +726,6 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
         if count > 0 and count < 4:
             data = await state.get_data()
             tg_id = data.get('tg_id')
-            print(tg_id, count)
             await db.add_battle_photos_votes_where_tg_id(tg_id, count)
             await message.answer(f'{count} голосов добавлено')
             await state.clear()
@@ -793,7 +792,7 @@ async def mailing_handler_q2(message: types.Message, state: FSMContext):
                 # Проверка на https://
                 if btn_url.startswith('https://'):
                     markup.button(text=btn_text, url=btn_url)
-                    print('кнопка добавлена')
+
                 else:
                     await message.answer(f"Ошибка: ссылка должна начинаться с 'https://'. Проверьте: {btn_url}")
                     return  # Возврат для исправления ошибки

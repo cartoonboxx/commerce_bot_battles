@@ -626,7 +626,7 @@ async def add_new_cahnnel_by_chan_id(tg_id, channel_id, title):
         row = await cursor.fetchone()
         await cursor.close()
         if row is not None:
-            print("Есть запись")
+
             return False
         else:
             await db.execute('INSERT INTO channels (tg_id, channel_id, title) VALUES (?, ?, ?)', (tg_id, channel_id, title))

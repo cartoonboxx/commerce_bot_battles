@@ -44,7 +44,7 @@ def back_main_menu_channels(channels):
     return kb.as_markup()
 
 async def active_battles_kb(battles):
-    print(battles)
+
     kb = InlineKeyboardBuilder()
     for battle in battles:
         name = battle[3]
@@ -60,7 +60,7 @@ async def active_battles_kb(battles):
 async def active_battle_settings_kb(battle_id, status):
     kb = InlineKeyboardBuilder()
     battle_info = await db.check_battle_info(battle_id)
-    print('current menu', status)
+
     if status == 0:
         status = 1
     # Кнопки только для статуса CREATED
@@ -165,7 +165,7 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
     battle_info = await db.check_battle_info(battle_id)
     post_start_battle = battle_info[17]
     time_now = datetime.datetime.now().strftime("%H:%M")
-    print('post_id', post_start_battle)
+
     if post_start_battle == 0 or post_start_battle is None:
         post_start_battle = 'Не нужен'
     else:
@@ -221,7 +221,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
 
         await db.update_status_battle(battle_id, 0)
         if battle_info[3] == '-'or battle_info[5] == '-' or battle_info[6] == '-' or battle_info[9] == '-' or battle_info[10] == 0 or battle_info[17] == 0:
-            print(battle_info[3], battle_info[5], battle_info[6], battle_info[9], battle_info[10], battle_info[17])
+
             await callback.answer('Заполните все поля', show_alert=True)
             return
         else:
@@ -561,22 +561,22 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             start_page -= 1
 
         all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
-        print('all', all_battle_users)
+
 
 
         if need_photos != 0:
             media_group = []
-            print(need_photos, 'need_photos')
+
             if len(all_battle_users) < need_photos:
                 need_photos = len(all_battle_users)
-                print('попал сюда')
+
             for index in range(need_photos):
                 media = types.InputMediaPhoto(media=all_battle_users[index][3])
                 media_group.append(media)
                 all_battle_users.pop(index)
                 await db.update_number_post_in_battle_photos_by_id(all_battle_users[index][0], start_page)
             index = start_page
-            print()
+
             text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
@@ -721,7 +721,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             start_page -= 1
 
         all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
-        print('all', all_battle_users)
+
 
         posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
 

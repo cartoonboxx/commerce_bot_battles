@@ -82,7 +82,7 @@ async def settings_channel(callback: types.CallbackQuery, channel_id):
 
 @dp.callback_query(lambda c: c.data.startswith('optionchannel'))
 async def option_channel_handler(callback: types.CallbackQuery):
-    print('вот тут что-то')
+
     channel_id = callback.data.split(';')[1] 
     await settings_channel(callback, channel_id)
     
@@ -332,7 +332,6 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
         for i, user in enumerate(post, start=1):
             # Генерация уникальной ссылки для каждого пользователя
             individual_channel_link = replace_last_digits(post_link, str(message_id))
-            print(f"Generated link for user {user[0]}: {individual_channel_link}")  # Логируем ссылку
             
             await db.update_number_post_in_battle_photos_by_id(user[0], index)
             try:
@@ -416,7 +415,6 @@ async def continueToNextRound(call: types.CallbackQuery):
 
     battle_info = await db.check_battle_info(battle_id)
     current_round = battle_info[22]
-    print('current round', current_round)
     await db.update_number_round(current_round + 1, battle_id)
 
     await active_battle_answer_func(call.message, battle_id)
@@ -464,7 +462,6 @@ async def build_keyboard(post, battle_id, count, current_page):
 
 @dp.callback_query(lambda c: c.data.startswith('reloadresults'))
 async def reload_results_handler(callback: types.CallbackQuery):
-    print(callback.data.split(';'))
     battle_id = callback.data.split(';')[1]
     count = int(callback.data.split(';')[2])
     page = int(callback.data.split(';')[3])
