@@ -62,9 +62,10 @@ def encode_url(accound_id):
 
 #проверка подписки на каналы
 async def check_sub_cahnnels(channels, user_id):
+    print('\nchannels and user_id\n', channels, user_id)
     for channel in channels:
         chat_member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-        
+        print('chat_member', chat_member, chat_member.status)
         if chat_member.status in ['left', 'kicked']:
             return False
     return True
@@ -305,7 +306,7 @@ async def vote_in_battle(callback: types.CallbackQuery):
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = [channel_info[2]]
 
-    if await check_sub_cahnnels(channel_tg_id, callback.message.from_user.id):
+    if await check_sub_cahnnels(channel_tg_id, callback.from_user.id):
         await callback.message.answer_photo(photo=battle_photos_info[3],
                                    caption='<b>Вы хотите проголосовать? Изменить или отменить голос уже не будет возможным</b>',
                                    reply_markup=get_my_voice_kb(accound_id))
