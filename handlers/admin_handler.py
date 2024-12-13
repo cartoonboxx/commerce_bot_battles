@@ -142,7 +142,7 @@ async def saveRoundParam(callback: types.CallbackQuery, state: FSMContext):
     await active_battle_func(callback, battle_id)
 
 
-'''колбек начала раунда'''
+
 @dp.callback_query(lambda c: c.data.startswith('approveactivebattlesettings'))
 async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
     battle_id = callback.data.split(';')[1]
@@ -227,16 +227,15 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
 
                 current_battle = await check_battle_info(battle_id)
 
-                await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
+                if current_battle[22] == 0:
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
             ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
-                # elif current_battle[14] == 2:
-                #     await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nВы прошли предыдущий раунд. Набирайте голоса и увидимся в ФИНАЛЕ
-                # ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
-                # elif current_battle[14] == 5:
-                #     await bot.send_message(chat_id=user[1], text=f'''✅💪 <b>ВЫ В ФИНАЛЕ</b>
-                #
-                #                                        Поздравляем, вы победили всех на своем пути и остались с наисельнейшими участниками. Набирайте голоса и заберете приз.
-                #                                        ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                elif current_battle[22] != 0 and current_battle[7] != 'Финал':
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nВы прошли предыдущий раунд. Набирайте голоса и увидимся в ФИНАЛЕ
+                ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                if current_battle[7] == "Финал":
+                    await bot.send_message(chat_id=user[1], text=f'''✅💪 <b>ВЫ В ФИНАЛЕ</b>\n\nПоздравляем, вы победили всех на своем пути и остались с наисельнейшими участниками. Набирайте голоса и заберете приз.
+''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
             except Exception as e:
                 print(e)
@@ -535,7 +534,7 @@ async def start_first_round(call: types.CallbackQuery, state: FSMContext):
         await call.answer('Заполните все поля', show_alert=True)
         return
 
-    await db.update_status_battle(battle_id, Status.ENDROUND.value)
+    # await db.update_status_battle(battle_id, Status.ENDROUND.value)
     post_id = battle_info[17]
     if post_id is not None:
         kb = InlineKeyboardBuilder()

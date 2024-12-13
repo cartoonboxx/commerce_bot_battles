@@ -9,7 +9,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from keyboards.another import back_main_menu_add_channel, back_main_menu_channels, back_main_menu_create_battle, create_battle_kb, create_good
 from states.classes_states import *
 from constants.constants import *
-import json
+import json, asyncio
 
 bot = loader.start_bot(config.Token)
 
@@ -101,6 +101,8 @@ async def active_battle_settings_kb(battle_id, status):
             kb.button(text='✅ Открыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
         else:
             kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
+        kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
+        kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo;{battle_id}')
 
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
@@ -109,7 +111,10 @@ async def active_battle_settings_kb(battle_id, status):
     # kb.button(text='🔄', callback_data=f'activebattlesettings;reload;{battle_id}')
     kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
 
-    kb.adjust(1, 1, 2, 1, 1, 1, 1)
+    if status != Status.ENDROUND.value:
+        kb.adjust(1, 1, 2, 1, 1, 1, 1)
+    else:
+        kb.adjust(1, 1, 1, 1, 1)
     return kb.as_markup()
 
 
@@ -494,6 +499,167 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await active_battle_func(call, battle_id)
         await state.update_data(battle_id=battle_id)
 
+    if action == 'check_photo':
+        battle_info = await db.check_battle_info(battle_id)
+
+        channel_id = battle_info[1]
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        channel_tg_id = channel_info[2]
+        members_in_post = battle_info[13]
+
+        all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
+        posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
+
+        resultation = 0
+        for post in posts:
+            for user in post:
+                resultation += 1
+
+        post_text = ''
+        if resultation % members_in_post == 0 and resultation != 0:
+            post_text = 'Можете выкладывать новые фотографии'
+        else:
+            post_text = 'Выкладывать новые фотографии не рекомендуется'
+
+        await call.answer(f'Количество новых фото: {resultation}. {post_text}')
+
+    if action == 'update_photo':
+        from handlers.admin_handler import replace_last_digits, check_battle_info
+        battle_info = await db.check_battle_info(battle_id)
+
+        channel_id = battle_info[1]
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        channel_tg_id = channel_info[2]
+        members_in_post = battle_info[13]
+
+        all_battle_users_posted = await db.check_all_battle_photos_where_status_1_and_battle_id(battle_id)
+        posts_posted = [all_battle_users_posted[i:i + members_in_post] for i in range(0, len(all_battle_users_posted),
+                                                                                      members_in_post)]
+
+        for post in posts_posted:
+            for index, user in enumerate(post):
+                if user[6] == 0:
+                    post.pop(index)
+
+        start_page = 0
+        if len(posts_posted) != 0:
+            start_page = posts_posted[-1][-1][6]
+
+        need_photos = battle_info[13] - len(posts_posted[-1])
+        if need_photos != 0:
+            start_page -= 1
+
+        all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
+        print('all', all_battle_users)
+
+
+        if need_photos != 0:
+            media_group = []
+            for index in range(need_photos):
+                media = types.InputMediaPhoto(media=all_battle_users[index][3])
+                media_group.append(media)
+                all_battle_users.pop(index)
+            index = start_page
+            print()
+            text = f'''⚔️ <b>{battle_info[7]}</b>
+<b>💰 ПРИЗ — {battle_info[6]}</b>
+
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
+
+📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
+⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            # await asyncio.sleep(20)
+            await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
+            kb = InlineKeyboardBuilder()
+            kb.button(text=f'✅ Проголосовать',
+                      url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index + 1}')
+            kb.adjust(1)
+            message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
+
+        posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
+
+        if len(posts) == 0:
+            await call.answer('Одобренных фото нет')
+            return
+
+        await call.answer('Выставляются новые фото')
+        count = 0
+
+        for index, post in enumerate(posts):
+            index += start_page
+            count += 1
+            media_group = []
+            for user in post:
+                media_photo = types.InputMediaPhoto(media=user[3])
+                media_group.append(media_photo)
+                # Обновление для каждого пользователя
+            kb = InlineKeyboardBuilder()
+
+            if battle_info[20] == '-':
+                text = f'''⚔️ <b>{battle_info[7]}</b>
+<b>💰 ПРИЗ — {battle_info[6]}</b>
+
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
+
+📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
+⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            else:
+                text = battle_info[20]
+            await asyncio.sleep(20)
+            try:
+                await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
+
+            except Exception:
+                await db.update_status_battle(battle_id, Status.Error.value)
+                await active_battle_func(call, battle_id)
+                await call.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+
+                last_user_id = post[-1][0]
+                await db.update_error_number(last_user_id - 1, battle_id)
+                last_number_post = index + 1
+                await db.update_error_post(last_number_post, battle_id)
+                return
+
+            await asyncio.sleep(10)
+            try:
+                kb.button(text=f'✅ Проголосовать',
+                          url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index + 1}')
+                kb.adjust(1)
+                message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
+                message_id = message.message_id
+                await db.update_id_post(message_id, battle_id)
+
+
+            except Exception:
+                await db.update_status_battle(battle_id, Status.Error.value)
+                await active_battle_func(call, battle_id)
+                await call.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+
+                last_user_id = post[-1][0]
+                await db.update_error_number(last_user_id - 1, battle_id)
+                last_number_post = index + 1
+                await db.update_error_post(last_number_post, battle_id)
+                return
+            post_link = channel_info[6]  # Основной шаблон ссылки
+            new_channel_link = replace_last_digits(post_link, str(message_id))
+            for i, user in enumerate(post, start=1):
+
+                await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
+                try:
+                    kb = InlineKeyboardBuilder()
+                    kb.button(text='Ссылка на пост', url=new_channel_link)
+                    kb.button(text='Ссылка на голосование', url=new_channel_link)
+                    kb.button(text='Ссылка на канал', url=battle_info[5])
+                    kb.adjust(1)
+
+                    current_battle = await check_battle_info(battle_id)
+
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
+                    ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+
+                except Exception as e:
+                    print(e)
+            await db.update_count_in_posts(battle_id, count)
 
     if action =='reload':
         await active_battle_func(call, battle_id)

@@ -95,6 +95,7 @@ async def scheduled_task():
                     if current_voices == 0:
                         current_voices = min_voice
 
+
                     # Подготовка клавиатуры и сообщения
                     url = encode_url(tg_id)
                     # найти нужный батл айди
