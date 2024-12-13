@@ -179,7 +179,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
             text = battle_info[20]
-        await asyncio.sleep(20)
+        await asyncio.sleep(5)
         try:
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             
@@ -194,7 +194,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             await db.update_error_post(last_number_post, battle_id)
             return
         
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
         try:
             kb.button(text=f'✅ Проголосовать', url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index+1}')
             kb.adjust(1)
@@ -302,7 +302,7 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
             ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
             text = battle_info[20]
-        await asyncio.sleep(20)
+        await asyncio.sleep(5)
         try:
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             
@@ -317,7 +317,7 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
             return
             
         
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
         try:
             message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
             message_id = message.message_id

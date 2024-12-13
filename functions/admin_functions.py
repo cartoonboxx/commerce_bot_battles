@@ -584,7 +584,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
-            # await asyncio.sleep(20)
+            await asyncio.sleep(5)
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             kb = InlineKeyboardBuilder()
             kb.button(text=f'✅ Проголосовать',
@@ -640,7 +640,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = battle_info[20]
-            await asyncio.sleep(20)
+            await asyncio.sleep(5)
             try:
                 await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
 
@@ -655,7 +655,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 await db.update_error_post(last_number_post, battle_id)
                 return
 
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
             try:
                 kb.button(text=f'✅ Проголосовать',
                           url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index + 1}')
