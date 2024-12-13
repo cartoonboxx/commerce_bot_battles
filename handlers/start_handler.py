@@ -468,7 +468,7 @@ async def show_battles(call: types.CallbackQuery):
     data = call.data.split(';')[-1]
 
     async with aiosqlite.connect(name_db) as db:
-        async with db.execute(f'''SELECT * FROM battles WHERE (channel_id = {data} AND status <> 0)''') as cursor:
+        async with db.execute(f'''SELECT * FROM battles WHERE (channel_id = {data} AND status = 0)''') as cursor:
             battles = await cursor.fetchall()
 
             kb = InlineKeyboardBuilder()

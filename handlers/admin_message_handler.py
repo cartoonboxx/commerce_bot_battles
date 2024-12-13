@@ -301,14 +301,15 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
 @dp.message(AddBattlePost.q1)
 async def add_battle_post(message: types.Message, state: FSMContext):
     data = await state.get_data()
+    print(message.text)
+    battle_id = data.get('battle_id')
     await state.update_data(message="empty")
     print(data)
-    kb = InlineKeyboardBuilder()
-    kb.button(text='✅ Верно', callback_data='admitPostData')
-    kb.button(text='🔄 Заново', callback_data=f'accessCreatePostVote;{json.dumps(data)}')
-    kb.adjust(1)
-    await state.update_data(message=message)
-    await message.answer(f'Ваш пост будет выглядеть так:\n\n{message.text}\n\nВсе верно?', reply_markup=kb.as_markup())
+    post_id = message.message_id
+    # await message.delete()
+    await bot.delete_message(message.chat.id, message.message_id - 1)
+    await db.update_post_id(post_id, battle_id)
+    await battle_answer_func_message(message, battle_id, state)
 
 
 @dp.message(DeleteBattleFromDB.password)
