@@ -100,6 +100,9 @@ async def add_battle_name(message: types.Message, state: FSMContext):
     await battle_answer_func_message(message, battle_id, state)
     await state.clear()
 
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
+
 @dp.message(AddLinkToBattle.q1)
 async def add_link_to_battle(message: types.Message, state: FSMContext):
     battle_link = message.text
@@ -144,6 +147,9 @@ async def add_battle_prize(message: types.Message, state: FSMContext):
     await db.update_battle_prize(battle_id, prize)
     await battle_answer_func_message(message, battle_id, state)
     await state.clear()
+
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
 
 
 
@@ -232,6 +238,9 @@ async def add_battle_end_time(message: types.Message, state: FSMContext):
     # Очищаем состояние
     await state.clear()
 
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
+
 
 
 @dp.message(AddActiveBattleEnd.q1)
@@ -246,7 +255,10 @@ async def add_active_battle_end_time(message: types.Message, state: FSMContext):
     else:
         await firstround_menu_setting(message, battle_id)
     await state.clear()
-    
+
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
+
 
 
 
@@ -254,10 +266,13 @@ async def add_active_battle_end_time(message: types.Message, state: FSMContext):
 
 @dp.message(AddActiveBattleParticipants.q1)
 async def add_active_battle_participants(message: types.Message, state: FSMContext):
+    print(message.text, message.message_id)
     participants = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
     round = data.get('round')
+    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     if participants.isdigit():
         if int(participants)<2 or int(participants)>10:
             await message.answer("Минимальное кол-во участников должно быть от 2х до 10", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -271,7 +286,6 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
         await state.clear()
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
-
 
 
 
@@ -297,7 +311,8 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
 
-
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
 @dp.message(AddBattlePost.q1)
 async def add_battle_post(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -364,6 +379,8 @@ async def add_battle_participants(message: types.Message, state: FSMContext):
     patricipants = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    await bot.delete_message(message.chat.id, message.message_id)
+    await bot.delete_message(message.chat.id, message.message_id - 1)
     if patricipants.isdigit():
         if int(patricipants) < 2:
             await message.answer("Минимальное кол-во участников должно быть больше 2", reply_markup=await back_main_menu_create_battle(battle_id))
