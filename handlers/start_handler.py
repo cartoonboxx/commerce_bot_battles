@@ -187,11 +187,14 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
                     media = await db.all_photo_by_battle(battle_id)
 
-
                     current_media = []
                     for i in range((current_page - 1) * available_count_photo_in_post,
                                    current_page * available_count_photo_in_post):
-                        current_media.append(media[i])
+                        try:
+                            current_media.append(media[i])
+                        except Exception as ex:
+                            print("Не хватило фотографии")
+
 
                     channel_id = battle_info[1]
                     channel_info = await db.check_channel_info_by_id(channel_id)
@@ -201,7 +204,11 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     posts = [all_battle_users[i:i + members_in_post] for i in
                              range(0, len(all_battle_users), members_in_post)]
 
-
+                    # print(posts)
+                    print('Пользователь голосует')
+                    # for post in posts:
+                    #     for user in post:
+                    #         print(user)
 
                     count = 0
 
@@ -213,6 +220,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
                             media_photo = InputMediaPhoto(media=user[3])
                             media_group.append(media_photo)
                             # Обновление для каждого пользователя
+
+                        print()
                         kbr = InlineKeyboardBuilder()
                         kbr.button(text='🔄 Обновить результаты', callback_data=f'reloadresults;{battle_id};'
                                                                                f'{available_count_photo_in_post};{current_page}')

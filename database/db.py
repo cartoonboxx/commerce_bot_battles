@@ -433,12 +433,18 @@ async def update_count_in_posts(battle_id,count_in_post):
 async def check_all_battle_photos_where_status_1_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
         # cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ? AND number_post <> 0', (battle_id, ))
-        cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ?', (battle_id, ))
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ? AND number_post <> 0)', (battle_id, ))
+        return await cursor.fetchall()
+
+async def before_check_all_battle_photos_where_status_1_and_battle_id(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        # cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ? AND number_post <> 0', (battle_id, ))
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ?)', (battle_id, ))
         return await cursor.fetchall()
 
 async def check_all_battle_photos_where_number_post_0_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
-        cursor = await db.execute('SELECT * FROM battle_photos WHERE number_post = 0 AND battle_id = ?', (battle_id, ))
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (number_post = 0 AND battle_id = ? AND status = 1)', (battle_id, ))
         return await cursor.fetchall()
 
 
@@ -642,7 +648,7 @@ async def checkk_all_channels_where_tg_id(tg_id):
 
 async def all_photo_by_battle(battle_id):
     async with aiosqlite.connect(name_db) as db:
-        cursor = await db.execute('SELECT * FROM battle_photos WHERE battle_id = ?', (battle_id, ))
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (battle_id = ? and status = 1 AND number_post <> 0)', (battle_id, ))
         return await cursor.fetchall()
 
 async def update_id_post(message_id_post, battle_id):

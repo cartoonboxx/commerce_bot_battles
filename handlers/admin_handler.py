@@ -155,7 +155,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = channel_info[2]
     members_in_post = battle_info[13]
-    all_battle_users = await db.check_all_battle_photos_where_status_1_and_battle_id(battle_id)
+    all_battle_users = await db.before_check_all_battle_photos_where_status_1_and_battle_id(battle_id)
     posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
 
     count = 0

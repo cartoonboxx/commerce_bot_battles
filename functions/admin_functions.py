@@ -547,22 +547,22 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         posts_posted = [all_battle_users_posted[i:i + members_in_post] for i in range(0, len(all_battle_users_posted),
                                                                                       members_in_post)]
 
-        for post in posts_posted:
-            for index, user in enumerate(post):
-                if user[6] == 0:
-                    post.pop(index)
+        print(posts_posted) # '''выпущенные посты'''
+        while [] in posts_posted:
+            posts_posted.remove([])
+
 
         start_page = 0
         if len(posts_posted) != 0:
-            start_page = posts_posted[-2][-1][6]
+            start_page = posts_posted[-1][-1][6]
 
-        need_photos = battle_info[13] - len(posts_posted[-2])
-        if need_photos != 0:
-            start_page -= 1
+        need_photos = battle_info[13] - len(posts_posted[-1])
+
+        print(start_page, need_photos)
 
         all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
 
-
+        print(all_battle_users)
 
         if need_photos != 0:
             media_group = []
@@ -570,11 +570,18 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             if len(all_battle_users) < need_photos:
                 need_photos = len(all_battle_users)
 
+            print(all_battle_users)
+            print(need_photos, start_page)
+
             for index in range(need_photos):
-                media = types.InputMediaPhoto(media=all_battle_users[index][3])
-                media_group.append(media)
-                all_battle_users.pop(index)
-                await db.update_number_post_in_battle_photos_by_id(all_battle_users[index][0], start_page)
+                try:
+                    media = types.InputMediaPhoto(media=all_battle_users[index][3])
+                    media_group.append(media)
+                    await db.update_number_post_in_battle_photos_by_id(all_battle_users[index][0], start_page)
+                    all_battle_users.pop(index)
+                except Exception as ex:
+
+                    break
             index = start_page
 
             text = f'''⚔️ <b>{battle_info[7]}</b>
@@ -588,11 +595,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             kb = InlineKeyboardBuilder()
             kb.button(text=f'✅ Проголосовать',
-                      url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index + 1}')
+                      url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index}')
             kb.adjust(1)
             message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
 
         posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
+
+        print(posts)
 
         if len(posts) == 0:
             await call.answer('Одобренных фото нет')
@@ -617,8 +626,21 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
             await call.message.answer(f'Количество новых фото: {resultation1}. {post_text}')
 
+            # res2 - старые посты
+            # res1 - новые
+            print(resultation1, resultation2)
 
         count = 0
+
+        '''Сюда дошли только новые фото'''
+        not_posted_photo = await db.all_photo_by_battle(battle_id)
+        while [] in not_posted_photo:
+            not_posted_photo.remove([])
+
+
+        print(all_battle_users, start_page)
+
+        # start_page = int(already_posted_photo[-1][-1][6])
 
         for index, post in enumerate(posts):
             index += start_page
@@ -713,10 +735,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     post.pop(index)
 
         start_page = 0
-        if len(posts_posted) != 0:
-            start_page = posts_posted[-2][-1][6]
 
-        need_photos = battle_info[13] - len(posts_posted[-2])
+        while [] in posts_posted:
+            posts_posted.remove([])
+        if len(posts_posted) != 0:
+            start_page = posts_posted[-1][-1][6]
+
+        need_photos = battle_info[13] - len(posts_posted[-1])
         if need_photos != 0:
             start_page -= 1
 
@@ -743,6 +768,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             post_text = ''
             if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
                 post_text = 'Можете выкладывать новые фотографии'
+                kb = InlineKeyboardBuilder()
+                kb.button(text='✅ Опубликовать', callback_data=f'activebattlesettings;update_photo;{battle_id}')
+                kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
+                kb.adjust(1)
+                await call.message.edit_text(
+                    'Вы точно хотите опубликовать новые фото?',
+                    reply_markup=kb.as_markup())
             else:
                 kb = InlineKeyboardBuilder()
                 kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
