@@ -170,10 +170,17 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         kb = InlineKeyboardBuilder()
 
         if battle_info[20] == '-':
-            text = f'''⚔️ <b>{battle_info[7]}</b>
+            if battle_info[22] == 0:
+                text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
 <b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
+
+📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
+⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            else:
+                text = f'''⚔️ <b>{battle_info[7]}</b>
+<b>💰 ПРИЗ — {battle_info[6]}</b>
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
@@ -293,7 +300,10 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
         kb.button(text=f'✅ Проголосовать', url=f'https://t.me/{config.bot_name}?start=vote{battle_id}')
         kb.adjust(1)
         if battle_info[20] == '-':
-            text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            if battle_info[22] == 0:
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            else:
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
             text = battle_info[20]
         await asyncio.sleep(5)
@@ -380,7 +390,6 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
         eligible_participants = [user for user in post if user[4] >= min_voices]
         
         if not eligible_participants:
-            await callback.message.answer(f'Пост {i}: нет победителей, не достигнувших минимального количества голосов')
             for user in post:
                 await db.delete_user_from_battle_photos(user[0])
             continue
@@ -389,6 +398,7 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
         max_votes = max(user[4] for user in eligible_participants)
         
         winners = [user for user in eligible_participants if user[4] == max_votes]
+
         for winner in winners:
             await db.update_battle_photos_votes_and_number_post(winner[0], 0,0)
         for user in post:
@@ -404,6 +414,12 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
             kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
             kb.adjust(1)
             await callback.message.answer(f'⚔️ Итоги раунда: проходит {len(winners)} человек в следующий раунд', reply_markup=kb.as_markup())
+        else:
+            kb = InlineKeyboardBuilder()
+            kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
+            kb.adjust(1)
+            await callback.message.answer(f'⚔️ Итоги раунда: проходит {len(winners)} человек в следующий раунд',
+                                          reply_markup=kb.as_markup())
 
     await db.update_battles_descr_round_users_min_golos_end_round_by_id(battle_id)
     await db.delete_all_battle_voices_where_battle_id(battle_id)
