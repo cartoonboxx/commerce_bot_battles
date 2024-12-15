@@ -205,7 +205,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         try:
             kb.button(text=f'✅ Проголосовать', url=f'https://t.me/{config.bot_name}?start=vote{battle_id}page{index+1}')
             kb.adjust(1)
-            message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
+            message = await bot.send_message(chat_id=channel_tg_id, text=text, disable_web_page_preview=True, reply_markup=kb.as_markup())
             message_id = message.message_id
             await db.update_id_post(message_id, battle_id)
 
@@ -323,7 +323,7 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
         
         await asyncio.sleep(5)
         try:
-            message = await bot.send_message(chat_id=channel_tg_id, text=text, reply_markup=kb.as_markup())
+            message = await bot.send_message(chat_id=channel_tg_id, text=text, disable_web_page_preview=True, reply_markup=kb.as_markup())
             message_id = message.message_id
             
         except Exception:
