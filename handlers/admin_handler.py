@@ -374,21 +374,32 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
     await callback.answer('Батл успешно завершился', show_alert=True)
     await db.update_status_battle(battle_id, Status.NEXTROUND.value)
     battle_info = await db.check_battle_info(battle_id)
-    
-    count = battle_info[16]
+
+
+    '''количество вышедших постов делим на количество в одном посте'''
+    all_posts_photo = await db.all_photo_by_battle(battle_id)
+
+    count = len(all_posts_photo)//int(battle_info[13])
+    if len(all_posts_photo) % 2 != 0:
+        count += 1
+
     min_voices = battle_info[11]
-    
+
+
     for i in range(1, count + 1):
+        print('count', count)
         # Получение всех участников для текущего поста
         post = await db.check_battle_photos_by_battle_id_and_number_post(battle_id, i)
-        
+
+        print('post', post)
         # Если нет участников, продолжить следующую итерацию
         if not post:
             continue
 
         # Отфильтровать участников, у которых голоса меньше минимального
         eligible_participants = [user for user in post if user[4] >= min_voices]
-        
+
+        print('eligible_participants', eligible_participants)
         if not eligible_participants:
             for user in post:
                 await db.delete_user_from_battle_photos(user[0])
@@ -399,13 +410,12 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
         
         winners = [user for user in eligible_participants if user[4] == max_votes]
 
+        print('winners', winners)
         for winner in winners:
             await db.update_battle_photos_votes_and_number_post(winner[0], 0,0)
-        for user in post:
 
-            
+        for user in post:
             if user not in winners:
-                
                 await db.delete_user_from_battle_photos(user[0])
 
         if winners:

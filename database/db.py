@@ -430,6 +430,11 @@ async def update_count_in_posts(battle_id,count_in_post):
         await db.execute('UPDATE battles SET count_in_post = ? WHERE id = ?', (count_in_post, battle_id))
         await db.commit()
 
+async def increment_count_in_posts(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET count_in_post = count_in_post + 1 WHERE id = ?', (battle_id,))
+        await db.commit()
+
 async def check_all_battle_photos_where_status_1_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
         # cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ? AND number_post <> 0', (battle_id, ))

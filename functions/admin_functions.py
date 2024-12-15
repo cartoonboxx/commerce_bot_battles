@@ -733,6 +733,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     print(e)
             await db.update_count_in_posts(battle_id, count)
 
+
     if action == 'update_photo_before':
         battle_info = await db.check_battle_info(battle_id)
 
