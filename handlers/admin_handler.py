@@ -483,7 +483,11 @@ async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSM
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Запомнил(а)", callback_data=f"firstround;publish;{battle_id}")
     kb.adjust(1)
-    await call.message.edit_text('''<b>⚠️ Внимание</b>\n\nПосты будут выкладываться в канал сразу после того, как вы одобрите количество фото, которое указали на втором шаге в поле «Участников в посте»''', reply_markup=kb.as_markup())
+    await call.message.edit_text('''<b>ℹ️ Информация о публикации постов</b>
+
+Фото участников публикуются постами, количество участников в каждом посте зависит от значения, указанного в поле «Участников в 1 посте».
+
+После публикации можно открыть новый набор фото, собрать дополнительные снимки и выставить их в следующих постах.''', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;publish'))
 async def firstround_createbattle_publish(callback: types.CallbackQuery, state: FSMContext):

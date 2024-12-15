@@ -759,7 +759,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
         # Проверяем, если пользователь главный админ
         if tg_id in admins:
             await message.answer(
-                "<b>Выберите действие:</b>",
+                "<b>⚙️ Выберите действие:</b>",
                 reply_markup=mailing_dev())
             await state.set_state("rassilka.admin_action")
             return
@@ -778,14 +778,14 @@ async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>') 
 @dp.callback_query(lambda c: c.data.startswith('create_mailling'))
 async def create_mailing(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.message.answer('Введите сообщение для рассылки')
+    await callback_query.message.answer('<b>[1/2] Введите сообщение для рассылки</b>')
     await state.set_state(Mailing.q1)
 @dp.message(Mailing.q1)
 async def mailing_handler(message: types.Message, state: FSMContext):
     # Сохраняем данные о типе сообщения и его ID для дальнейшего использования
     await state.update_data(message_id=message.message_id)
     await state.set_state(Mailing.q2)
-    await message.answer('Введите кнопки в формате Текст;ссылка каждую с новой строки, если не нужны кнопки, то 0')
+    await message.answer('<b>[2/2] Введите кнопки в формате:</b> Текст;ссылка\n\nКаждую кнопку с новой строки \nЕсли не нужны кнопки, то 0')
 @dp.message(Mailing.q2)
 async def mailing_handler_q2(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
@@ -809,7 +809,7 @@ async def mailing_handler_q2(message: types.Message, state: FSMContext):
     # Теперь пересылаем сообщение с кнопками (если они есть) всем пользователям
     await send_copy_to_all_users(message.chat.id, mess_id, markup.as_markup())
     await state.clear()
-    await message.answer("Рассылка завершена.")
+    await message.answer("<b>🏁 Рассылка завершена.</b>")
 async def send_copy_to_all_users(chat_id, message_id, reply_markup):
     # Здесь укажите ID всех чатов, куда нужно отправить копию
     user_ids = await db.get_all_users_tg_id()  # Примерные ID пользователей для рассылки
@@ -905,7 +905,6 @@ async def statics(message: types.Message, state: FSMContext):
 <b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n
 - Количество активных батлов: {len(items)}\n
 - Количество пользователей: {users}\n
-- Заблокировало из них бота: {blocked}\n
 <b>ℹ️ Ваша статистика представлена в личном кабинете</b>
 """,reply_markup=statics_back(),parse_mode="HTML",)
         
@@ -1051,7 +1050,7 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.add_one_voice_to_battle_photos_by_id(accound_id)
     await db.update_users_today_voices_and_all_voices(battle_photos_info[1])
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
-    await callback.answer('<b>✅ Вы успешно проголосовали</b>', show_alert=True)
+    await callback.answer('✅ Вы успешно проголосовали', show_alert=True)
     time_now = datetime.datetime.now()
     await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'))
     min_votes = battle_info[11]

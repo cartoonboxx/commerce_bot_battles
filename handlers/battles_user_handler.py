@@ -446,7 +446,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     if action == 'approve':
         try:
             
-            await bot.send_message(chat_id=user_id, text=f'''<b>✅ ВАШЕ ФОТО ОДОБРЕНО</b>\n\nПоздравляем, теперь вы участвуете в фото-батле. \nНачало раунда {battle_info[9]} по МСК. \n\nСсылка на вступление в канал - {battle_info[5]}''', disable_web_page_preview=True)
+            await bot.send_message(chat_id=user_id, text=f'''<b>✅ ВАШЕ ФОТО ОДОБРЕНО</b>\n\nПоздравляем, теперь вы участвуете в фото-батле. \nОжидайте объявление начала батла в канале \n\nСсылка на вступление в канал - {battle_info[5]}''', disable_web_page_preview=True)
         except Exception as e:
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
