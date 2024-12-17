@@ -447,9 +447,9 @@ async def build_items_kb34(channels, page, total_moments):
    
     categories_kb.adjust(1)
     buttons = [
-        InlineKeyboardButton(text='◀️', callback_data=f'battlespageitems;{page-1}'),
+        InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'),
         InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'),
-        InlineKeyboardButton(text='▶️', callback_data=f'battlespageitems;{page+1}')
+        InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}')
           ]
     categories_kb.row(*buttons)
     back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='cancel_menu_channels')

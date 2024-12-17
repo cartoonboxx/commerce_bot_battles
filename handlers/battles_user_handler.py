@@ -22,8 +22,18 @@ ITEMS_PER_PAGE = 10
     
 async def get_paginated_items33(page: int = 0):
     items = await db.check_all_battles()
+    print(items)
     start = page * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
+    print(start, end)
+    return items[start:end], len(items)
+
+async def get_paginated_items33_channels(page: int = 0):
+    items = await db.check_all_channels()
+    print(items)
+    start = page * ITEMS_PER_PAGE
+    end = start + ITEMS_PER_PAGE
+    print(start, end)
     return items[start:end], len(items)
 
 
@@ -41,6 +51,28 @@ def build_items_kb33(categories, page, total_moments):
     buttons.append(InlineKeyboardButton(text='◀️', callback_data=f'battlespageitems;{page-1}'))
     buttons.append(InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'))
     buttons.append(InlineKeyboardButton(text='▶️', callback_data=f'battlespageitems;{page+1}'))
+
+    categories_kb.row(*buttons)
+
+    # Add "Back" button
+    back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='backstartmenu')
+    categories_kb.row(back_button)
+
+    return categories_kb
+
+def build_items_kb33_channels(categories, page, total_moments):
+    categories_kb = InlineKeyboardBuilder()
+
+    for category in categories:
+        categories_kb.button(text=f"{category[3]}", callback_data=f'battlecheckitem;{category[0]};{page}')
+    categories_kb.adjust(1)
+
+    # Add pagination buttons
+    buttons = []
+
+    buttons.append(InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'))
+    buttons.append(InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'))
+    buttons.append(InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}'))
 
     categories_kb.row(*buttons)
 
@@ -83,6 +115,7 @@ async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('battlespageitems'))
 async def battles_page_items_handler(call: types.CallbackQuery):
     page = int(call.data.split(';')[1])
+    print(page)
     categories, total_items = await get_paginated_items33(page)
 
     if page < 0 or page > total_items // ITEMS_PER_PAGE:
@@ -91,7 +124,20 @@ async def battles_page_items_handler(call: types.CallbackQuery):
     
     items_kb = build_items_kb33(categories, page, total_items)
     await call.message.edit_reply_markup(reply_markup=items_kb.as_markup())
-    
+
+
+@dp.callback_query(lambda c: c.data.startswith('channelspageitems'))
+async def channels_page_items_handler(call: types.CallbackQuery):
+    page = int(call.data.split(';')[1])
+    print(page)
+    categories, total_items = await get_paginated_items33_channels(page)
+
+    if page < 0 or page > total_items // ITEMS_PER_PAGE:
+        await call.answer()
+        return
+
+    items_kb = build_items_kb33_channels(categories, page, total_items)
+    await call.message.edit_reply_markup(reply_markup=items_kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('battlecheckitem'))
 async def battle_check_item_handler(call: types.CallbackQuery):

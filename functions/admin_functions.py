@@ -102,7 +102,7 @@ async def active_battle_settings_kb(battle_id, status):
                 kb.button(text='✅ Открыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             else:
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
-            kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
+            # kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
             kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
 
 
@@ -793,11 +793,12 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     'Вы точно хотите опубликовать новые фото?',
                     reply_markup=kb.as_markup())
             else:
-                kb = InlineKeyboardBuilder()
-                kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
-                kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
-                kb.adjust(1)
-                await call.message.edit_text('⚠️ Новые посты с фотографиями могут выйти не так, как должны. Продолжить?', reply_markup=kb.as_markup())
+                # kb = InlineKeyboardBuilder()
+                # kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
+                # kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
+                # kb.adjust(1)
+                # await call.message.edit_text('⚠️ Новые посты с фотографиями могут выйти не так, как должны. Продолжить?', reply_markup=kb.as_markup())
+                await call.answer('Выставлять новые фото не рекомендуется, подождите, когда появятся новые фотографии')
 
 
 
