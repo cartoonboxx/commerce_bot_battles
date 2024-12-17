@@ -44,6 +44,7 @@ def encode_url(accound_id):
 
 bot = loader.start_bot(config.Token)
 
+
 async def scheduled_task():
     # Получить текущую дату и время
     date_now = datetime.datetime.now().date()
@@ -77,31 +78,35 @@ async def scheduled_task():
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'))
 
                 try:
+
                     current_voices = 0
                     battle_info = await check_battle_info(battle_id)
                     min_voice = battle_info[11]
                     users_in_battle = await check_users_from_battle(battle_id)
-                    user_voices = 0
+                    user_info = await check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
+                    user_voices = user_info[4]
+
+                    print(user_voices, user_info)
+
                     max_user_voices = 0
                     for user in users_in_battle:
                         max_user_voices = max(max_user_voices, user[4])
-                        if user[4] > min_voice:
-                            current_voices = user[4]
-                        if user[1] == tg_id:
-                            user_voices = user[4]
 
-
-                    if current_voices == 0:
+                    if max_user_voices == 0 or max_user_voices < min_voice:
                         current_voices = min_voice
+                    else:
+                        current_voices = max_user_voices
 
+                    print(battle_id)
+                    print('max_user', max_user_voices)
 
                     # Подготовка клавиатуры и сообщения
                     url = encode_url(tg_id)
                     # найти нужный батл айди
 
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд"
-                    if user_voices != max_user_voices:
-
+                    if user_voices != max_user_voices and current_voices > 0:
+                        print('корректный батл айди', battle_id)
                         kb = InlineKeyboardBuilder()
                         kb.button(text="Ссылка на голосование",
                                   url=f"https://t.me/{config.bot_name}/start=vote{battle_id}")

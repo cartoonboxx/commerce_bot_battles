@@ -680,3 +680,8 @@ async def get_photos_where_status_1(battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (battle_id = ? AND status = 1)', (battle_id, ))
         return await cursor.fetchall()
+
+async def check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE battle_id = ? AND tg_id = ? AND status = 1', (battle_id, tg_id))
+        return await cursor.fetchone()
