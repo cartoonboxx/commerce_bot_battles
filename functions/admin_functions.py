@@ -102,7 +102,7 @@ async def active_battle_settings_kb(battle_id, status):
                 kb.button(text='✅ Открыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             else:
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
-            # kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
+            kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
             kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
 
 
@@ -212,7 +212,7 @@ async def firstround_menu_setting(message: types.Message, battle_id):
 
     kb.button(text='🔙 Назад', callback_data=f'firstround;returnback;{battle_id}')
     kb.adjust(1)
-    await message.answer(f'''<b>🛠 Создание фото-батла (2 ШАГ ИЗ 2):\n\n⚙️ Введение настроек для 1 раунда:</b>\n\nВремя завершения раунда: {battle_info[13]}\nМинимальное кол-во голосов для победы в раунде: {battle_info[15]}\nУчастников в одном посте: {battle_info[11]}''', reply_markup=kb.as_markup())
+    await message.answer(f'''<b>🛠 Создание фото-батла (2 ШАГ ИЗ 2):\n\n⚙️ Введение настроек для 1 раунда:</b>\n\nВремя завершения раунда: {battle_info[15]}\nМинимальное кол-во голосов для победы в раунде: {battle_info[11]}\nУчастников в одном посте: {battle_info[13]}''', reply_markup=kb.as_markup())
 
 
 async def battle_settings_func(callback: types.CallbackQuery, battle_id, action, state):
@@ -442,7 +442,7 @@ async def redact_all_status_posts(battle_id, photo_send):
         kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{index+1}')
         kb.adjust(1)
         if photo_send and battle_info[22] == 0:
-            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
+            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать в батле? Жми тут</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
         ''', chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
         else:
             await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
@@ -589,7 +589,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
-<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать в батле? Жми тут</a></b>
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
@@ -666,7 +666,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
-<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать в батле? Жми тут</a></b>
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
@@ -793,12 +793,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     'Вы точно хотите опубликовать новые фото?',
                     reply_markup=kb.as_markup())
             else:
-                # kb = InlineKeyboardBuilder()
-                # kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
-                # kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
-                # kb.adjust(1)
-                # await call.message.edit_text('⚠️ Новые посты с фотографиями могут выйти не так, как должны. Продолжить?', reply_markup=kb.as_markup())
-                await call.answer('Выставлять новые фото не рекомендуется, подождите, когда появятся новые фотографии')
+                await call.answer('Выставить фото не получится. Нужен еще соперние')
 
 
 
