@@ -110,3 +110,6 @@ class FormFirstBattle(StatesGroup):
 
 class DeleteBattleFromDB(StatesGroup):
     password = State()
+
+class PublishPhotoByOneBattle(StatesGroup):
+    text = State()

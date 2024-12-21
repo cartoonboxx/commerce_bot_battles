@@ -15,6 +15,7 @@ from aiogram.types import InputMediaPhoto
 from functions.admin_functions import *
 from database.db import *
 import datetime
+from aiogram.enums import parse_mode
 
 
 
@@ -117,6 +118,15 @@ async def battlesettings(callback: types.CallbackQuery, state: FSMContext):
 
     await battle_settings_func(callback, battle_id,action, state)
 
+@dp.callback_query(lambda c: c.data.startswith('create_one_battle_continue'))
+async def create_one_battle_continue(call: types.CallbackQuery) -> None:
+    data = call.data.split(';')
+    battle_id = data[1]
+    battle_info = await db.check_battle_info(battle_id)
+    if battle_info[3] != '-' and battle_info[17] != 0 and battle_info[11] != 0:
+        await firstround_createbattle_publish(call)
+    else:
+        await call.answer('❌ Не все поля заполнены!')
 
 
 @dp.callback_query(lambda c: c.data.startswith('optionactivebattle'))
@@ -423,12 +433,19 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
             kb = InlineKeyboardBuilder()
             kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
             kb.adjust(1)
-            await callback.message.answer(f'⚔️ Итоги раунда: проходит {len(winners)} человек в следующий раунд', reply_markup=kb.as_markup())
+            text_users = ''
+            for user in winners:
+                current_user = await db.check_info_users_by_tg_id(user[1])
+                text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
+            await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
         else:
             kb = InlineKeyboardBuilder()
             kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
             kb.adjust(1)
-            await callback.message.answer(f'⚔️ Итоги раунда: проходит {len(winners)} человек в следующий раунд',
+            for user in winners:
+                current_user = await db.check_info_users_by_tg_id(user[1])
+                text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
+            await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}',
                                           reply_markup=kb.as_markup())
 
     await db.update_battles_descr_round_users_min_golos_end_round_by_id(battle_id)
@@ -494,6 +511,7 @@ async def reload_results_handler(callback: types.CallbackQuery):
 
     all_photos = await db.all_photo_by_battle(battle_id)
     current_medias = []
+    print(all_photos, (page - 1) * count, page * count)
     for i in range((page - 1) * count, page * count):
         current_medias.append(all_photos[i])
     
@@ -523,10 +541,12 @@ async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSM
 После публикации можно открыть новый набор фото, собрать дополнительные снимки и выставить их в следующих постах.''', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;publish'))
-async def firstround_createbattle_publish(callback: types.CallbackQuery, state: FSMContext):
+async def firstround_createbattle_publish(callback: types.CallbackQuery, state=None):
     battle_id = callback.data.split(';')[-1]
 
     battle_info = await db.check_battle_info(battle_id)
+    if battle_info[23] == 1:
+        await db.update_status_battle(battle_id, 3)
 
     await callback.message.edit_text('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
 
@@ -550,6 +570,29 @@ async def firstround_createbattle_publish(callback: types.CallbackQuery, state: 
     except Exception as e:
         print(e)
         await callback.message.answer('Ошибка отправки поста о батле')
+
+
+@dp.message(PublishPhotoByOneBattle.text)
+async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMContext) -> None:
+    '''Публикуем фотографию с постом'''
+    '''Надо получить фотографию и отправить ее вместе с текстом'''
+
+    data = await state.get_data()
+
+    battle_id = data.get('battle_id')
+    channel_id = data.get('channel_id')
+    photo = data.get('photo')
+    photo_id = data.get('photo_id')
+    photos_battle = await db.all_photo_by_battle(battle_id)
+    page = len(photos_battle) + 1
+
+    await db.update_number_post_in_battle_photos_by_id(photo_id, page)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{page}')
+    kb.adjust(1)
+    await bot.send_photo(chat_id=channel_id, photo=photo, caption=message.text, reply_markup=kb.as_markup())
+    await message.answer('✅ Фото отправлено в канал!')
 
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;createbattle'))
@@ -605,10 +648,16 @@ async def set_end_time_round(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('firstround;min_votes_win'))
 async def set_min_votes_win(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]
+    battle_info = await db.check_battle_info(battle_id)
 
-    await call.message.edit_text(
-        '<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
-    reply_markup=await kb_return_2page_battlecreate(battle_id))
+    if battle_info[23] == 2:
+        await call.message.edit_text(
+            '<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
+        reply_markup=await kb_return_2page_battlecreate(battle_id))
+    else:
+        await call.message.edit_text(
+            '<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
+            reply_markup=await kb_return_2page_battlecreate(battle_id))
     await state.set_state(AddVoicesToWin.q1)
     await state.update_data(battle_id=battle_id)
     await state.update_data(round=1)

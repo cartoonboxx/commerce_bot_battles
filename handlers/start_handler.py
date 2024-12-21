@@ -250,10 +250,12 @@ async def cmd_start(message: types.Message, state: FSMContext):
                         kbr.adjust(1,2,3,4)
                         break
 
-                    await bot.send_media_group(chat_id=message.chat.id, media=media_group)
+                    if battle_info[23] == 2:
+                        await bot.send_media_group(chat_id=message.chat.id, media=media_group)
 
-                    await bot.send_message(chat_id=message.chat.id, text="Голосование за определенного кандидата", reply_markup=kbr.as_markup())
-
+                        await bot.send_message(chat_id=message.chat.id, text="Голосование за определенного кандидата", reply_markup=kbr.as_markup())
+                    else:
+                        await bot.send_photo(chat_id=message.chat.id, photo=current_media[-1][3], caption='Голосование за кандидата', reply_markup=kbr.as_markup())
                     return
 
                 # Проверка на голосование

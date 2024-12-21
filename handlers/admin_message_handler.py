@@ -301,6 +301,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     voices = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    battle_info = await db.check_battle_info(battle_id)
     round = data.get('round')
     if voices.isdigit():
         if int(voices) < 1:
@@ -310,7 +311,10 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
         if round is None:
             await active_battle_answer_func(message, battle_id)
         else:
-            await firstround_menu_setting(message, battle_id)
+            if battle_info[23] == 2:
+                await firstround_menu_setting(message, battle_id)
+            else:
+                await battle_one_message(message, battle_id)
         await state.clear()
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -323,13 +327,17 @@ async def add_battle_post(message: types.Message, state: FSMContext):
 
     battle_id = data.get('battle_id')
     await state.update_data(message="empty")
+    battle_info = await db.check_battle_info(battle_id)
 
     post_id = message.message_id
     # await message.delete()
     await bot.delete_message(message.chat.id, message.message_id - 1)
     await db.update_post_id(post_id, battle_id)
-    await battle_answer_func_message(message, battle_id, state)
-
+    if battle_info[23] == 2:
+        await battle_answer_func_message(message, battle_id, state)
+    else:
+        await battle_one_message(message, battle_id)
+        await state.clear()
 
 @dp.message(DeleteBattleFromDB.password)
 async def deleteBattleFromDB(message: types.Message, state: FSMContext):
@@ -370,11 +378,16 @@ async def declineCreatePostVote(call: types.CallbackQuery, state: FSMContext):
     data = json.loads(call.data.split(';')[1])
     post_id = data.get('post_id')
     battle_id = data.get('battle_id')
+
+    battle_info = await db.check_battle_info(battle_id)
     await call.message.edit_text(f'Ваша ссылка для принятия участников на батл: https://t.me/{bot_name}?start=b{battle_id}\n\n'
                             f'ℹ️<b>Разместите эту ссылку в посте для приема фото, иначе бот не будет работать без фото</b>')
     await db.update_post_id(post_id, battle_id)
-    await battle_answer_func_message(call.message, battle_id, state)
 
+    if battle_info[23] == 2:
+        await battle_answer_func_message(call.message, battle_id, state)
+    else:
+        await battle_one_message(call.message, battle_id)
 
 
 

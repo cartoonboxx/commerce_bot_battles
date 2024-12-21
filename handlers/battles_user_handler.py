@@ -506,6 +506,18 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
             print(e)
         kb.button(text='✅ Принят', callback_data='nonefsafs')
         await call.message.edit_reply_markup(reply_markup=kb.as_markup())
+
+        if battle_info[23] == 1:
+            channel_info = await db.check_channel_info_by_id(battle_info[1])
+            channel_id = channel_info[2]
+            print(channel_id)
+
+            await state.update_data(battle_id=battle_id)
+            await state.update_data(channel_id=channel_id)
+            await state.update_data(photo=photos[-1][3])
+            await state.update_data(photo_id=photos[-1][0])
+            await call.message.answer('⚙️ Введите текст поста, под которым собираетесь опубликовать этот пост')
+            await state.set_state(PublishPhotoByOneBattle.text)
     else:
         await state.update_data(user_id=user_id)
         await state.update_data(photo_battle_id=photo_battle_id)

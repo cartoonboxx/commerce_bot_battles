@@ -96,22 +96,17 @@ async def active_battle_settings_kb(battle_id, status):
 
     # Кнопки для других статусов
     if status == Status.ENDROUND.value:
-        kb.button(text='⛔️ Завершить раунд и подвести итоги', callback_data=f'activebattlesettings;end;{battle_id}')
+        if battle_info[23] == 2:
+            kb.button(text='⛔️ Завершить раунд и подвести итоги', callback_data=f'activebattlesettings;end;{battle_id}')
+        else:
+            kb.button(text='⛔️ Завершить раунд и подвести итоги', callback_data=f'activebattlesettings;endone;{battle_id}')
         if battle_info[22] == 0:
             if battle_info[21] == 0:
                 kb.button(text='✅ Открыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             else:
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
-            # kb.button(text='Проверить количество новых фотографий', callback_data=f'activebattlesettings;check_photo;{battle_id}')
-            kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
-
-
-
-
-
-
-
-
+            if battle_info[23] == 2:
+                kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
 
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
@@ -131,9 +126,13 @@ async def active_battle_settings_kb(battle_id, status):
 
 
 async def back_battle__active_setting_kb(battle_id):
+    battle_info = await db.check_battle_info(battle_id)
     kb = InlineKeyboardBuilder()
+    if battle_info[23] == 2:
+        kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
+    else:
+        kb.button(text='🔙 Назад', callback_data=f'one_battle_message;{battle_id}')
 
-    kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
     return kb.as_markup()
 
 async def round_buttons_battle(battle_id):
@@ -183,8 +182,14 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
 
 async def kb_return_2page_battlecreate(battle_id):
+    battle_info = await db.check_battle_info(battle_id)
+
     kb = InlineKeyboardBuilder()
-    kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
+    if battle_info[23] == 2:
+        kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
+    else:
+        kb.button(text='🔙 Назад', callback_data=f"one_battle_message;{battle_id}")
+
     kb.adjust(1)
     return kb.as_markup()
 
@@ -351,15 +356,26 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
         await db.update_type_battle(battle_id, 1)
 
         await db.update_battle_channel_link_by_battle_id(battle_id, channel_tg_id)
+        await db.update_battle_prize(battle_id, 'null')
+        await db.update_end_round_battle(battle_id, 'null')
+        await db.update_battle_end(battle_id, '00:00')
+        await db.update_participants_battle(battle_id, 2)
+        # await db.update_min_golos_battle(battle_id, 1)
+        await db.update_round_users_battle(battle_id, 1)
+
 
         '''Устанавливается только пост и название'''
 
         kb = InlineKeyboardBuilder()
-        kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
+        kb.button(text='✅ Продолжить', callback_data=f'create_one_battle_continue;{battle_id}')
         if battle_info[3] == "-":
             kb.button(text='❌ Название', callback_data=f'battlesettings;name;{battle_id}')
         else:
             kb.button(text='✅ Название', callback_data=f'battlesettings;name;{battle_id}')
+        if battle_info[11] == 0:
+            kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+        else:
+            kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
         if battle_info[17] == 0:
             kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
         else:
@@ -430,11 +446,15 @@ async def battle_one_message(message, battle_id):
     '''Устанавливается только пост и название'''
 
     kb = InlineKeyboardBuilder()
-    kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
+    kb.button(text='✅ Продолжить', callback_data=f'create_one_battle_continue;{battle_id}')
     if battle_info[3] == "-":
         kb.button(text='❌ Название', callback_data=f'battlesettings;name;{battle_id}')
     else:
         kb.button(text='✅ Название', callback_data=f'battlesettings;name;{battle_id}')
+    if battle_info[11] == 0:
+        kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+    else:
+        kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
     if battle_info[17] == 0:
         kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
     else:
@@ -442,21 +462,6 @@ async def battle_one_message(message, battle_id):
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1)
     await message.answer(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
-
-async def back_to_menu_one_battle(message: types.Message, battle_id):
-
-    battle_info = await db.check_battle_info(battle_id)
-    post_start_battle = battle_info[17]
-
-    '''Устанавливается только пост и название'''
-
-    kb = InlineKeyboardBuilder()
-    kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
-    kb.button(text='✅ Название', callback_data='name')  # ИСПРАВИТЬ
-    kb.button(text='✅ Пост о батле', callback_data='postbattle')  # ИСПРАВИТЬ
-    kb.button(text='🔙 Назад', callback_data='backtochannels')
-    kb.adjust(1)
-    await message.edit_text(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
 
 async def active_battle_func(call: types.CallbackQuery, battle_id):
@@ -466,7 +471,8 @@ async def active_battle_func(call: types.CallbackQuery, battle_id):
     time_now = datetime.datetime.now().strftime("%H:%M:%S")
     status = battle_info[14]
     photo_send = "Открыт" if battle_info[21] else "Закрыт"
-    battle_info_text = f'''
+    if battle_info[23] == 2:
+        battle_info_text = f'''
 <b>⚔️ Батл: {battle_info[3]}</b>
 
 - Раунд: {battle_info[7]}
@@ -480,6 +486,8 @@ async def active_battle_func(call: types.CallbackQuery, battle_id):
 
 - Набор фото: {photo_send}
 '''
+    else:
+        battle_info_text = '<b>Меню управления:</b>'
     await call.message.edit_text(battle_info_text, disable_web_page_preview=True, reply_markup=await active_battle_settings_kb(battle_id, status))
 
 async def active_battle_answer_func(msg: types.Message, battle_id):
@@ -886,6 +894,74 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
         await call.message.edit_text('Завершить раунд?', reply_markup=kb.as_markup())
+
+    if action == 'endone':
+
+        await call.answer('Батл успешно завершился', show_alert=True)
+        # await db.update_status_battle(battle_id, Status.NEXTROUND.value)
+        battle_info = await db.check_battle_info(battle_id)
+
+        '''количество вышедших постов делим на количество в одном посте'''
+        all_posts_photo = await db.all_photo_by_battle(battle_id)
+
+        count = len(all_posts_photo) // int(battle_info[13])
+        if len(all_posts_photo) % 2 != 0:
+            count += 1
+
+        min_voices = battle_info[11]
+
+        for i in range(1, count + 1):
+            print('count', count)
+            # Получение всех участников для текущего поста
+            post = await db.check_battle_photos_by_battle_id_and_number_post(battle_id, i)
+
+            print('post', post)
+            # Если нет участников, продолжить следующую итерацию
+            if not post:
+                continue
+
+            # Отфильтровать участников, у которых голоса меньше минимального
+            eligible_participants = [user for user in post if user[4] >= min_voices]
+
+            print('eligible_participants', eligible_participants)
+            if not eligible_participants:
+                for user in post:
+                    await db.delete_user_from_battle_photos(user[0])
+                continue
+
+            max_votes = max(user[4] for user in eligible_participants)
+
+            winners = [user for user in eligible_participants if user[4] == max_votes]
+
+            print('winners', winners)
+            for winner in winners:
+                await db.update_battle_photos_votes_and_number_post(winner[0], 0, 0)
+
+            for user in post:
+                if user not in winners:
+                    await db.delete_user_from_battle_photos(user[0])
+
+
+            kb = InlineKeyboardBuilder()
+            kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
+            kb.adjust(1)
+            if winners:
+                # await callback.message.answer(f'Пост {i}: победители - {[user[1] for user in winners]} с {max_votes} голосами')
+                text_users = ''
+                for user in winners:
+                    current_user = await db.check_info_users_by_tg_id(user[1])
+                    text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
+                await call.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
+            else:
+                text_users = ''
+                for user in winners:
+                    current_user = await db.check_info_users_by_tg_id(user[1])
+                    text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
+                await call.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
+
+        await db.update_battles_descr_round_users_min_golos_end_round_by_id(battle_id)
+        await db.delete_all_battle_voices_where_battle_id(battle_id)
+
     if action == 'next':
         battle_info = await db.check_battle_info(battle_id)
         await db.update_photo_send_battle(0, battle_info[0])
