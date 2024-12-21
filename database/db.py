@@ -607,8 +607,7 @@ async def check_all_channels():
 async def check_all_battles():
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battles WHERE status = 1')
-        rows = await cursor.fetchall()
-        return rows
+        return await cursor.fetchall()
     
 async def check_channel_info_by_id(id):
     async with aiosqlite.connect(name_db) as db:
