@@ -101,7 +101,11 @@ async def back_main_menu_add_channel(channel_id):
 #кнопка назад в создание фото-батла
 async def back_main_menu_create_battle(battle_id):
     kb = InlineKeyboardBuilder()
-    kb.button(text='🔙 Назад', callback_data=f'backtocreate;{battle_id}')
+    battle_info = await db.check_battle_info(battle_id)
+    if battle_info[23] == 2:
+        kb.button(text='🔙 Назад', callback_data=f'backtocreate;{battle_id}')
+    else:
+        kb.button(text='🔙 Назад', callback_data=f'one_battle_message;{battle_id}')
     return kb.as_markup()
 
 async def create_battle_kb(battle_id, channel_id):

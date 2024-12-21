@@ -348,14 +348,22 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
         channel_tg_id = channel_info[5]
         time_now = datetime.datetime.now().strftime("%H:%M")
 
+        await db.update_type_battle(battle_id, 1)
+
         await db.update_battle_channel_link_by_battle_id(battle_id, channel_tg_id)
 
         '''Устанавливается только пост и название'''
 
         kb = InlineKeyboardBuilder()
-        kb.button(text='✅ Продолжить', callback_data='continue') # ИСПРАВИТЬ
-        kb.button(text='✅ Название', callback_data='name') # ИСПРАВИТЬ
-        kb.button(text='✅ Пост о батле', callback_data='postbattle') # ИСПРАВИТЬ
+        kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
+        if battle_info[3] == "-":
+            kb.button(text='❌ Название', callback_data=f'battlesettings;name;{battle_id}')
+        else:
+            kb.button(text='✅ Название', callback_data=f'battlesettings;name;{battle_id}')
+        if battle_info[17] == 0:
+            kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
+        else:
+            kb.button(text='✅ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
         kb.button(text='🔙 Назад', callback_data='backtochannels')
         kb.adjust(1)
         await call.message.edit_text(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
@@ -413,6 +421,27 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
     f'<b>⁉️ Пожалуйста, отправьте корректную ссылку на канал, чтобы пользователи могли перейти на него.</b>',
     reply_markup=await back_main_menu_add_channel(channel_id))
 
+
+async def battle_one_message(message, battle_id):
+
+    battle_info = await db.check_battle_info(battle_id)
+    post_start_battle = battle_info[17]
+
+    '''Устанавливается только пост и название'''
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
+    if battle_info[3] == "-":
+        kb.button(text='❌ Название', callback_data=f'battlesettings;name;{battle_id}')
+    else:
+        kb.button(text='✅ Название', callback_data=f'battlesettings;name;{battle_id}')
+    if battle_info[17] == 0:
+        kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
+    else:
+        kb.button(text='✅ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
+    kb.button(text='🔙 Назад', callback_data='backtochannels')
+    kb.adjust(1)
+    await message.answer(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
 async def back_to_menu_one_battle(message: types.Message, battle_id):
 

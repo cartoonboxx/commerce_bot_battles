@@ -503,6 +503,13 @@ async def reload_results_handler(callback: types.CallbackQuery):
     except Exception as e:
         print(e)
 
+@dp.callback_query(lambda c: c.data.startswith('one_battle_message'))
+async def one_battle_message(call: types.CallbackQuery):
+    battle_id = call.data.split(';')[1]
+
+    await call.message.delete()
+    await battle_one_message(call.message, battle_id)
+
 @dp.callback_query(lambda c: c.data.startswith('firstround;iagree'))
 async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]

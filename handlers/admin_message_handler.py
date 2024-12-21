@@ -96,8 +96,12 @@ async def add_battle_name(message: types.Message, state: FSMContext):
     battle_name = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    battle_info = await db.check_battle_info(battle_id)
     await db.update_battle_name_by_battle_id(battle_id, battle_name)
-    await battle_answer_func_message(message, battle_id, state)
+    if battle_info[23] == 2:
+        await battle_answer_func_message(message, battle_id, state)
+    else:
+        await battle_one_message(message, battle_id)
     await state.clear()
 
     await bot.delete_message(message.chat.id, message.message_id)

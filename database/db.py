@@ -107,7 +107,8 @@ async def db_start():
                 error_post INTEGER DEFAULT 0,
                 post_text TEXT DEFAULT '-',
                 photo_send INTEGER DEFAULT 1,
-                current_round INTEGER DEFAULT 0)''')
+                current_round INTEGER DEFAULT 0,
+                type_battle INTEGER DEFAULT 2)''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS posts_correcting (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -684,3 +685,9 @@ async def check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, t
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE battle_id = ? AND tg_id = ? AND status = 1', (battle_id, tg_id))
         return await cursor.fetchone()
+
+async def update_type_battle(battle_id, type_battle) -> None:
+    ''' Обновляет значение типа батла в таблице по айди '''
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET type_battle = ? WHERE id = ?', (type_battle, battle_id))
+        await db.commit()
