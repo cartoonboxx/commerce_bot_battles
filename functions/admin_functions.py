@@ -338,6 +338,28 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
         '- Пользователи не смогут войти в канал;\n'
         '- И другие неполадки.\n\n'
         'Пожалуйста, убедитесь, что всё заполнено правильно!', reply_markup=await create_good(channel_id))
+    if action == 'create_one':
+        channel_id = call.data.split(';')[2]
+
+        battle_id = await db.create_new_battle_return_id(channel_id, tg_id)
+        battle_info = await db.check_battle_info(battle_id)
+        post_start_battle = battle_info[17]
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        channel_tg_id = channel_info[5]
+        time_now = datetime.datetime.now().strftime("%H:%M")
+
+        await db.update_battle_channel_link_by_battle_id(battle_id, channel_tg_id)
+
+        '''Устанавливается только пост и название'''
+
+        kb = InlineKeyboardBuilder()
+        kb.button(text='✅ Продолжить', callback_data='continue') # ИСПРАВИТЬ
+        kb.button(text='✅ Название', callback_data='name') # ИСПРАВИТЬ
+        kb.button(text='✅ Пост о батле', callback_data='postbattle') # ИСПРАВИТЬ
+        kb.button(text='🔙 Назад', callback_data='backtochannels')
+        kb.adjust(1)
+        await call.message.edit_text(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
+
     if action == 'create_good':
         battle_id = await db.create_new_battle_return_id(channel_id, tg_id)
         battle_info = await db.check_battle_info(battle_id)
@@ -372,6 +394,14 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
     "<b>⁉️ Пожалуйста, отправьте ссылку на любой пост из вашего канала.</b>",
     reply_markup=await back_main_menu_add_channel(channel_id), disable_web_page_preview=True)
 
+    if action == 'choise_type':
+        channel_id = call.data.split(';')[2]
+        kb = InlineKeyboardBuilder()
+        kb.button(text='Посты с одной фотографией', callback_data=f'channelsetting;create_one;{channel_id}')
+        kb.button(text='Посты с несколькими фото', callback_data=f'channelsetting;create_good;{channel_id}')
+        kb.adjust(1)
+        await call.message.edit_text(text='Выберите тип батла', reply_markup=kb.as_markup())
+
     if action == 'channellink':
         channel_info = await db.check_channel_info_by_id(channel_id)
         await state.update_data(channel_id=channel_id)
@@ -382,6 +412,23 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
     f'ℹ️ Ссылка на ваш канал будет использоваться для уведомлений участников батла, а также будет отображаться в информации о батле.\n\n'
     f'<b>⁉️ Пожалуйста, отправьте корректную ссылку на канал, чтобы пользователи могли перейти на него.</b>',
     reply_markup=await back_main_menu_add_channel(channel_id))
+
+
+async def back_to_menu_one_battle(message: types.Message, battle_id):
+
+    battle_info = await db.check_battle_info(battle_id)
+    post_start_battle = battle_info[17]
+
+    '''Устанавливается только пост и название'''
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Продолжить', callback_data='continue')  # ИСПРАВИТЬ
+    kb.button(text='✅ Название', callback_data='name')  # ИСПРАВИТЬ
+    kb.button(text='✅ Пост о батле', callback_data='postbattle')  # ИСПРАВИТЬ
+    kb.button(text='🔙 Назад', callback_data='backtochannels')
+    kb.adjust(1)
+    await message.edit_text(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
+
 
 async def active_battle_func(call: types.CallbackQuery, battle_id):
     battle_info = await db.check_battle_info(battle_id)

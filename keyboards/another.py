@@ -65,7 +65,7 @@ def back_from_addchannel():
 #кнопки в подтверждении правильных данных
 async def create_good(channel_id):
     kb = InlineKeyboardBuilder()
-    kb.button(text='✅ Всё правильно, проверил(а)', callback_data=f'channelsetting;create_good;{channel_id}')
+    kb.button(text='✅ Всё правильно, проверил(а)', callback_data=f'channelsetting;choise_type;{channel_id}')
     kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channel_id}')
     kb.adjust(1)
     return kb.as_markup()
