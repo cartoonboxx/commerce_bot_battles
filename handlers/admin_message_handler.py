@@ -387,6 +387,7 @@ async def declineCreatePostVote(call: types.CallbackQuery, state: FSMContext):
     if battle_info[23] == 2:
         await battle_answer_func_message(call.message, battle_id, state)
     else:
+        await state.clear()
         await battle_one_message(call.message, battle_id)
 
 

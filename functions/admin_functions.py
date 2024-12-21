@@ -380,7 +380,7 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
             kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
         else:
             kb.button(text='✅ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
-        kb.button(text='🔙 Назад', callback_data='backtochannels')
+        kb.button(text='🔙 Назад', callback_data=f'channelsetting;choise_type;{channel_id}')
         kb.adjust(1)
         await call.message.edit_text(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
@@ -443,6 +443,7 @@ async def battle_one_message(message, battle_id):
     battle_info = await db.check_battle_info(battle_id)
     post_start_battle = battle_info[17]
 
+    channel_id = battle_info[1]
     '''Устанавливается только пост и название'''
 
     kb = InlineKeyboardBuilder()
@@ -459,7 +460,7 @@ async def battle_one_message(message, battle_id):
         kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
     else:
         kb.button(text='✅ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
-    kb.button(text='🔙 Назад', callback_data='backtochannels')
+    kb.button(text='🔙 Назад', callback_data=f'channelsetting;choise_type;{channel_id}')
     kb.adjust(1)
     await message.answer(f'⚔️ Настройки фото батла', reply_markup=kb.as_markup(), disable_web_page_preview=True)
 

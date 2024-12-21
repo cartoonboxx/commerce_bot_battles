@@ -516,6 +516,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
             await state.update_data(channel_id=channel_id)
             await state.update_data(photo=photos[-1][3])
             await state.update_data(photo_id=photos[-1][0])
+            await state.update_data(user_id=user_id)
             await call.message.answer('⚙️ Введите текст поста, под которым собираетесь опубликовать этот пост')
             await state.set_state(PublishPhotoByOneBattle.text)
     else:

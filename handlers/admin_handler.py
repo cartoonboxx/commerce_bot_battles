@@ -574,8 +574,6 @@ async def firstround_createbattle_publish(callback: types.CallbackQuery, state=N
 
 @dp.message(PublishPhotoByOneBattle.text)
 async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMContext) -> None:
-    '''Публикуем фотографию с постом'''
-    '''Надо получить фотографию и отправить ее вместе с текстом'''
 
     data = await state.get_data()
 
@@ -583,6 +581,7 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     channel_id = data.get('channel_id')
     photo = data.get('photo')
     photo_id = data.get('photo_id')
+    user_id = data.get('user_id')
     photos_battle = await db.all_photo_by_battle(battle_id)
     page = len(photos_battle) + 1
 
@@ -593,6 +592,8 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     kb.adjust(1)
     await bot.send_photo(chat_id=channel_id, photo=photo, caption=message.text, reply_markup=kb.as_markup())
     await message.answer('✅ Фото отправлено в канал!')
+    await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
+                ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;createbattle'))

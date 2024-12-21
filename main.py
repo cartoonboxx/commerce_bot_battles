@@ -105,7 +105,7 @@ async def scheduled_task():
                     # найти нужный батл айди
 
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд"
-                    if user_voices != max_user_voices and current_voices > 0:
+                    if user_voices != max_user_voices and current_voices > 0 and user_info[6] != 0:
                         print('корректный батл айди', battle_id)
                         kb = InlineKeyboardBuilder()
                         kb.button(text="Ссылка на голосование",
