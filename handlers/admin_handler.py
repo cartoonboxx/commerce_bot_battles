@@ -174,7 +174,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
                 text = f'''⚔️ <b>{battle_info[7]}</b>
 <b>💰 ПРИЗ — {battle_info[6]}</b>
 
-<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать в батле? Жми тут</a></b>
+<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
 
 📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
 ⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
@@ -301,7 +301,7 @@ async def aprove_continue_battle_handler(callback: types.CallbackQuery):
         kb.adjust(1)
         if battle_info[20] == '-':
             if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать в батле? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:

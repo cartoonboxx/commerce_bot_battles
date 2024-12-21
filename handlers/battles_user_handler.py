@@ -22,8 +22,18 @@ ITEMS_PER_PAGE = 10
     
 async def get_paginated_items33(page: int = 0):
     items = await db.check_all_battles()
+    print(items)
     start = page * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
+    print(start, end)
+    return items[start:end], len(items)
+
+async def get_paginated_items33_channels(page: int = 0):
+    items = await db.check_all_channels()
+    print(items)
+    start = page * ITEMS_PER_PAGE
+    end = start + ITEMS_PER_PAGE
+    print(start, end)
     return items[start:end], len(items)
 
 
@@ -41,6 +51,28 @@ def build_items_kb33(categories, page, total_moments):
     buttons.append(InlineKeyboardButton(text='◀️', callback_data=f'battlespageitems;{page-1}'))
     buttons.append(InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'))
     buttons.append(InlineKeyboardButton(text='▶️', callback_data=f'battlespageitems;{page+1}'))
+
+    categories_kb.row(*buttons)
+
+    # Add "Back" button
+    back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='backstartmenu')
+    categories_kb.row(back_button)
+
+    return categories_kb
+
+def build_items_kb33_channels(categories, page, total_moments):
+    categories_kb = InlineKeyboardBuilder()
+
+    for category in categories:
+        categories_kb.button(text=f"{category[3]}", callback_data=f'battlecheckitem;{category[0]};{page}')
+    categories_kb.adjust(1)
+
+    # Add pagination buttons
+    buttons = []
+
+    buttons.append(InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'))
+    buttons.append(InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'))
+    buttons.append(InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}'))
 
     categories_kb.row(*buttons)
 
@@ -83,6 +115,7 @@ async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('battlespageitems'))
 async def battles_page_items_handler(call: types.CallbackQuery):
     page = int(call.data.split(';')[1])
+    print(page)
     categories, total_items = await get_paginated_items33(page)
 
     if page < 0 or page > total_items // ITEMS_PER_PAGE:
@@ -91,7 +124,20 @@ async def battles_page_items_handler(call: types.CallbackQuery):
     
     items_kb = build_items_kb33(categories, page, total_items)
     await call.message.edit_reply_markup(reply_markup=items_kb.as_markup())
-    
+
+
+@dp.callback_query(lambda c: c.data.startswith('channelspageitems'))
+async def channels_page_items_handler(call: types.CallbackQuery):
+    page = int(call.data.split(';')[1])
+    print(page)
+    categories, total_items = await get_paginated_items33_channels(page)
+
+    if page < 0 or page > total_items // ITEMS_PER_PAGE:
+        await call.answer()
+        return
+
+    items_kb = build_items_kb33_channels(categories, page, total_items)
+    await call.message.edit_reply_markup(reply_markup=items_kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('battlecheckitem'))
 async def battle_check_item_handler(call: types.CallbackQuery):
@@ -378,6 +424,7 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
         await call.answer('Вы заблокированы в этом батле', show_alert=True)
         return
     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(battle_id, call.from_user.id)
+
     is_user_exist_battle = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_0_return_bool(battle_id, call.from_user.id)
     if is_user_exist_battle:
         await call.answer('Вы уже отправили фото на проверку, ожидайте...', show_alert=True)
@@ -385,7 +432,6 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
     if is_user_exist:
         await call.answer('Вы уже участвуете в этом батле', show_alert=True)
         return
-
     await state.set_state(SendPhotoForBattle.q1)
     await state.update_data(battle_id=battle_id)
     await call.message.edit_text('Отправьте фото, которое не несет 18+ и оскорбительного характера')
@@ -394,41 +440,44 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
 @dp.message(SendPhotoForBattle.q1)
 async def send_photo_for_battle_handler(message: types.Message, state: FSMContext):
     if message.photo:
-        photo_file_id = message.photo[-1].file_id
-        data = await state.get_data()
-        battle_id = data['battle_id']
-        tg_id = message.from_user.id
-
-        # Сохраняем фото в базе
-        photo_battle_id = await db.add_battle_photo(tg_id, battle_id, photo_file_id)
-
-        # Получаем информацию о батле и чате админа
-        battle_info = await db.check_battle_info(battle_id)
-        channel_id = battle_info[1]
-        channel_info = await db.check_channel_info_by_id(channel_id)
-        admin_chat_id = channel_info[4]
-
-        # Формируем клавиатуру для админов
-        kbs = InlineKeyboardBuilder()
-        kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id}')
-        kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id}')
-        kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id}')
-        kbs.adjust(2, 1)
-
-        # Отправляем фото админам
-        try:
-            await bot.send_photo(
-                chat_id=admin_chat_id,
-                photo=photo_file_id,
-                caption=f'Фото от {message.from_user.first_name} (@{message.from_user.username})\nID <code>{message.from_user.id}</code>',
-                reply_markup=kbs.as_markup()
-            )
-            await message.answer('<b>⏳ Фото отправлено на проверку</b>')
-        except Exception as e:
-            await message.answer('<b>❌ При отправке фото произошла ошибка</b>')
-        await state.clear()
+        photo = message.photo[-1].file_id
+        await state.update_data(photo=photo)
+        await state.set_state(SendPhotoForBattle.q2)
+        kb = InlineKeyboardBuilder()
+        kb.button(text='✅ Подтверждаю', callback_data=f'confirmbattlejoin')
+        kb.button(text='🔙 Другое фото', callback_data=f'usermenu;battles')
+        kb.adjust(1)
+        await message.answer('Подтверждаете свой выбор?', reply_markup=kb.as_markup())
     else:
-        await message.reply('Пожалуйста, отправьте фото.')
+        await message.reply('Пожалуйста, отправьте фото')
+
+@dp.callback_query(lambda c: c.data.startswith('usermenu;battles'))
+async def option_channel_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    await battle_join_handler(callback_query, state)
+    await callback_query.answer()
+
+@dp.callback_query(lambda c: c.data=='confirmbattlejoin', SendPhotoForBattle.q2)
+async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    battle_id = data['battle_id']
+    photo_file_id = data['photo']
+    tg_id = call.from_user.id
+    photo_battle_id = await db.add_battle_photo(tg_id, battle_id, photo_file_id)
+    battle_info = await db.check_battle_info(battle_id)
+    channel_id = battle_info[1]
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    admin_chat_id = channel_info[4]
+    kbs = InlineKeyboardBuilder()
+    kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id}')
+    kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id}')
+    kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id}')
+    kbs.adjust(2,1)
+    try:
+        await bot.send_photo(chat_id=admin_chat_id, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
+    except Exception as e:
+        await call.answer('<b>❌ При отправке фото произошла ошибка</b>')
+    await call.message.edit_text('<b>⏳ Фото  отправлено на проверку </b>')
+    await state.clear()
 
 @dp.callback_query(lambda c: c.data.startswith('searchbattle'))
 async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
