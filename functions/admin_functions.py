@@ -48,9 +48,10 @@ async def active_battles_kb(battles):
     kb = InlineKeyboardBuilder()
     for battle in battles:
         name = battle[3]
-        id = battle[0]
-        kb.button(
-        text=name, callback_data=f'optionactivebattle;{id}')
+        if name != '-':
+            id = battle[0]
+            kb.button(
+            text=name, callback_data=f'optionactivebattle;{id}')
     kb.button(text='🔙 В меню создания батлов', callback_data='backmainmenu')
     kb.adjust(1)
     return kb.as_markup()
