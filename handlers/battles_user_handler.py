@@ -439,7 +439,8 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message(SendPhotoForBattle.q1)
 async def send_photo_for_battle_handler(message: types.Message, state: FSMContext):
-    if message.photo:
+    print(message.media_group_id)
+    if message.photo and message.media_group_id is None:
         photo = message.photo[-1].file_id
         await state.update_data(photo=photo)
         await state.set_state(SendPhotoForBattle.q2)
@@ -449,7 +450,7 @@ async def send_photo_for_battle_handler(message: types.Message, state: FSMContex
         kb.adjust(1)
         await message.answer('Подтверждаете свой выбор?', reply_markup=kb.as_markup())
     else:
-        await message.reply('Пожалуйста, отправьте фото')
+        await message.reply('Пожалуйста, отправьте одно фото')
 
 @dp.callback_query(lambda c: c.data.startswith('usermenu;battles'))
 async def option_channel_handler(callback_query: types.CallbackQuery, state: FSMContext):
