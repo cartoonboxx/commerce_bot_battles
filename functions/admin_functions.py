@@ -107,6 +107,9 @@ async def active_battle_settings_kb(battle_id, status):
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             if battle_info[23] == 2:
                 kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
+            if battle_info[23] != 2:
+                kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
+
 
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
@@ -268,7 +271,10 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
     if action == 'prize':
         await state.set_state(AddBattlePrize.q1)
         await state.update_data(battle_id=battle_id)
-        await callback.message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        if battle_info[23] == 2:
+            await callback.message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        else:
+            await callback.message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'end':
         await state.set_state(AddBattleEnd.q1)
         await state.update_data(battle_id=battle_id)
@@ -356,7 +362,7 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
         await db.update_type_battle(battle_id, 1)
 
         await db.update_battle_channel_link_by_battle_id(battle_id, channel_tg_id)
-        await db.update_battle_prize(battle_id, 'null')
+        # await db.update_battle_prize(battle_id, 'null')
         await db.update_end_round_battle(battle_id, 'null')
         await db.update_battle_end(battle_id, '00:00')
         await db.update_participants_battle(battle_id, 2)
@@ -376,6 +382,10 @@ reply_markup=await back_main_menu_add_channel(channel_id) )
             kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
         else:
             kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+        if battle_info[6] == "-":
+            kb.button(text='❌ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
+        else:
+            kb.button(text='✅ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
         if battle_info[17] == 0:
             kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
         else:
@@ -456,6 +466,10 @@ async def battle_one_message(message, battle_id):
         kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
     else:
         kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+    if battle_info[6] == "-":
+        kb.button(text='❌ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
+    else:
+        kb.button(text='✅ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
     if battle_info[17] == 0:
         kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
     else:
@@ -577,6 +591,12 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await call.message.edit_text('<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.', reply_markup=await back_battle__active_setting_kb(battle_id))
         await state.set_state(AddVoicesToWin.q1)
         await state.update_data(battle_id=battle_id)
+
+    if action == 'change_post_text':
+        await call.message.edit_text('⚙️ Отправьте новый текст, который будет выкладываться с постами', reply_markup=await back_battle__active_setting_kb(battle_id))
+        await state.set_state(SetTextToPublish.post_text)
+        await state.update_data(battle_id=battle_id)
+
     if action == 'photo_send':
         await call.answer('✅ Записи постов были успешно изменены!')
         battle_info = await db.check_battle_info(battle_id)

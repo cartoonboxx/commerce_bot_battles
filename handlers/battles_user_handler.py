@@ -479,6 +479,20 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
     await call.message.edit_text('<b>⏳ Фото  отправлено на проверку </b>')
     await state.clear()
 
+
+def replace_last_digits(url, new_digits):
+    # Найти индекс последнего "/"
+    last_slash_index = url.rfind('/')
+
+    # Если символ найден, отделяем всё, что после него
+    if last_slash_index != -1:
+        # Заменяем всё после последнего "/" на новые цифры
+        new_url = url[:last_slash_index + 1] + str(new_digits)
+        return new_url
+    else:
+        # Если нет "/", возвращаем исходную ссылку
+        return url
+
 @dp.callback_query(lambda c: c.data.startswith('searchbattle'))
 async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     action = call.data.split(';')[1]
@@ -510,15 +524,46 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         if battle_info[23] == 1:
             channel_info = await db.check_channel_info_by_id(battle_info[1])
             channel_id = channel_info[2]
-            print(channel_id)
 
-            await state.update_data(battle_id=battle_id)
-            await state.update_data(channel_id=channel_id)
-            await state.update_data(photo=photos[-1][3])
-            await state.update_data(photo_id=photos[-1][0])
-            await state.update_data(user_id=user_id)
-            await call.message.answer('⚙️ Введите текст поста, под которым собираетесь опубликовать этот пост')
-            await state.set_state(PublishPhotoByOneBattle.text)
+            # await state.update_data(battle_id=battle_id)
+            # await state.update_data(channel_tg_id=channel_id)
+            # await state.update_data(channel_id=channel_info[0])
+            # await state.update_data(photo=photos[-1][3])
+            # await state.update_data(photo_id=photos[-1][0])
+            # await state.update_data(user_id=user_id)
+            # await call.message.answer('⚙️ Введите текст поста, под которым собираетесь опубликовать этот пост')
+            # await state.set_state(PublishPhotoByOneBattle.text)
+
+            channel_tg_id = channel_id
+            channel_id = channel_info[0]
+            photo = photos[-1][3]
+            photo_id = photos[-1][0]
+
+            photos_battle = await db.all_photo_by_battle(battle_id)
+            page = len(photos_battle) + 1
+
+            await db.update_number_post_in_battle_photos_by_id(photo_id, page)
+
+            kb = InlineKeyboardBuilder()
+            kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{page}')
+            kb.adjust(1)
+            message_send = await bot.send_photo(chat_id=channel_tg_id, photo=photo, caption=battle_info[6],
+                                                reply_markup=kb.as_markup())
+            await call.message.answer('✅ Фото отправлено в канал!')
+
+            channel_info = await db.check_channel_info_by_id(channel_id)
+            print(channel_info, channel_id)
+            post_link = channel_info[6]  # Основной шаблон ссылки
+            # print(post_link, message)
+            new_channel_link = replace_last_digits(post_link, str(message_send.message_id))
+
+            kb = InlineKeyboardBuilder()
+            kb.button(text='Ссылка на пост', url=new_channel_link)
+            kb.button(text='Ссылка на канал', url=battle_info[5])
+            kb.adjust(1)
+            await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
+                            ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+
     else:
         await state.update_data(user_id=user_id)
         await state.update_data(photo_battle_id=photo_battle_id)

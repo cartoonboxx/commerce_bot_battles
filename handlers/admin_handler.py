@@ -578,6 +578,8 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     data = await state.get_data()
 
     battle_id = data.get('battle_id')
+    battle_info = await db.check_battle_info(battle_id)
+    channel_tg_id = data.get('channel_tg_id')
     channel_id = data.get('channel_id')
     photo = data.get('photo')
     photo_id = data.get('photo_id')
@@ -590,8 +592,20 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{page}')
     kb.adjust(1)
-    await bot.send_photo(chat_id=channel_id, photo=photo, caption=message.text, reply_markup=kb.as_markup())
+    message_send = await bot.send_photo(chat_id=channel_tg_id, photo=photo, caption=message.text, reply_markup=kb.as_markup())
     await message.answer('✅ Фото отправлено в канал!')
+
+
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    print(channel_info, channel_id)
+    post_link = channel_info[6]  # Основной шаблон ссылки
+    # print(post_link, message)
+    new_channel_link = replace_last_digits(post_link, str(message_send.message_id))
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Ссылка на пост', url=new_channel_link)
+    kb.button(text='Ссылка на канал', url=battle_info[5])
+    kb.adjust(1)
     await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
                 ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 

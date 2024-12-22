@@ -148,8 +148,12 @@ async def add_battle_prize(message: types.Message, state: FSMContext):
     prize = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    battle_info = await db.check_battle_info(battle_id)
     await db.update_battle_prize(battle_id, prize)
-    await battle_answer_func_message(message, battle_id, state)
+    if battle_info[23] == 2:
+        await battle_answer_func_message(message, battle_id, state)
+    else:
+        await battle_one_message(message, battle_id)
     await state.clear()
 
     await bot.delete_message(message.chat.id, message.message_id)
@@ -321,6 +325,26 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
 
     await bot.delete_message(message.chat.id, message.message_id)
     await bot.delete_message(message.chat.id, message.message_id - 1)
+
+
+@dp.message(SetTextToPublish.post_text)
+async def SetTextToPublish_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    battle_id = data.get('battle_id')
+    battle_info = await db.check_battle_info(battle_id)
+
+    textSave = message.text
+
+    await db.update_battle_prize(battle_id, textSave)
+    await bot.delete_message(message.chat.id, message_id=message.message_id - 1)
+    await bot.delete_message(message.chat.id, message_id=message.message_id)
+
+    await state.clear()
+
+    battle_info_text = '<b>Меню управления</b>'
+    await message.answer(battle_info_text, disable_web_page_preview=True,
+                                 reply_markup=await active_battle_settings_kb(battle_id, 3))
+
 @dp.message(AddBattlePost.q1)
 async def add_battle_post(message: types.Message, state: FSMContext):
     data = await state.get_data()

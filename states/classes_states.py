@@ -113,3 +113,6 @@ class DeleteBattleFromDB(StatesGroup):
 
 class PublishPhotoByOneBattle(StatesGroup):
     text = State()
+
+class SetTextToPublish(StatesGroup):
+    post_text = State()

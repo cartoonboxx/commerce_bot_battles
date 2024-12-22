@@ -104,17 +104,16 @@ async def scheduled_task():
                     url = encode_url(tg_id)
                     # найти нужный батл айди
 
-                    text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд"
+                    text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд\n\n<a href='https://t.me/{config.bot_name}?start=vote{battle_id}page{user_info[6]}'>Ваша ссылка на голосование</a>"
                     if user_voices != max_user_voices and current_voices > 0 and user_info[6] != 0:
                         print('корректный батл айди', battle_id)
                         kb = InlineKeyboardBuilder()
-                        kb.button(text="Ссылка на голосование",
-                                  url=f"https://t.me/{config.bot_name}/start=vote{battle_id}")
                         kb.button(text="Ссылка на канал", url=battle_info[5])
                         kb.adjust(1)
                         await bot.send_message(
                             chat_id=tg_id,
-                            text=text, reply_markup=kb.as_markup())
+                            text=text, reply_markup=kb.as_markup(),
+                            disable_web_page_preview=True)
                 except Exception as e:
                     print(e)
 
