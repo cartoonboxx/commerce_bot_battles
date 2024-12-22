@@ -493,6 +493,19 @@ def replace_last_digits(url, new_digits):
         # Если нет "/", возвращаем исходную ссылку
         return url
 
+@dp.callback_query(lambda c: c.data.startswith('returntobattlemenu'))
+async def returntobattlemenu(call: types.CallbackQuery, state: FSMContext):
+    battle_id = call.data.split(';')[1]
+    battle_info = await db.check_battle_info(battle_id)
+    status = battle_info[14]
+
+    battle_info_text = '<b>Меню управления:</b>'
+    await call.message.edit_text(battle_info_text, disable_web_page_preview=True,
+                                 reply_markup=await active_battle_settings_kb(battle_id, status))
+
+    await state.clear()
+
+
 @dp.callback_query(lambda c: c.data.startswith('searchbattle'))
 async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     action = call.data.split(';')[1]
@@ -511,6 +524,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
         photos = await db.get_photos_where_status_1(battle_id)
+        print(photos)
         if len(photos) % battle_info[13] == 0:
             print('Надо выпускать пост')
 
