@@ -80,12 +80,7 @@ async def back_main_menu_add_channel_opt(channel_id):
         kb.button(text='Изменить админ-чат', callback_data=f'channelsetting;adminchat;{channel_id}')
     if channel_info[5] == "-":
      kb.button(text='Добавить ссылку на канал', callback_data=f'channelsetting;channellink;{channel_id}')
-    else:
-        kb.button(text='Изменить ссылку на канал', callback_data=f'channelsetting;channellink;{channel_id}')
-    if channel_info[6] == "-":
-     kb.button(text='Добавить ссылку на пост', callback_data=f'channelsetting;channelpost;{channel_id}')
-    else:
-        kb.button(text='Изменить ссылку на пост', callback_data=f'channelsetting;channelpost;{channel_id}')
+
     kb.button(text='🛠️ Тех. поддержка', callback_data=f'channelsetting;support;{channel_id}')
     kb.button(text='Удалить канал', callback_data=f'channelsetting;delete;{channel_id}')
     kb.button(text='🔙 Назад', callback_data='backtochannels')

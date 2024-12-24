@@ -322,8 +322,11 @@ async def vote_in_battle(callback: types.CallbackQuery):
                                    caption='<b>Вы хотите проголосовать? Изменить или отменить голос уже не будет возможным</b>',
                                    reply_markup=get_my_voice_kb(accound_id))
     else:
-        await callback.answer("Чтобы проголосовать, необходимо подписаться на канал",
-                             show_alert=True)
+        kb = InlineKeyboardBuilder()
+        kb.button(text='Ссылка на канал', url=channel_link)
+        kb.adjust(1)
+        await callback.message.answer("Чтобы проголосовать, необходимо подписаться на канал",
+                             reply_markup=kb.as_markup())
     return
 
 
@@ -687,6 +690,17 @@ async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
                 result = await db.add_new_cahnnel_by_chan_id(tg_id, channel_id, channel_title)
                 if result is True:
                     await db.add_battles_statistic(tg_id)
+                    channels = await db.check_all_channels()
+                    channel_id_db = channels[-1][0]
+
+                    chan_id = str(message.forward_origin.chat.id).replace('-100', '')
+                    message_link = f'https://t.me/c/{chan_id}/{message.forward_from_message_id}'
+                    await db.update_channels_post_link_where_id(message_link, channel_id_db)
+                    channel_name = message.forward_origin.chat.username
+                    if channel_name is not None:
+                        channel_link = f'https://t.me/{channel_name}'
+                        await db.update_channel_link_where_id(channel_link, channel_id_db)
+
                     await message.answer(
                         "<b>Канал успешно добавлен! 🎉</b>\n\n"
                         "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
@@ -902,11 +916,16 @@ async def statics(message: types.Message, state: FSMContext):
         blocked = await db.check_blocked_count_where_id_1()
         users = await db.check_len_users()
         items = await db.check_all_battles_where_status_1()
+
+        active_battles = await db.check_all_battles_where_all_ran_return_id()
+
+
         # Приветственное сообщение для обычного пользователя
         await message.answer(f"""
 <b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n
 - Количество активных батлов: {len(items)}\n
 - Количество пользователей: {users}\n
+- Активные батлы: {len(active_battles)}\n
 <b>ℹ️ Ваша статистика представлена в личном кабинете</b>
 """,reply_markup=statics_back(),parse_mode="HTML",)
         
@@ -1032,7 +1051,10 @@ async def subcribed_handler(callback: types.CallbackQuery):
         await callback.message.delete()
         await callback.message.answer_photo(photo=battle_photos_info[3], caption='<b>Вы хотите проголосовать? Изменить или отменить голос уже не будет возможным</b>', reply_markup=get_my_voice_kb(accound_id))
     else:
-        await callback.answer("Чтобы проголосовать, необходимо подписаться на канал", show_alert=True)
+        kb = InlineKeyboardBuilder()
+        kb.button(text='Ссылка на канал', url=channel_link)
+        kb.adjust(1)
+        await callback.message.answer("Чтобы проголосовать, необходимо подписаться на канал", reply_markup=kb.as_markup())
         
 @dp.callback_query(lambda c: c.data.startswith('getmyvoice'))
 async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext):

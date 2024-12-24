@@ -20,7 +20,21 @@ async def add_chat_handler(message: types.Message, state: FSMContext):
     data = await state.get_data()  # Сначала получаем данные
     channel_id = data.get('channel_id')  # Теперь правильно используем channel_id
     chat_id = message.forward_from_chat.id  # Получаем chat_id
-    
+
+    # match = re.search(r't\.me/([a-zA-Z0-9_]+)', message.text)
+    # if match:
+    #     chat_username = match.group(1)
+    #     print(chat_username)
+    #     try:
+    #         # Получаем информацию о чате
+    #         chat = await bot.get_chat('admin chat s botom')
+    #         await message.reply(f'ID чата: {chat.id}')
+    #     except Exception as e:
+    #         await message.reply(f'Не удалось получить информацию о чате: {e}')
+    # else:
+    #     await message.reply('Некорректная ссылка на чат.')
+    #
+    # return
     chat_member = await bot.get_chat_member(chat_id, bot.id)  # Получаем информацию о члене чата
     
     if chat_member.status in ['administrator', 'creator'] and message.forward_from_chat and \
@@ -332,15 +346,11 @@ async def SetTextToPublish_handler(message: types.Message, state: FSMContext):
     data = await state.get_data()
     battle_id = data.get('battle_id')
     battle_info = await db.check_battle_info(battle_id)
-
-    textSave = message.text
-
+    textSave = message.html_text or message.text
     await db.update_battle_prize(battle_id, textSave)
     await bot.delete_message(message.chat.id, message_id=message.message_id - 1)
     await bot.delete_message(message.chat.id, message_id=message.message_id)
-
     await state.clear()
-
     battle_info_text = '<b>Меню управления</b>'
     await message.answer(battle_info_text, disable_web_page_preview=True,
                                  reply_markup=await active_battle_settings_kb(battle_id, 3))

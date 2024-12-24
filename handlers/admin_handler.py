@@ -592,7 +592,7 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{page}')
     kb.adjust(1)
-    message_send = await bot.send_photo(chat_id=channel_tg_id, photo=photo, caption=message.text, reply_markup=kb.as_markup())
+    message_send = await bot.send_photo(chat_id=channel_tg_id, photo=photo, caption=message.html_text or message.text, reply_markup=kb.as_markup())
     await message.answer('✅ Фото отправлено в канал!')
 
 

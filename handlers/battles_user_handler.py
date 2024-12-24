@@ -539,16 +539,6 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         if battle_info[23] == 1:
             channel_info = await db.check_channel_info_by_id(battle_info[1])
             channel_id = channel_info[2]
-
-            # await state.update_data(battle_id=battle_id)
-            # await state.update_data(channel_tg_id=channel_id)
-            # await state.update_data(channel_id=channel_info[0])
-            # await state.update_data(photo=photos[-1][3])
-            # await state.update_data(photo_id=photos[-1][0])
-            # await state.update_data(user_id=user_id)
-            # await call.message.answer('⚙️ Введите текст поста, под которым собираетесь опубликовать этот пост')
-            # await state.set_state(PublishPhotoByOneBattle.text)
-
             channel_tg_id = channel_id
             channel_id = channel_info[0]
             photo = photos[-1][3]

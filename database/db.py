@@ -151,6 +151,14 @@ async def check_all_battles_where_status_3_return_id():
         ids = [row[0] for row in rows]
         return ids
 
+async def check_all_battles_where_all_ran_return_id():
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT id FROM battles WHERE (status > 2) AND title <> "-"')
+        rows = await cursor.fetchall()
+        # Преобразование списка кортежей в одномерный список
+        ids = [row[0] for row in rows]
+        return ids
+
 async def update_battlepost_text(post_text, id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battles SET post_text = ? WHERE id = ?', (post_text, id))
