@@ -55,9 +55,13 @@ async def scheduled_task():
     for battle_id in battles:
         battle_photos = await db.check_all_battles_photo_where_id(battle_id)
 
+        print('батл айди и фотки')
+        print(battle_id, battle_photos)
         for battle_photo in battle_photos:
             photo_time_str = battle_photo[9]
 
+
+            print('BATTLE PHOTO', battle_photo)
             # Попробуем сначала как полную дату и время
             try:
                 photo_time = datetime.datetime.strptime(photo_time_str, '%Y-%m-%d %H:%M:%S')
@@ -73,20 +77,19 @@ async def scheduled_task():
             # Вычисляем разницу во времени
             time_difference = time_now - photo_time
             # Проверяем разницу во времени
-            if time_difference.total_seconds() > 600:
+            if time_difference.total_seconds() > 1:
                 tg_id = battle_photo[1]
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'))
 
                 try:
-
+                    print('ТУТ ОШИБКА')
                     current_voices = 0
                     battle_info = await check_battle_info(battle_id)
                     min_voice = battle_info[11]
                     users_in_battle = await check_users_from_battle(battle_id)
                     user_info = await check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
                     user_voices = user_info[4]
-
-                    print(user_voices, user_info)
+                    print('USER INFO', user_info[1], user_voices)
 
                     max_user_voices = 0
                     for user in users_in_battle:
@@ -97,15 +100,13 @@ async def scheduled_task():
                     else:
                         current_voices = max_user_voices
 
-                    print(battle_id)
-                    print('max_user', max_user_voices)
-
                     # Подготовка клавиатуры и сообщения
                     url = encode_url(tg_id)
                     # найти нужный батл айди
 
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает <b>{current_voices - user_voices + 1} ГОЛОСОВ</b>, чтобы пройти в следующий раунд\n\n<a href='https://t.me/{config.bot_name}?start=vote{battle_id}page{user_info[6]}'>Ваша ссылка на голосование</a>"
                     if user_voices != max_user_voices and current_voices > 0 and user_info[6] != 0:
+                        print('tg_id', tg_id)
                         print('корректный батл айди', battle_id)
                         kb = InlineKeyboardBuilder()
                         kb.button(text="Ссылка на канал", url=battle_info[5])
