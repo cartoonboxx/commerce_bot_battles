@@ -1076,7 +1076,7 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
     await callback.answer('✅ Вы успешно проголосовали', show_alert=True)
     time_now = datetime.datetime.now()
-    await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'))
+    await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
     min_votes = battle_info[11]
     user_votes = battle_photos_info[4]
     

@@ -131,9 +131,9 @@ async def check_battles_where_status_1_return_battle_info():
         # Преобразование списка кортежей в одномерный список
         return rows
 
-async def update_last_like(tg_id, last_like):
+async def update_last_like(tg_id, last_like, battle_id):
     async with aiosqlite.connect(name_db) as db:
-        await db.execute('UPDATE battle_photos SET last_like = ? WHERE tg_id = ?', (last_like, tg_id))
+        await db.execute('UPDATE battle_photos SET last_like = ? WHERE tg_id = ? AND battle_id = ?', (last_like, tg_id, battle_id))
         await db.commit()
 
 async def check_all_battles_photo_where_id(id):
