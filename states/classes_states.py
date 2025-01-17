@@ -116,3 +116,11 @@ class PublishPhotoByOneBattle(StatesGroup):
 
 class SetTextToPublish(StatesGroup):
     post_text = State()
+
+class AddVoices(StatesGroup):
+    q1 = State()
+    q2 = State()
+
+class Mailing(StatesGroup):
+    q1 = State()
+    q2 = State()

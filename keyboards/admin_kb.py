@@ -1,8 +1,5 @@
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-
-#кнопки обычных админов
-
 def start_menu_for_admins():
     kb = ReplyKeyboardBuilder()
     kb.button(text='🧱 Создать фото-батл')

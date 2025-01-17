@@ -21,7 +21,7 @@ scheduler = AsyncIOScheduler()
 
 motivations = [f"‼️ ВЫ ПРОИГРЫВАЕТЕ\n\nВам нехватает  ГОЛОСОВ, чтобы пройти в следующий раунд\n\nВаша ссылка для принятия голосов:.\nСсылка на канал -"]
 
-def encode_url(accound_id):
+def encode_url(account_id):
 
     # Замените это на ваш фактический ID
 
@@ -29,7 +29,7 @@ def encode_url(accound_id):
     base_url = 'https://t.me/share/url'
 
     # Ссылка на бот с вашим ID
-    bot_url = f'https://t.me/{config.bot_name}?start={accound_id}'
+    bot_url = f'https://t.me/{config.bot_name}?start={account_id}'
 
     # Текст, который вы хотите отправить
     text = "👉 Привет, можешь пожалуйста проголосовать за меня в боте?"
@@ -75,7 +75,7 @@ async def scheduled_task():
             time_difference = time_now - photo_time
 
             # Проверяем разницу во времени
-            if time_difference.total_seconds() > 1:
+            if time_difference.total_seconds() > 600:
 
                 tg_id = battle_photo[1]
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)

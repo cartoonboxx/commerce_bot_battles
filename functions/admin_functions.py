@@ -9,7 +9,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from keyboards.another import back_main_menu_add_channel, back_main_menu_channels, back_main_menu_create_battle, create_battle_kb, create_good
 from states.classes_states import *
 from constants.constants import *
-import json, asyncio
+import json
+import asyncio
 
 bot = loader.start_bot(config.Token)
 
@@ -19,6 +20,7 @@ def back_main_menu_add_channel2(channed_id):
     kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channed_id}')
     kb.adjust(1)
     return kb.as_markup()
+
 def back_main_menu_add_channel3(channed_id):
     kb = InlineKeyboardBuilder()
     kb.button(
@@ -30,7 +32,6 @@ def back_main_menu_add_channel3(channed_id):
     kb.adjust(1)
     return kb.as_markup()
 
-#кнопки выберите канал для создания батла
 def back_main_menu_channels(channels):
     kb = InlineKeyboardBuilder()
     for chan in channels:
@@ -56,24 +57,20 @@ async def active_battles_kb(battles):
     kb.adjust(1)
     return kb.as_markup()
 
-
-
 async def active_battle_settings_kb(battle_id, status):
     kb = InlineKeyboardBuilder()
     battle_info = await db.check_battle_info(battle_id)
 
     if status == 0:
         status = 1
-    # Кнопки только для статуса CREATED
+
     if status == Status.CREATED.value:
         kb.button(text='✅ Начать раунд', callback_data=f'activebattlesettings;start;{battle_id}')
         kb.button(text='🏞 Добавить фото', callback_data=f'activebattlesettings;fake;{battle_id}')
 
-    # Кнопки только для статуса NEXTROUND
     if status == Status.NEXTROUND.value:
         kb.button(text='✅ Запустить следующий раунд', callback_data=f'activebattlesettings;next;{battle_id}')
 
-    # Кнопки для статусов CREATED и NEXTROUND
     if status == Status.CREATED.value or status == Status.NEXTROUND.value:
         if battle_info[7] == "-":
             kb.button(text='❌ Раунд по счёту', callback_data=f'activebattlesettings;descr;{battle_id}')
@@ -95,7 +92,6 @@ async def active_battle_settings_kb(battle_id, status):
         else:
             kb.button(text='✅ Мин. голосов для победы', callback_data=f'activebattlesettings;voices;{battle_id}')
 
-    # Кнопки для других статусов
     if status == Status.ENDROUND.value:
         if battle_info[23] == 2:
             kb.button(text='⛔️ Завершить раунд и подвести итоги', callback_data=f'activebattlesettings;end;{battle_id}')
@@ -115,8 +111,6 @@ async def active_battle_settings_kb(battle_id, status):
     if status == Status.Error.value:
         kb.button(text='▶️ Продолжить', callback_data=f'aprovecontinuebattleesettings;{battle_id}')
 
-    # Общие кнопки
-    # kb.button(text='🔄', callback_data=f'activebattlesettings;reload;{battle_id}')
     kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
 
     if status != Status.ENDROUND.value:
@@ -124,10 +118,6 @@ async def active_battle_settings_kb(battle_id, status):
     else:
         kb.adjust(1, 1, 1, 1, 1)
     return kb.as_markup()
-
-
-
-
 
 async def back_battle__active_setting_kb(battle_id):
     battle_info = await db.check_battle_info(battle_id)
@@ -150,22 +140,6 @@ async def round_buttons_battle(battle_id):
     kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
     kb.adjust(1)
     return kb.as_markup()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 async def battle_answer_func_message(message: types.Message, battle_id,state:FSMContext):
     await state.clear()
@@ -229,7 +203,7 @@ async def firstround_menu_setting(message: types.Message, battle_id):
 
 async def battle_settings_func(callback: types.CallbackQuery, battle_id, action, state):
     battle_info = await db.check_battle_info(battle_id)
-    tg_id = callback.from_user.id
+    message = callback.message
     if action == 'createbattle':
 
         await db.update_status_battle(battle_id, 0)
@@ -239,54 +213,34 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
             return
         else:
 
-            await callback.message.delete()
+            await message.delete()
 
-            # await callback.message.answer('<b>✅ Батл создан </b> \n\nПерейдите в ⚔️ Наборы на фото-батлы, чтобы продолжить настройку')
-            #
-            # tg_id = callback.from_user.id
-            # await db.update_battle_statistic_plus_1(tg_id)
-            # await db.update_admin_count_minus_1(tg_id)
-            # channel_id = battle_info[1]
-            # channel_info = await db.check_channel_info_by_id(channel_id)
-            # channel_tg_id = channel_info[2]
-            # kb = InlineKeyboardBuilder()
-            # kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
-            # try:
-            #     post_id = battle_info[17]
-            #     if post_id is not None:
-            #         await bot.copy_message(chat_id=channel_tg_id, from_chat_id=callback.message.chat.id,
-            #                            message_id=battle_info[17], reply_markup=kb.as_markup()
-            #                            )
-            # except Exception as e:
-            #     print(e)
-            #     await callback.message.answer('Ошибка отправки поста о батле')
-
-            await firstround_menu_setting(callback.message, battle_id)
+            await firstround_menu_setting(message, battle_id)
 
     if action == 'channel_link':
         await state.set_state(AddLinkToBattle.q1)
         await state.update_data(battle_id=battle_id)
-        await callback.message.edit_text('<b>⚙️ Введите ссылку на ваш канал</b>',
+        await message.edit_text('<b>⚙️ Введите ссылку на ваш канал</b>',
                                          reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'name':
         await state.set_state(AddBattleName.q1)
         await state.update_data(battle_id=battle_id)
-        await callback.message.edit_text('<b>⚙️ Введите название для вашего батла</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await message.edit_text('<b>⚙️ Введите название для вашего батла</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'prize':
         await state.set_state(AddBattlePrize.q1)
         await state.update_data(battle_id=battle_id)
         if battle_info[23] == 2:
-            await callback.message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+            await message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
         else:
-            await callback.message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+            await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'end':
         await state.set_state(AddBattleEnd.q1)
         await state.update_data(battle_id=battle_id)
-        await callback.message.edit_text('<b>⚙️ Введите время конца набора фото в формате: 00:00:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await message.edit_text('<b>⚙️ Введите время конца набора фото в формате: 00:00:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'participants':
         await state.set_state(AddBattleParticipants.q1)
         await state.update_data(battle_id=battle_id)
-        await callback.message.edit_text('<b>⚙️ Введите минимальное кол-во участников для начала батла. \n\n Отправьте только число</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await message.edit_text('<b>⚙️ Введите минимальное кол-во участников для начала батла. \n\n Отправьте только число</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'battlepost':
         await state.set_state(AddBattlePost.q1)
         await state.update_data(battle_id=battle_id)
@@ -306,10 +260,8 @@ async def delete_channel_func2(call: types.CallbackQuery, channel_id):
     await db.delete_channel_by_id(channel_id)
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
-    await call.message.edit_text('<b>✅ Канал удален </b>', reply_markup= back_main_menu_channels(channels))
-
-
-
+    message = call.message
+    await message.edit_text('<b>✅ Канал удален </b>', reply_markup= back_main_menu_channels(channels))
 
 def generate_support_link(channel_id):
     base_url = f"https://t.me/{config.bot_name}?start=support_{channel_id}"  # Ссылка для запуска бота
@@ -327,17 +279,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
         await state.set_state(AddChat.q1)
         await state.update_data(channel_id=channel_id)
         channel_info = await db.check_channel_info_by_id(channel_id)
-        await call.message.edit_text(f'''<b>⚙️ Добавление чата для администраторов </b>
-
-Текущий ID админ-чата: {channel_info[4]}
-
-ℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей. Любой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.
-
-<b>⁉️ Как добавить админ-чат: </b>
-
-1. Добавьте бота в нужный чат.
-2. Перешлите сообщение от имени чата. 
-3. Назначьте бота администратором с правами на публикацию!''',
+        await call.message.edit_text(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей. Любой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\n<b>⁉️ Как добавить админ-чат: </b>\n\n1. Добавьте бота в нужный чат.\n2. Перешлите сообщение от имени чата. \n3. Назначьте бота администратором с правами на публикацию!''',
 reply_markup=await back_main_menu_add_channel(channel_id) )
     if action == 'create':
       channel_info = await db.check_channel_info_by_id(channel_id)
@@ -533,7 +475,6 @@ async def active_battle_answer_func(msg: types.Message, battle_id):
 
 
 async def redact_all_status_posts(battle_id, photo_send):
-    '''photo send необходимо для понимания, закрыт или открыт набор'''
     battle_info = await db.check_battle_info(battle_id)
     channel_link = battle_info[5]
     channel_info = await db.check_channel_info_by_link(channel_link)
@@ -657,7 +598,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         posts_posted = [all_battle_users_posted[i:i + members_in_post] for i in range(0, len(all_battle_users_posted),
                                                                                       members_in_post)]
 
-        print(posts_posted) # '''выпущенные посты'''
         while [] in posts_posted:
             posts_posted.remove([])
 
@@ -668,20 +608,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
         need_photos = battle_info[13] - len(posts_posted[-1])
 
-        print(start_page, need_photos)
-
         all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
-
-        print(all_battle_users)
 
         if need_photos != 0:
             media_group = []
 
             if len(all_battle_users) < need_photos:
                 need_photos = len(all_battle_users)
-
-            print(all_battle_users)
-            print(need_photos, start_page)
 
             for index in range(need_photos):
                 try:
@@ -695,19 +628,9 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             index = start_page
 
             if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>
-<b>💰 ПРИЗ — {battle_info[6]}</b>
-
-<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
-
-📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
-⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
-                text = f'''⚔️ <b>{battle_info[7]}</b>
-<b>💰 ПРИЗ — {battle_info[6]}</b>
-
-📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
-⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             await asyncio.sleep(5)
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             kb = InlineKeyboardBuilder()
@@ -718,8 +641,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             await db.update_id_post(message.message_id, battle_id)
 
         posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
-
-        print(posts)
 
         if len(posts) == 0:
             await call.answer('Одобренных фото нет')
@@ -744,21 +665,11 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
             await call.message.answer(f'Количество новых фото: {resultation1}. {post_text}')
 
-            # res2 - старые посты
-            # res1 - новые
-            print(resultation1, resultation2)
-
         count = 0
 
-        '''Сюда дошли только новые фото'''
         not_posted_photo = await db.all_photo_by_battle(battle_id)
         while [] in not_posted_photo:
             not_posted_photo.remove([])
-
-
-        print(all_battle_users, start_page)
-
-        # start_page = int(already_posted_photo[-1][-1][6])
 
         for index, post in enumerate(posts):
             index += start_page
@@ -767,24 +678,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             for user in post:
                 media_photo = types.InputMediaPhoto(media=user[3])
                 media_group.append(media_photo)
-                # Обновление для каждого пользователя
             kb = InlineKeyboardBuilder()
 
             if battle_info[20] == '-':
                 if battle_info[22] == 0:
-                    text = f'''⚔️ <b>{battle_info[7]}</b>
-<b>💰 ПРИЗ — {battle_info[6]}</b>
-
-<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>
-
-📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
-⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
                 else:
-                    text = f'''⚔️ <b>{battle_info[7]}</b>
-<b>💰 ПРИЗ — {battle_info[6]}</b>
-
-📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов
-⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = battle_info[20]
             await asyncio.sleep(5)
@@ -880,7 +780,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             await call.answer('Одобренных фото нет')
             return
         else:
-            '''проверка и вывешиваем предупреждение'''
             resultation1 = 0
             for post in posts:
                 for user in post:
@@ -891,9 +790,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 for user in post:
                     resultation2 += 1
 
-            post_text = ''
             if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
-                post_text = 'Можете выкладывать новые фотографии'
                 kb = InlineKeyboardBuilder()
                 kb.button(text='✅ Опубликовать', callback_data=f'activebattlesettings;update_photo;{battle_id}')
                 kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
@@ -902,11 +799,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     'Вы точно хотите опубликовать новые фото?',
                     reply_markup=kb.as_markup())
             else:
-                # kb = InlineKeyboardBuilder()
-                # kb.button(text='✅ Продолжить', callback_data=f'activebattlesettings;update_photo;{battle_id}')
-                # kb.button(text='🔙 Назад', callback_data=f'activebattlesettings;reload;{battle_id}')
-                # kb.adjust(1)
-                # await call.message.edit_text('⚠️ Новые посты с фотографиями могут выйти не так, как должны. Продолжить?', reply_markup=kb.as_markup())
+
                 await call.answer('Выставлять новые фото не рекомендуется, подождите, когда появятся новые фотографии')
 
 
@@ -923,7 +816,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
     if action == 'endone':
 
         await call.answer('Батл успешно завершился', show_alert=True)
-        # await db.update_status_battle(battle_id, Status.NEXTROUND.value)
         battle_info = await db.check_battle_info(battle_id)
 
         '''количество вышедших постов делим на количество в одном посте'''
@@ -936,19 +828,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         min_voices = battle_info[11]
 
         for i in range(1, count + 1):
-            print('count', count)
-            # Получение всех участников для текущего поста
             post = await db.check_battle_photos_by_battle_id_and_number_post(battle_id, i)
 
-            print('post', post)
-            # Если нет участников, продолжить следующую итерацию
             if not post:
                 continue
 
-            # Отфильтровать участников, у которых голоса меньше минимального
             eligible_participants = [user for user in post if user[4] >= min_voices]
 
-            print('eligible_participants', eligible_participants)
             if not eligible_participants:
                 for user in post:
                     await db.delete_user_from_battle_photos(user[0])
@@ -958,7 +844,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
             winners = [user for user in eligible_participants if user[4] == max_votes]
 
-            print('winners', winners)
             for winner in winners:
                 await db.update_battle_photos_votes_and_number_post(winner[0], 0, 0)
 
@@ -971,7 +856,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             kb.button(text='🗑 Удалить батл', callback_data=f'activebattlesettings;delete;{battle_id}')
             kb.adjust(1)
             if winners:
-                # await callback.message.answer(f'Пост {i}: победители - {[user[1] for user in winners]} с {max_votes} голосами')
                 text_users = ''
                 for user in winners:
                     current_user = await db.check_info_users_by_tg_id(user[1])
@@ -1031,7 +915,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await call.message.edit_text('Начать раунд?', reply_markup=kb.as_markup())
     if action == 'delete':
         kb = InlineKeyboardBuilder()
-        # kb.button(text='✅ Подтверждаю', callback_data=f'secapprovedeletebattle;{battle_id}')
         await state.set_state(DeleteBattleFromDB.password)
         await state.update_data(battle_id=battle_id)
         kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')

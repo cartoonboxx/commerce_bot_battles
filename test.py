@@ -1,12 +1,12 @@
 import urllib.parse
 
-accound_id = '38'  # Замените это на ваш фактический ID
+account_id = '38'  # Замените это на ваш фактический ID
 
 # Основная ссылка для шаринга в Telegram
 base_url = 'https://t.me/share/url'
 
 # Ссылка на бот с вашим ID
-bot_url = f'https://t.me/photobattllehelper_bot?start={accound_id}'
+bot_url = f'https://t.me/photobattllehelper_bot?start={account_id}'
 
 
 
