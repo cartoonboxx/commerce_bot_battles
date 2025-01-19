@@ -412,12 +412,22 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
     channel_info = await db.check_channel_info_by_id(channel_id)
     admin_chat_id = channel_info[4]
     kbs = InlineKeyboardBuilder()
-    kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id}')
-    kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id}')
-    kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id}')
-    kbs.adjust(2,1)
+    # kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{call.message.message_id}')
+    # kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id};{call.message.message_id}')
+    # kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id};{call.message.message_id}')
+    # kbs.adjust(2, 1)
+
     try:
-        await bot.send_photo(chat_id=admin_chat_id, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
+        message_id_from = await bot.send_photo(chat_id=admin_chat_id, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
+        message_id_from = message_id_from.message_id
+
+        kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{message_id_from};{admin_chat_id}')
+        kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id};{message_id_from};{admin_chat_id}')
+        kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id};{message_id_from};{admin_chat_id}')
+        kbs.adjust(2, 1)
+
+        await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=message_id_from, reply_markup=kbs.as_markup())
+
     except Exception as e:
         await call.answer('<b>❌ При отправке фото произошла ошибка</b>')
     await call.message.edit_text('<b>⏳ Фото  отправлено на проверку </b>')
@@ -446,11 +456,14 @@ async def returntobattlemenu(call: types.CallbackQuery, state: FSMContext):
 async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     action = call.data.split(';')[1]
     photo_battle_id = call.data.split(';')[2]
+    correct_message_ID = call.data.split(';')[3]
+    admin_chat_id = call.data.split(';')[4]
     kb = InlineKeyboardBuilder()
     battle_photo_info = await db.check_battle_photos_where_id1(photo_battle_id)
     tg_id = battle_photo_info[1]
     user_id = battle_photo_info[1]
     battle_id = battle_photo_info[2]
+
     battle_info = await db.check_battle_info(battle_id)
     if action == 'approve':
         try:
@@ -466,7 +479,9 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         except Exception as e:
             print(e)
         kb.button(text='✅ Принят', callback_data='nonefsafs')
-        await call.message.edit_reply_markup(reply_markup=kb.as_markup())
+        # await call.message.edit_reply_markup(reply_markup=kb.as_markup())
+        await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=correct_message_ID, reply_markup=kb.as_markup())
+
 
         if battle_info[23] == 1:
             channel_info = await db.check_channel_info_by_id(battle_info[1])
@@ -504,6 +519,8 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(photo_battle_id=photo_battle_id)
         await state.update_data(battle_id=battle_id)
         await state.update_data(tg_id=tg_id)
+        await state.update_data(correct_message_ID=correct_message_ID)
+
         await call.message.answer("Введите причину:")
         if action == 'decline':
             await state.set_state(ReasonRejectOrBlock.q1)
@@ -529,7 +546,7 @@ async def reject_photo(message: types.Message, state: FSMContext):
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
 
-    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=message.message_id - 2, reply_markup=kb.as_markup())
+    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data.get('correct_message_ID'), reply_markup=kb.as_markup())
     await db.delete_user_from_battle_photos(data['photo_battle_id'])
 
     await state.clear()
@@ -549,7 +566,7 @@ async def block_photo(message: types.Message, state: FSMContext):
     await message.delete()
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
 
-    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=message.message_id - 2, reply_markup=kb.as_markup())
+    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data.get('correct_message_ID'), reply_markup=kb.as_markup())
     await db.delete_user_from_battle_photos(data['photo_battle_id'])
     await db.add_new_user_to_battle_blocks(data['battle_id'], data['tg_id'])
 
