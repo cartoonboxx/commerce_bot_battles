@@ -2,7 +2,6 @@ from aiogram import types
 import asyncio
 from data.config import *
 from keyboards.another import back_main_menu_add_channel_opt
-from test import bot_url
 from aiogram import types, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
