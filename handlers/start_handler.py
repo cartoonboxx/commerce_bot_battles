@@ -555,28 +555,30 @@ async def cooperation(message: types.Message, state: FSMContext):
             return
     await state.set_state(AddChannel.q1)
 
-    kb = ReplyKeyboardMarkup()
-    button = types.KeyboardButton(text='📝Добавить канал', request_chat=types.KeyboardButtonRequestChat(
-        request_id=1,
-        chat_is_channel=True,
-        chat_is_forum=False
-    ))
+    kb_list = [
+        [types.KeyboardButton(text='📝Добавить канал', request_chat=types.KeyboardButtonRequestChat(
+            request_id=1,
+            chat_is_channel=True,
+            chat_is_forum=False
+        ))]
+    ]
 
-    # kb.button(text='📝Добавить бота в канал', url=f"https://t.me/{bot_name}?startgroup=true")
+    kb = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
 
     await message.answer(
         "<b>Добавление канала 📝</b>\n\n"
         "Чтобы подключить канал:\n\n"
         "1. Добавьте бота в канал ➕\n"
         "2. Перешлите сюда любое сообщение из канала 📲\n"
-        "3. Дайте боту права администратора с разрешением на публикацию 👑", reply_markup=kb.as_markup(), show_alert=True)
+        "3. Дайте боту права администратора с разрешением на публикацию 👑", reply_markup=kb, show_alert=True)
 
 @dp.message(AddChannel.q1)
 async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
-    if message.forward_from_chat and message.forward_from_chat.type == 'channel':
-        tg_id = message.from_user.id
-        channel_id = message.forward_from_chat.id
-        channel_title = message.forward_from_chat.title
+    tg_id = message.from_user.id
+    channel_id = message.chat_shared.chat_id
+    info = await bot.get_chat(channel_id)
+    channel_title = info.title
+    if channel_title and info.type == 'channel':
         try:
             admin_exists = await db.check_admin_exist_return_bool(tg_id)
             if not admin_exists:
@@ -589,13 +591,12 @@ async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
                     channels = await db.check_all_channels()
                     channel_id_db = channels[-1][0]
 
-                    chan_id = str(message.forward_origin.chat.id).replace('-100', '')
-                    message_link = f'https://t.me/c/{chan_id}/{message.forward_from_message_id}'
+                    chan_id = str(channel_id).replace('-100', '')
+                    message_link = f'https://t.me/c/{chan_id}/-1'
                     await db.update_channels_post_link_where_id(message_link, channel_id_db)
-                    channel_name = message.forward_origin.chat.username
-                    if channel_name is not None:
-                        channel_link = f'https://t.me/{channel_name}'
-                        await db.update_channel_link_where_id(channel_link, channel_id_db)
+                    channel_link = info.invite_link
+
+                    await db.update_channel_link_where_id(channel_link, channel_id_db)
 
                     await message.answer(
                         "<b>Канал успешно добавлен! 🎉</b>\n\n"

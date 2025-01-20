@@ -71,7 +71,7 @@ async def back_main_menu_add_channel_opt(channel_id):
     if channel_info[5] == "-":
         kb.button(text='Добавить ссылку на канал', callback_data=f'channelsetting;channellink;{channel_id}')
 
-    kb.button(text='🛠️ Тех. поддержка', callback_data=f'channelsetting;support;{channel_id}')
+
     kb.button(text='Удалить канал', callback_data=f'channelsetting;delete;{channel_id}')
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1)
