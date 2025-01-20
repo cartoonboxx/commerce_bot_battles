@@ -8,7 +8,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from data import loader, config
 from database import db
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup
 from functions.admin_functions import back_main_menu_channels, delete_channel_func
 from handlers.admin_handler import settings_channel
 from keyboards.another import cabinet_back, create_battle, faq, statics_back
@@ -64,7 +64,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
         username = message.from_user.username
         first_name = message.from_user.first_name
         await db.add_user_if_not_exist(tg_id, first_name, username)
-        
+
         if tg_id in admins:
             await message.answer(
                 "<b>⚙️ Меню управления (главный админ):</b>", reply_markup=start_menu_for_dev())
@@ -81,9 +81,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
                 account_id = account_id[1]
 
                 if account_id.startswith("support_"):
-                    channel_id = account_id.split("_")[1] 
+                    channel_id = account_id.split("_")[1]
                     channel_info = await db.check_channel_info_by_id(channel_id)
-                    name = channel_info[3] 
+                    name = channel_info[3]
                     await state.update_data(channel_id=channel_id)
                     await message.answer(f"💬 <b>Здравствуйте, @{username}!</b>\n\n"
                         f"Вы обращаетесь в службу поддержки канала <b>{name}.</b>\n\n"
@@ -230,7 +230,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
             "<b>💬 Используя бота, вы автоматически соглашаетесь с данными условиями. Приятного использования!</b>",
             reply_markup=kb.start_menu_for_users(),
             parse_mode='HTML',
-            disable_web_page_preview=True)      
+            disable_web_page_preview=True)
 
 @dp.callback_query(lambda c: c.data.startswith('voteby'))
 async def vote_in_battle(callback: types.CallbackQuery):
@@ -264,7 +264,7 @@ async def vote_in_battle(callback: types.CallbackQuery):
                              reply_markup=kb.as_markup())
     return
 
-@dp.message(lambda message: message.text == "🧱 Создать фото-батл")    
+@dp.message(lambda message: message.text == "🧱 Создать фото-батл")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -301,7 +301,7 @@ async def go_create_battle(call: types.CallbackQuery):
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
     await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла: </b>', reply_markup=back_main_menu_channels(channels))
 
-@dp.message(lambda message: message.text == "🤝 Сотрудничество")    
+@dp.message(lambda message: message.text == "🤝 Сотрудничество")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -317,7 +317,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
             return
     await message.answer(f"""<b>Сотрудничество с ботом 📸</b>\n\nСделайте фото батлы проще и удобнее вместе с нами!\n\n<b>✨ Что вы получаете бесплатно:</b>\n\n- Прием фотографий и поддержка в одном месте   \n- Автоматизация публикации постов и итогов \n- Уведомления о ходе батла \n\n<b>Убедимся, что у вас есть канал для батлов. Готовы начать? 👌</b>""", reply_markup=gocooperation(), parse_mode="HTML")
 
-@dp.message(lambda message: message.text == "🧑‍💼 Каналы")    
+@dp.message(lambda message: message.text == "🧑‍💼 Каналы")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -327,7 +327,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
             items_kb = await build_items_kb34(channels, 0, total_moments)
             await message.answer(
                 "<b>Список каналов, использующие бота:</b>",
-                reply_markup=items_kb.as_markup())  
+                reply_markup=items_kb.as_markup())
             return
         admin_exist = await db.check_admin_exist_return_bool(tg_id)
         if admin_exist:
@@ -338,7 +338,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
         await message.answer(
             "<b>🚫 Неизвестная команда.</b>")
         return
-    
+
 async def get_paginated_items34(page: int = 0):
     channels = await db.check_all_channels()
     start = page * ITEMS_PER_PAGE
@@ -352,7 +352,7 @@ async def build_items_kb34(channels, page, total_moments):
         channel_info = await db.check_channel_info_by_id(channel[0])
         name = channel_info[3]
         categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
-   
+
     categories_kb.adjust(1)
     buttons = [
         InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'),
@@ -362,7 +362,7 @@ async def build_items_kb34(channels, page, total_moments):
     categories_kb.row(*buttons)
     back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='cancel_menu_channels')
     categories_kb.row(back_button)
-    
+
     return categories_kb
 
 @dp.callback_query(lambda c: c.data.startswith('channelcheckitem'))
@@ -370,7 +370,7 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     channel_id = call.data.split(';')[1]
     kb = InlineKeyboardBuilder()
     channel_info = await db.check_channel_info_by_id(channel_id)
-    name = channel_info[3]  
+    name = channel_info[3]
     link = channel_info[5]
 
     kb.button(text='⚔️ Активные наборы на фото-батлы', callback_data=f'channel_battles;{channel_id}')
@@ -478,7 +478,7 @@ async def back_to_channel_list_handler(call: types.CallbackQuery):
     categories_kb = await build_items_kb34(channels, page, total_channels)
     await call.message.edit_text(
         text=f"<b>Список каналов, использующие бота:</b>", reply_markup=categories_kb.as_markup())
-    
+
 @dp.callback_query(lambda c: c.data.startswith('cancel_delete_channel'))
 async def cancel_delete_channel_handler(call: types.CallbackQuery):
     await battle_check_item_handler(call)
@@ -509,7 +509,7 @@ async def approve_delete_channel_handler2(callback: types.CallbackQuery):
 async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
 
-@dp.message(lambda message: message.text == "🛠️ Накрутка голосов")    
+@dp.message(lambda message: message.text == "🛠️ Накрутка голосов")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -535,12 +535,12 @@ async def handle_profile(message: types.Message, state: FSMContext):
 async def add_channel_func(callback_query: types.CallbackQuery, state: FSMContext):
     await cooperation(callback_query.message, state)
     await callback_query.answer()
-    
+
 @dp.callback_query(lambda c: c.data == 'addchannel')
 async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
     await add_channel_func(callback, state)
 
-@dp.message(lambda message: message.text == "✅ Приступим")    
+@dp.message(lambda message: message.text == "✅ Приступим")
 async def cooperation(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         tg_id = message.from_user.id
@@ -554,12 +554,23 @@ async def cooperation(message: types.Message, state: FSMContext):
             await message.answer("<b>🚫 Неизвестная команда.</b>",)
             return
     await state.set_state(AddChannel.q1)
+
+    kb = ReplyKeyboardMarkup()
+    button = types.KeyboardButton(text='📝Добавить канал', request_chat=types.KeyboardButtonRequestChat(
+        request_id=1,
+        chat_is_channel=True,
+        chat_is_forum=False
+    ))
+
+    # kb.button(text='📝Добавить бота в канал', url=f"https://t.me/{bot_name}?startgroup=true")
+
     await message.answer(
         "<b>Добавление канала 📝</b>\n\n"
         "Чтобы подключить канал:\n\n"
         "1. Добавьте бота в канал ➕\n"
         "2. Перешлите сюда любое сообщение из канала 📲\n"
-        "3. Дайте боту права администратора с разрешением на публикацию 👑", reply_markup=ReplyKeyboardRemove())
+        "3. Дайте боту права администратора с разрешением на публикацию 👑", reply_markup=kb.as_markup(), show_alert=True)
+
 @dp.message(AddChannel.q1)
 async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
     if message.forward_from_chat and message.forward_from_chat.type == 'channel':
@@ -569,7 +580,7 @@ async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
         try:
             admin_exists = await db.check_admin_exist_return_bool(tg_id)
             if not admin_exists:
-                await db.add_admin(tg_id)               
+                await db.add_admin(tg_id)
             chat_member = await bot.get_chat_member(channel_id, bot.id)
             if chat_member.status in ['administrator', 'creator']:
                 result = await db.add_new_cahnnel_by_chan_id(tg_id, channel_id, channel_title)
@@ -612,11 +623,11 @@ async def create_mailing(callback: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('cancel_nakrutka'))
 async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
-    
+
 @dp.callback_query(lambda c: c.data.startswith('cancel_menu_channels'))
 async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
-   
+
 @dp.message(AddVoices.q1)
 async def add_voices_handler(message: types.Message, state: FSMContext):
     tg_id = message.text
@@ -645,10 +656,10 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data.startswith('backtosettings'))
 async def option_channel_handler(callback: types.CallbackQuery):
-    channel_id = callback.data.split(';')[1] 
+    channel_id = callback.data.split(';')[1]
     await settings_channel(callback, channel_id)
 
-@dp.message(lambda message: message.text == "💬 Рассылка")    
+@dp.message(lambda message: message.text == "💬 Рассылка")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -669,7 +680,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
         return
 @dp.callback_query(lambda c: c.data.startswith('cancel_mailing'))
 async def cancel_mailing(callback_query: types.CallbackQuery):
-    await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>') 
+    await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
 @dp.callback_query(lambda c: c.data.startswith('create_mailling'))
 async def create_mailing(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.message.answer('<b>[1/2] Введите сообщение для рассылки</b>')
@@ -764,7 +775,7 @@ async def statics(message: types.Message, state: FSMContext):
 
         await message.answer(f"""<b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n\n- Количество активных батлов: {len(items)}\n\n- Количество пользователей: {users}\n\n- Активные батлы: {len(active_battles)}\n\n<b>ℹ️ Ваша статистика представлена в личном кабинете</b>""",reply_markup=statics_back(),parse_mode="HTML",)
 
-@dp.message(lambda message: message.text == '🔙 Назад') 
+@dp.message(lambda message: message.text == '🔙 Назад')
 async def statics(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
@@ -772,7 +783,7 @@ async def statics(message: types.Message, state: FSMContext):
         if tg_id in admins:
             await state.set_state(stats_bot.dev2)
             await message.answer(
-                "<b>⚙️Меню управление (главный админ):</b>", 
+                "<b>⚙️Меню управление (главный админ):</b>",
                 reply_markup=start_menu_for_dev())
             return
 
@@ -850,7 +861,7 @@ async def subcribed_handler(callback: types.CallbackQuery):
         kb.button(text='Ссылка на канал', url=channel_link)
         kb.adjust(1)
         await callback.message.answer("Чтобы проголосовать, необходимо подписаться на канал", reply_markup=kb.as_markup())
-        
+
 @dp.callback_query(lambda c: c.data.startswith('getmyvoice'))
 async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext):
     account_id = callback.data.split(';')[1]
@@ -874,4 +885,3 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
     min_votes = battle_info[11]
     user_votes = battle_photos_info[4]
-    
