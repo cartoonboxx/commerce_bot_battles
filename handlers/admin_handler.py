@@ -64,7 +64,7 @@ def back_from_addchannel():
 async def settings_channel(callback: types.CallbackQuery, channel_id):
     channel_info = await db.check_channel_info_by_id(channel_id)
     name = channel_info[3]  
-    await callback.message.edit_text(f'<b>⚙️ Настройки канала "{name}"\n\n🛠️ Ваша ссылка для принятия вопросов от пользователей анонимно: \n\nhttps://t.me/vndfkjnkjdfgbknvds_bot?start=support_{channel_info[0]}</b>', reply_markup=await back_main_menu_add_channel_opt(channel_id))
+    await callback.message.edit_text(f'<b>⚙️ Настройки канала "{name}"\n\n🛠️ Ваша ссылка для принятия вопросов от пользователей анонимно: \n\nhttps://t.me/{bot_name}?start=support_{channel_info[0]}</b>', reply_markup=await back_main_menu_add_channel_opt(channel_id))
 
 
 @dp.callback_query(lambda c: c.data.startswith('optionchannel'))
