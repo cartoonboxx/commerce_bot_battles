@@ -572,6 +572,19 @@ async def cooperation(message: types.Message, state: FSMContext):
                 can_post_stories=True,
                 can_edit_stories=True,
                 can_delete_stories=True,
+            ),
+            bot_administrator_rights=types.ChatAdministratorRights(
+                is_anonymous=False,
+                can_manage_chat=False,
+                can_delete_messages=True,
+                can_manage_video_chats=False,
+                can_restrict_members=False,
+                can_promote_members=False,
+                can_change_info=True,
+                can_invite_users=False,
+                can_post_stories=False,
+                can_edit_stories=False,
+                can_delete_stories=False,
             )
         ))]
     ]
