@@ -21,12 +21,17 @@ bot = loader.start_bot(config.Token)
 async def add_chat_handler(message: types.Message, state: FSMContext):
     data = await state.get_data()
     channel_id = data.get('channel_id')
-    chat_id = message.forward_from_chat.id
+    chat_id = message.chat_shared.chat_id
 
-    chat_member = await bot.get_chat_member(chat_id, bot.id)
-    
-    if chat_member.status in ['administrator', 'creator'] and message.forward_from_chat and \
-            (message.forward_from_chat.type == 'supergroup' or message.forward_from_chat.type == 'group'):
+    try:
+        chat_member = await bot.get_chat_member(chat_id, bot.id)
+    except Exception as ex:
+        await message.answer(
+            '''<b>❌ Ошибка!</b>\n\n- Бот должен быть администратором в чате. Пожалуйста, предоставьте боту права администратора и попробуйте снова.\n\n- Сообщение должно быть отправлено от имени чата, а не переслано от участника. Убедитесь, что пересылаете сообщение из чата.\n\n<b>ℹ️ Чтобы избежать ошибок:</b>\n1. Проверьте, что бот имеет права администратора.\n2. Убедитесь, что сообщение отправлено из чата, а не от пользователя.\n\n<b>Если возникнут вопросы, пишите нам в разделе 🛠️ Тех. поддержка! </b>''',
+            reply_markup=await back_main_menu_add_channel(channel_id))
+        return
+
+    if chat_member.status in ['administrator', 'creator']:
         await message.answer(
             text='''<b>✅ Чат успешно добавлен!</b>\n\nℹ️ Теперь фото для батлов и сообщения от пользователей будут отправляться в этот чат. Любой участник сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\nСпасибо, что доверяете нашему боту!''', reply_markup=await back_main_menu_add_channel(channel_id)
         )

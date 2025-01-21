@@ -339,6 +339,8 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
 
     min_voices = battle_info[11]
 
+    winners = []
+
     for i in range(1, count + 1):
         post = await db.check_battle_photos_by_battle_id_and_number_post(battle_id, i)
 
@@ -346,6 +348,7 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
             continue
 
         eligible_participants = [user for user in post if user[4] >= min_voices]
+        print(eligible_participants)
 
         if not eligible_participants:
             for user in post:
@@ -354,7 +357,7 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
 
         max_votes = max(user[4] for user in eligible_participants)
         
-        winners = [user for user in eligible_participants if user[4] == max_votes]
+        winners.extend([user for user in eligible_participants if user[4] == max_votes])
 
         for winner in winners:
             await db.update_battle_photos_votes_and_number_post(winner[0], 0,0)
@@ -363,24 +366,27 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
             if user not in winners:
                 await db.delete_user_from_battle_photos(user[0])
 
-        if winners:
-            kb = InlineKeyboardBuilder()
-            kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
-            kb.adjust(1)
-            text_users = ''
-            for user in winners:
-                current_user = await db.check_info_users_by_tg_id(user[1])
-                text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
-            await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
-        else:
-            kb = InlineKeyboardBuilder()
-            kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
-            kb.adjust(1)
-            for user in winners:
-                current_user = await db.check_info_users_by_tg_id(user[1])
-                text_users += f'- Участник @{current_user[3]}({current_user[1]})\n'
-            await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}',
-                                          reply_markup=kb.as_markup())
+    if winners:
+        kb = InlineKeyboardBuilder()
+        kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
+        kb.adjust(1)
+        text_users = ''
+        print('1', winners)
+        for user in winners:
+            current_user = await db.check_info_users_by_tg_id(user[1])
+            text_users += f'- Участник @{current_user[3]} ({current_user[1]})\n'
+        await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
+    else:
+        kb = InlineKeyboardBuilder()
+        kb.button(text="✅ Продолжить", callback_data=f'continueToNextRound;{battle_id}')
+        kb.adjust(1)
+        text_users = ''
+        print('2', winners)
+        for user in winners:
+            current_user = await db.check_info_users_by_tg_id(user[1])
+            text_users += f'- Участник @{current_user[3]} ({current_user[1]})\n'
+        await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}',
+                                      reply_markup=kb.as_markup())
 
     await db.update_battles_descr_round_users_min_golos_end_round_by_id(battle_id)
     await db.delete_all_battle_voices_where_battle_id(battle_id)

@@ -5,7 +5,7 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from data import loader, config
 from database import db
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup
 from keyboards.another import back_main_menu_add_channel, back_main_menu_channels, back_main_menu_create_battle, create_battle_kb, create_good
 from states.classes_states import *
 from constants.constants import *
@@ -279,22 +279,48 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
         await state.set_state(AddChat.q1)
         await state.update_data(channel_id=channel_id)
         channel_info = await db.check_channel_info_by_id(channel_id)
-        await call.message.edit_text(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей. Любой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\n<b>⁉️ Как добавить админ-чат: </b>\n\n1. Добавьте бота в нужный чат.\n2. Перешлите сообщение от имени чата. \n3. Назначьте бота администратором с правами на публикацию!''',
-reply_markup=await back_main_menu_add_channel(channel_id) )
+
+        kb_list = [
+            [types.KeyboardButton(text='📝Добавить админ чат', request_chat=types.KeyboardButtonRequestChat(
+                request_id=1,
+                chat_is_channel=False,
+                user_administrator_rights=types.ChatAdministratorRights(
+                    is_anonymous=False,
+                    can_manage_chat=True,
+                    can_delete_messages=True,
+                    can_manage_video_chats=True,
+                    can_restrict_members=True,
+                    can_promote_members=True,
+                    can_change_info=True,
+                    can_invite_users=True,
+                    can_post_stories=True,
+                    can_edit_stories=True,
+                    can_delete_stories=True,
+                )
+            ))]
+        ]
+
+        kb = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+
+        await call.message.answer(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей. Любой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\n<b>⁉️ Как добавить админ-чат: </b>\n\n1. Добавьте бота в нужный чат.\n2. Перешлите сообщение от имени чата. \n3. Назначьте бота администратором с правами на публикацию!''',
+        reply_markup=await back_main_menu_add_channel(channel_id) )
+
+        await call.message.answer('Для выбора используйте кнопку ниже', reply_markup=kb)
+
     if action == 'create':
-      channel_info = await db.check_channel_info_by_id(channel_id)
-      if channel_info[4] == '0'or channel_info[5] == '-' or channel_info[6] == '-':
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        if channel_info[4] == '0'or channel_info[5] == '-' or channel_info[6] == '-':
             await call.answer('Заполните все поля', show_alert=True)
             return
-      else:
-       await call.message.edit_text(
-        f'⚙️ <b>ВНИМАНИЕ</b>\n\n'
-        'Перепроверьте все поля, которые вы заполнили ранее. Бот не может проверить их корректность автоматически.\n\n'
-        '⚠️ Если данные неверны, это может привести к следующим проблемам:\n'
-        '- Фото могут не загружаться;\n'
-        '- Пользователи не смогут войти в канал;\n'
-        '- И другие неполадки.\n\n'
-        'Пожалуйста, убедитесь, что всё заполнено правильно!', reply_markup=await create_good(channel_id))
+        else:
+            await call.message.edit_text(
+            f'⚙️ <b>ВНИМАНИЕ</b>\n\n'
+            'Перепроверьте все поля, которые вы заполнили ранее. Бот не может проверить их корректность автоматически.\n\n'
+            '⚠️ Если данные неверны, это может привести к следующим проблемам:\n'
+            '- Фото могут не загружаться;\n'
+            '- Пользователи не смогут войти в канал;\n'
+            '- И другие неполадки.\n\n'
+            'Пожалуйста, убедитесь, что всё заполнено правильно!', reply_markup=await create_good(channel_id))
     if action == 'create_one':
         channel_id = call.data.split(';')[2]
 

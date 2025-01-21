@@ -559,7 +559,20 @@ async def cooperation(message: types.Message, state: FSMContext):
         [types.KeyboardButton(text='📝Добавить канал', request_chat=types.KeyboardButtonRequestChat(
             request_id=1,
             chat_is_channel=True,
-            chat_is_forum=False
+            chat_is_forum=False,
+            user_administrator_rights=types.ChatAdministratorRights(
+                is_anonymous=True,
+                can_manage_chat=True,
+                can_delete_messages=True,
+                can_manage_video_chats=True,
+                can_restrict_members=True,
+                can_promote_members=True,
+                can_change_info=True,
+                can_invite_users=True,
+                can_post_stories=True,
+                can_edit_stories=True,
+                can_delete_stories=True,
+            )
         ))]
     ]
 
@@ -576,7 +589,13 @@ async def cooperation(message: types.Message, state: FSMContext):
 async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
     tg_id = message.from_user.id
     channel_id = message.chat_shared.chat_id
-    info = await bot.get_chat(channel_id)
+    try:
+        info = await bot.get_chat(channel_id)
+    except Exception as ex:
+        await message.answer(
+            "<b>Что-то пошло не так! 😟</b>\n\n"
+            "Убедитесь, что бот добавлен в канал как администратор и пересылаете сообщение из канала. Попробуйте еще раз.")
+        return
     channel_title = info.title
     if channel_title and info.type == 'channel':
         try:
