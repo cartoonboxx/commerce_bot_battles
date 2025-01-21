@@ -271,10 +271,6 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
     tg_id = call.from_user.id
     if action == 'delete':
         await call.message.edit_text('Вы уверены что хотите удалить канал?', reply_markup=back_main_menu_add_channel2(channel_id))
-    if action == 'support':
-        support_link = generate_support_link(channel_id)
-        await call.message.edit_text(
-            f'<b>🛠️ Ваша ссылка для принятия вопросов от пользователей анонимно:</b> \n\n{support_link}\n\nВопросы будут приходить в админ-чат.',reply_markup=await back_main_menu_add_channel(channel_id))
     if action == 'adminchat':
         await state.set_state(AddChat.q1)
         await state.update_data(channel_id=channel_id)
@@ -317,10 +313,8 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 
         kb = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
 
-        await call.message.answer(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей. Любой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\n<b>⁉️ Как добавить админ-чат: </b>\n\n1. Добавьте бота в нужный чат.\n2. Перешлите сообщение от имени чата. \n3. Назначьте бота администратором с правами на публикацию!''',
-        reply_markup=await back_main_menu_add_channel(channel_id) )
-
-        await call.message.answer('Для выбора используйте кнопку ниже', reply_markup=kb)
+        await call.message.answer(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей.\n\nЛюбой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.''', reply_markup=await back_main_menu_add_channel(channel_id) )
+        await call.message.answer('Для установки админ-чата используйте кнопку ниже', reply_markup=kb)
 
     if action == 'create':
         channel_info = await db.check_channel_info_by_id(channel_id)
@@ -418,10 +412,10 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
     if action == 'choise_type':
         channel_id = call.data.split(';')[2]
         kb = InlineKeyboardBuilder()
-        kb.button(text='Посты с одной фотографией', callback_data=f'channelsetting;create_one;{channel_id}')
-        kb.button(text='Посты с несколькими фото', callback_data=f'channelsetting;create_good;{channel_id}')
+        kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
+        kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
         kb.adjust(1)
-        await call.message.edit_text(text='Выберите тип батла', reply_markup=kb.as_markup())
+        await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
 
     if action == 'channellink':
         channel_info = await db.check_channel_info_by_id(channel_id)
@@ -960,9 +954,9 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await state.update_data(battle_id=battle_id)
         kb.button(text='🔙 Назад', callback_data=f'optionactivebattle;{battle_id}')
         kb.adjust(1)
-        await call.message.edit_text('Вы точно хотите удалить батл? Введите "1234", чтобы удалить', reply_markup=kb.as_markup())
+        await call.message.edit_text('⚠️ <b>Вы уверены, что хотите удалить батл?</b>\n\n''Введите <code>1234</code>, чтобы подтвердить удаление. 🗑️', reply_markup=kb.as_markup())
     if action == 'fake':
-        await call.message.edit_text('<b>⚙️ Отправьте фото, чтобы добавить фото в батл.</b> \n\n Используйте этот метод загрузки фото только в крайних случаях, за раз можно отправить несколько фото.', reply_markup=await back_battle__active_setting_kb(battle_id))
+        await call.message.edit_text('<b>⚙️ Отправьте фото, чтобы добавить фото в батл.</b> \n\n Используйте этот метод загрузки фото только в тестовых случаях, за раз можно отправить несколько фото.', reply_markup=await back_battle__active_setting_kb(battle_id))
         await state.set_state(AddFakePhoto.q1)
         await state.update_data(battle_id=battle_id)
         return
