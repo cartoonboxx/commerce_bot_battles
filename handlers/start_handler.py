@@ -585,8 +585,8 @@ async def cooperation(message: types.Message, state: FSMContext):
                 can_post_stories=False,
                 can_edit_stories=False,
                 can_delete_stories=False,
-                can_post_messages=True,
-                can_edit_messages=True
+                # can_post_messages=True,
+                # can_edit_messages=True
             )
         ))]
     ]

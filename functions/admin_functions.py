@@ -309,8 +309,8 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
                     can_post_stories=False,
                     can_edit_stories=False,
                     can_delete_stories=False,
-                    can_post_messages=True,
-                    can_edit_messages=True
+                    # can_post_messages=True,
+                    # can_edit_messages=True
                 )
             ))]
         ]
