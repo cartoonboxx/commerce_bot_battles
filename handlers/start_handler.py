@@ -675,7 +675,8 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
         await message.answer('Не похоже на число, попробуйте ещё раз')
 
 @dp.callback_query(lambda c: c.data.startswith('backtosettings'))
-async def option_channel_handler(callback: types.CallbackQuery):
+async def option_channel_handler(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
     channel_id = callback.data.split(';')[1]
     await settings_channel(callback, channel_id)
 
