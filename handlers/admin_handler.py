@@ -373,7 +373,13 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
         text_users = ''
         print('1', winners)
         for user in winners:
+
+
             current_user = await db.check_info_users_by_tg_id(user[1])
+            if current_user is None:
+                '''Для фейк-фото'''
+                print(user)
+                current_user = [0, user[1], 0, 'Unknown']
             text_users += f'- Участник @{current_user[3]} ({current_user[1]})\n'
         await callback.message.answer(f'⚔️ Итоги раунда:\n\n{text_users}', reply_markup=kb.as_markup())
     else:
