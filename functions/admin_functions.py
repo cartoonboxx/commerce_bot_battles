@@ -235,14 +235,6 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
             await message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
         else:
             await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
-    if action == 'end':
-        await state.set_state(AddBattleEnd.q1)
-        await state.update_data(battle_id=battle_id)
-        await message.edit_text('<b>⚙️ Введите время конца набора фото в формате: 00:00:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
-    if action == 'participants':
-        await state.set_state(AddBattleParticipants.q1)
-        await state.update_data(battle_id=battle_id)
-        await message.edit_text('<b>⚙️ Введите минимальное кол-во участников для начала батла. \n\n Отправьте только число</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'battlepost':
         await state.set_state(AddBattlePost.q1)
         await state.update_data(battle_id=battle_id)

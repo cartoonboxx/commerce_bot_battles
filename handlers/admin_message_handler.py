@@ -185,29 +185,6 @@ async def add_battle_start_time(message: types.Message, state: FSMContext):
     await battle_answer_func_message(message, battle_id, state)
     await state.clear()
 
-@dp.message(AddBattleEnd.q1)
-async def add_battle_end_time(message: types.Message, state: FSMContext):
-    time_text = message.text
-    time_pattern = r"^(?:[01]\d|2[0-3]):[0-5]\d$"
-
-    if not re.match(time_pattern, time_text):
-        await message.answer("Неверный формат времени. Пожалуйста, введите время в формате ЧЧ:ММ, например, 14:30.")
-        return
-
-    try:
-        valid_time = datetime.datetime.strptime(time_text, '%H:%M').time()
-    except ValueError:
-        await message.answer("Неверный формат времени. Пожалуйста, введите время в формате ЧЧ:ММ, например, 14:30.")
-        return
-
-    data = await state.get_data()
-    battle_id = data['battle_id']
-    await db.update_battle_end(battle_id, time_text)
-    await battle_answer_func_message(message, battle_id, state)
-    await state.clear()
-    await bot.delete_message(message.chat.id, message.message_id)
-    await bot.delete_message(message.chat.id, message.message_id - 1)
-
 @dp.message(AddActiveBattleEnd.q1)
 async def add_active_battle_end_time(message: types.Message, state: FSMContext):
     time = message.text
@@ -346,23 +323,6 @@ async def declineCreatePostVote(call: types.CallbackQuery, state: FSMContext):
     else:
         await state.clear()
         await battle_one_message(call.message, battle_id)
-
-@dp.message(AddBattleParticipants.q1)
-async def add_battle_participants(message: types.Message, state: FSMContext):
-    patricipants = message.text
-    data = await state.get_data()
-    battle_id = data['battle_id']
-    await bot.delete_message(message.chat.id, message.message_id)
-    await bot.delete_message(message.chat.id, message.message_id - 1)
-    if patricipants.isdigit():
-        if int(patricipants) < 2:
-            await message.answer("Минимальное кол-во участников должно быть больше 2", reply_markup=await back_main_menu_create_battle(battle_id))
-            return
-        await db.update_participants_battle(battle_id, patricipants)
-        await battle_answer_func_message(message, battle_id, state)
-        await state.clear()
-    else:
-        await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_main_menu_create_battle(battle_id))
 
 @dp.message(AddFakePhoto.q1)
 async def add_fake_photo(message: types.Message, state: FSMContext):
