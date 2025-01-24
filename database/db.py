@@ -409,8 +409,6 @@ async def update_battle_photos_votes_and_number_post(id, votes, number_post):
         await db.execute('UPDATE battle_photos SET votes = ?, number_post = ? WHERE id = ?', (votes, number_post, id))
         await db.commit()
 
-
-
 async def delete_user_from_battle_photos(id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('DELETE FROM battle_photos WHERE id = ?', (id, ))
@@ -426,12 +424,10 @@ async def check_battle_photos_by_battle_id_and_number_post(battle_id, number_pos
         cursor = await db.execute('SELECT * FROM battle_photos WHERE battle_id = ? AND number_post = ?', (battle_id, number_post))
         return await cursor.fetchall()
 
-
 async def update_number_post_in_battle_photos_by_id(id,number_post):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battle_photos SET number_post = ? WHERE id = ?', (number_post, id))
         await db.commit()
-
 
 async def update_count_in_posts(battle_id,count_in_post):
     async with aiosqlite.connect(name_db) as db:
@@ -445,13 +441,11 @@ async def increment_count_in_posts(battle_id):
 
 async def check_all_battle_photos_where_status_1_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
-        # cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ? AND number_post <> 0', (battle_id, ))
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ? AND number_post <> 0)', (battle_id, ))
         return await cursor.fetchall()
 
 async def before_check_all_battle_photos_where_status_1_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
-        # cursor = await db.execute('SELECT * FROM battle_photos WHERE status = 1 AND battle_id = ? AND number_post <> 0', (battle_id, ))
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ?)', (battle_id, ))
         return await cursor.fetchall()
 
@@ -459,7 +453,6 @@ async def check_all_battle_photos_where_number_post_0_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (number_post = 0 AND battle_id = ? AND status = 1)', (battle_id, ))
         return await cursor.fetchall()
-
 
 async def check_all_battle_photos_where_status_1_and_battle_id_bigger_than(battle_id, start_id):
     async with aiosqlite.connect(name_db) as db:
@@ -475,8 +468,6 @@ async def update_min_golos_battle(battle_id, min_golos):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battles SET min_golos = ? WHERE id = ?', (min_golos, battle_id))
         await db.commit()
-
-
 
 async def update_end_round_battle(battle_id,end_round):
     async with aiosqlite.connect(name_db) as db:
@@ -512,7 +503,6 @@ async def add_battle_photo(tg_id, battle_id, photo):
         async with db.execute('INSERT INTO battle_photos (tg_id, battle_id, photo) VALUES (?, ?, ?)', (tg_id, battle_id, photo)) as cursor:
             await db.commit()
             return cursor.lastrowid
-
 
 async def check_all_battles_where_status_1():
     async with aiosqlite.connect(name_db) as db:
@@ -586,8 +576,6 @@ async def check_battle_info(battle_id):
         await cursor.close()
         return rows
 
-
-
 async def create_new_battle_return_id(channel_id, tg_id):
     async with aiosqlite.connect(name_db) as db:
         async with db.execute('INSERT INTO battles (channel_id, tg_id) VALUES (?, ?)', (channel_id, tg_id)) as cursor:
@@ -630,7 +618,7 @@ async def check_channel_info_by_link(url):
         rows = await cursor.fetchone()
         await cursor.close()
         return rows
-    
+
 async def check_channel_duplicate(channel_id):  # Исправлено название функции для ясности
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM channels WHERE id = ?', (channel_id,))  # Используем channel_id

@@ -122,7 +122,7 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Отправить фото', callback_data=f'battlejoin;{battle_id}')
     kb.button(text='✍️ Задать вопрос', callback_data=f'battlequestion;{battle_id}')
-    kb.button(text='🔙 Назад', callback_data=f'usermenu;battles')
+    kb.button(text='🔙 Назад', callback_data=f'backtochannel_list')
     kb.adjust(1)
     await call.message.edit_text(f'''<b>{battle_info[3]}</b>\n\nСсылка на канал - {battle_info[5]}\nПриз: {battle_info[6]}\n\n<b>Начало батла: {battle_info[9]} МСК</b>''',disable_web_page_preview=True, reply_markup=kb.as_markup())
 
@@ -412,10 +412,6 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
     channel_info = await db.check_channel_info_by_id(channel_id)
     admin_chat_id = channel_info[4]
     kbs = InlineKeyboardBuilder()
-    # kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{call.message.message_id}')
-    # kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id};{call.message.message_id}')
-    # kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id};{call.message.message_id}')
-    # kbs.adjust(2, 1)
 
     try:
         message_id_from = await bot.send_photo(chat_id=admin_chat_id, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())

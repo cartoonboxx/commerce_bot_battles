@@ -206,6 +206,8 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
     message = callback.message
     if action == 'createbattle':
 
+        await db.update_battle_end(battle_id, "00:00")
+        await db.update_participants_battle(battle_id, 2)
         await db.update_status_battle(battle_id, 0)
         if battle_info[3] == '-'or battle_info[5] == '-' or battle_info[6] == '-' or battle_info[9] == '-' or battle_info[10] == 0 or battle_info[17] == 0:
 
@@ -535,6 +537,11 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
     if action =='start':
         battle_info = await db.check_battle_info(battle_id)
         count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
+        count_photos = len(await db.check_all_battle_photos_where_battle_id(battle_info[0]))
+        if count_photos % battle_info[13] != 0:
+            await call.answer(text='Нельзя начать раунд, пока не наберется четное количество фотографий', show_alert=True)
+            return
+
         if int(count_users_in_battle) < int(battle_info[10]):
             await call.answer('Нельзя начать раунд, пока количество участников меньше минимального', show_alert=True)
             return
