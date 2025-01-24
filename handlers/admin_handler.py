@@ -166,7 +166,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
 
         if battle_info[20] == '-':
             if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
@@ -219,7 +219,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
                 current_battle = await check_battle_info(battle_id)
 
                 if current_battle[22] == 0:
-                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 elif current_battle[22] != 0 and current_battle[7] != 'Финал':
                     await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nВы прошли предыдущий раунд. Набирайте голоса и увидимся в ФИНАЛЕ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 if current_battle[7] == "Финал":
@@ -261,7 +261,7 @@ async def approve_continue_battle_handler(callback: types.CallbackQuery):
         kb.adjust(1)
         if battle_info[20] == '-':
             if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
         else:
@@ -537,8 +537,7 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
     kb.button(text='Ссылка на пост', url=new_channel_link)
     kb.button(text='Ссылка на канал', url=battle_info[5])
     kb.adjust(1)
-    await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
-                ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+    await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;createbattle'))

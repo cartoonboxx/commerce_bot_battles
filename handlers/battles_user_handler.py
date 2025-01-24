@@ -430,7 +430,7 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
 
     except Exception as e:
         await call.answer('<b>❌ При отправке фото произошла ошибка</b>')
-    await call.message.edit_text('<b>⏳ Фото  отправлено на проверку </b>')
+    await call.message.edit_text('<b>⏳ Фото отправлено на проверку\n\n🚫 Не блокируйте бота, иначе можете всё пропустить </b>')
     await state.clear()
 
 def replace_last_digits(url, new_digits):
@@ -467,8 +467,13 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     battle_info = await db.check_battle_info(battle_id)
     if action == 'approve':
         try:
+            def url_channel():
+             kb = InlineKeyboardBuilder()
+             kb.button(text='Ссылка на канал', url=battle_info[5])
+             kb.adjust(1)
+             return kb.as_markup(resize_keyboard=True)
             if battle_info[23] == 2:
-                await bot.send_message(chat_id=user_id, text=f'''<b>✅ ВАШЕ ФОТО ОДОБРЕНО</b>\n\nПоздравляем, теперь вы участвуете в фото-батле. \nОжидайте объявление начала батла в канале \n\nСсылка на вступление в канал - {battle_info[5]}''', disable_web_page_preview=True)
+                await bot.send_message(chat_id=user_id, text=f'''<b>✅ ФОТО ОДОБРЕНО</b>\n\nОжидайте, вас скоро опубликуем и  пришлём уведомление.''', disable_web_page_preview=True, reply_markup=url_channel())
         except Exception as e:
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
@@ -481,7 +486,6 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         kb.button(text='✅ Принят', callback_data='nonefsafs')
         # await call.message.edit_reply_markup(reply_markup=kb.as_markup())
         await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=correct_message_ID, reply_markup=kb.as_markup())
-
 
         if battle_info[23] == 1:
             channel_info = await db.check_channel_info_by_id(battle_info[1])
@@ -511,8 +515,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
             kb.button(text='Ссылка на пост', url=new_channel_link)
             kb.button(text='Ссылка на канал', url=battle_info[5])
             kb.adjust(1)
-            await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
-                            ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+            await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
     else:
         await state.update_data(user_id=user_id)

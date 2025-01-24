@@ -521,7 +521,7 @@ async def redact_all_status_posts(battle_id, photo_send):
         kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{index+1}')
         kb.adjust(1)
         if photo_send and battle_info[22] == 0:
-            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
+            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
         ''', chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
         else:
             await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
@@ -593,30 +593,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await active_battle_func(call, battle_id)
         await state.update_data(battle_id=battle_id)
 
-    if action == 'check_photo':
-        battle_info = await db.check_battle_info(battle_id)
-
-        channel_id = battle_info[1]
-        channel_info = await db.check_channel_info_by_id(channel_id)
-        channel_tg_id = channel_info[2]
-        members_in_post = battle_info[13]
-
-        all_battle_users = await db.check_all_battle_photos_where_number_post_0_and_battle_id(battle_id)
-        posts = [all_battle_users[i:i + members_in_post] for i in range(0, len(all_battle_users), members_in_post)]
-
-        resultation = 0
-        for post in posts:
-            for user in post:
-                resultation += 1
-
-        post_text = ''
-        if resultation % members_in_post == 0 and resultation != 0:
-            post_text = 'Можете выкладывать новые фотографии'
-        else:
-            post_text = 'Выкладывать новые фотографии не рекомендуется'
-
-        await call.message.answer(f'Количество новых фото: {resultation}. {post_text}')
-
     if action == 'update_photo':
 
         await active_battle_func(call, battle_id)
@@ -663,7 +639,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             index = start_page
 
             if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
                 text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             await asyncio.sleep(5)
@@ -692,13 +668,8 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 for user in post:
                     resultation2 += 1
 
-            post_text = ''
             if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
-                post_text = 'Можете выкладывать новые фотографии'
-            else:
-                post_text = 'Выкладывать новые фотографии не рекомендуется'
-
-            await call.message.answer(f'Количество новых фото: {resultation1}. {post_text}')
+             await call.message.answer(f'✅ Идёт публикация новых фото: {resultation1} шт.')
 
         count = 0
 
@@ -717,7 +688,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
             if battle_info[20] == '-':
                 if battle_info[22] == 0:
-                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ ИДЕТ НАБОР НА БАТЛ ТУТ</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
                 else:
                     text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
             else:
@@ -770,8 +741,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
                     current_battle = await check_battle_info(battle_id)
 
-                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>\n\nПоздравляем, вы участвуете в фото-батле. Набирайте голоса и увидимся в следующем раунде
-                    ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
                 except Exception as e:
                     print(e)
@@ -835,7 +805,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     reply_markup=kb.as_markup())
             else:
 
-                await call.answer('Выставлять новые фото не рекомендуется, подождите, когда появятся новые фотографии')
+                await call.answer('Нужно ещё фото')
 
 
 

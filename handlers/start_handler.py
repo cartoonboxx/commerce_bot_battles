@@ -190,9 +190,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     if battle_info[23] == 2:
                         await bot.send_media_group(chat_id=message.chat.id, media=media_group)
 
-                        await bot.send_message(chat_id=message.chat.id, text="Голосование за определенного кандидата", reply_markup=kbr.as_markup())
+                        await bot.send_message(chat_id=message.chat.id, text="<b>🙋 Выберите участника, голос за которого хотите отдать:</b>", reply_markup=kbr.as_markup())
                     else:
-                        await bot.send_photo(chat_id=message.chat.id, photo=current_media[-1][3], caption='Голосование за кандидата', reply_markup=kbr.as_markup())
+                        await bot.send_photo(chat_id=message.chat.id, photo=current_media[-1][3], caption='<b>🙋 Выберите участника, голос за которого хотите отдать:</b>', reply_markup=kbr.as_markup())
                     return
 
                 battle_photos_info = await db.check_battle_photos_where_id1(account_id)
