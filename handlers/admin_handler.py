@@ -43,9 +43,7 @@ async def create_battle(call: types.CallbackQuery, battle_id):
 - Ссылка на канал: {battle_info[5]}
 - Пост о начале батла: {post_start_battle}
 - Приз: {battle_info[6]}
-- Время начала: {battle_info[8]}
-- Время завершения: {battle_info[9]}
-- Минимальное кол-во участников: {battle_info[10]}                                                    
+- Время начала: {battle_info[8]}                                                    
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
     
 @dp.callback_query(lambda c: c.data.startswith('spisokadminov'))
@@ -638,9 +636,7 @@ async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContex
 - Ссылка на канал: {channel_tg_id}
 - Пост о начале батла: {post_start_battle}
 - Приз: {battle_info[6]}
-- Время начала: {time_now}
-- Время завершения: {battle_info[9]}
-- Минимальное кол-во участников: {battle_info[10]}                                                    
+- Время начала: {time_now}                                                   
     ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
 
 

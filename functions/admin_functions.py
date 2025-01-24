@@ -157,9 +157,7 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
 - Ссылка на канал: {battle_info[5]}
 - Пост о начале батла: {post_start_battle}
 - Приз: {battle_info[6]}
-- Время начала: {time_now}
-- Время завершения: {battle_info[9]}
-- Минимальное кол-во участников: {battle_info[10]}                                                    
+- Время начала: {time_now}                                                  
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
 
 async def kb_return_2page_battlecreate(battle_id):
@@ -388,9 +386,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 - Ссылка на канал: {channel_tg_id}
 - Пост о начале батла: {post_start_battle}
 - Приз: {battle_info[6]}
-- Время начала: {time_now}
-- Время завершения: {battle_info[9]}
-- Минимальное кол-во участников: {battle_info[10]}                                                    
+- Время начала: {time_now}                                                  
 ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
     if action == 'channelpost':
         await state.update_data(channel_id=channel_id)
