@@ -272,21 +272,22 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 
         if channel_info[4] != 0:
             kb = InlineKeyboardBuilder()
-            kb.button(text='Изменить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
+            kb.button(text='Изменить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics&claim=owner')
             kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
             kb.adjust(1)
 
             await call.message.edit_text('Для изменения админ-чата нажмите кнопку ниже', reply_markup=kb.as_markup())
         else:
             kb = InlineKeyboardBuilder()
-            kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics',
+            kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics&claim=owner',
                       )
-            kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
+            kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channel_id}')
             kb.adjust(1)
             await call.message.edit_text('Админ-чат не установлен, для установки нажмите кнопку ниже', reply_markup=kb.as_markup())
 
     if action == 'correct_chat':
         channel_info = await db.check_channel_info_by_id(channel_id)
+        print(channel_info[4])
         chat_info = await bot.get_chat(chat_id=channel_info[4])
         print(chat_info)
         kb = InlineKeyboardBuilder()

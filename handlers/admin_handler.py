@@ -123,19 +123,24 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                 await db.update_channels_post_link_where_id(message_link, channel_id_db)
                 channel = chat_member_update.chat
 
+                print(channel)
+
                 # Способ 1: Для публичных каналов с username
                 if channel.username:
                     channel_link = f"https://t.me/{channel.username}"
+
 
                 # Способ 2: Для приватных каналов (создаем пригласительную ссылку)
                 else:
                     try:
                         # Создаем новую пригласительную ссылку
+
                         invite = await bot.create_chat_invite_link(
                             chat_id=channel.id,
                             name="Bot auto-link",
                             creates_join_request=False
                         )
+                        print(invite)
                         channel_link = invite.invite_link
                     except Exception as e:
                         channel_link = None
