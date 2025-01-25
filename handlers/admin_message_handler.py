@@ -43,44 +43,6 @@ async def add_chat_handler(message: types.Message, state: FSMContext):
         await message.answer(
     '''<b>❌ Ошибка!</b>\n\n- Бот должен быть администратором в чате. Пожалуйста, предоставьте боту права администратора и попробуйте снова.\n\n- Сообщение должно быть отправлено от имени чата, а не переслано от участника. Убедитесь, что пересылаете сообщение из чата.\n\n<b>ℹ️ Чтобы избежать ошибок:</b>\n1. Проверьте, что бот имеет права администратора.\n2. Убедитесь, что сообщение отправлено из чата, а не от пользователя.\n\n<b>Если возникнут вопросы, пишите нам в разделе 🛠️ Тех. поддержка! </b>''', reply_markup=admin_kb.start_menu_for_admins())
         await state.clear()
-@dp.message(AddChannelLink.q1)
-async def add_channel_link_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    channel_id = data['channel_id']
-    if message.text.startswith('https://t.me/'):
-        await db.update_channel_link_where_id(message.text, channel_id)
-        await message.answer(
-        "<b>✅ Ссылка добавлена!</b>\nЕсли нужно, вы всегда можете изменить её в настройках.",
-        reply_markup=await back_main_menu_add_channel(channel_id)
-        )
-        await state.clear()
-    else:
-        await message.answer(
-        "<b>⚠️ Это не похоже на ссылку! </b>\n\n"
-        "Проверьте, чтобы ваша ссылка начиналась с https://t.me/ \n\n"
-        "Если вы отправили юзернейм (например, @username), замените его на правильную ссылку, "
-        "чтобы пользователи могли попасть в ваш канал.",
-        reply_markup=await back_main_menu_add_channel(channel_id)
-        )
-
-@dp.message(AddChannelPost.q1)
-async def add_channel_post_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    channel_id = data['channel_id']
-    if message.text.startswith('https://t.me/'):
-        await db.update_channels_post_link_where_id(message.text, channel_id)
-        await message.answer(
-            text="<b>✅ Ссылка успешно добавлена!</b>\n"
-            "Вы всегда можете изменить её в настройках, если это потребуется. Всё готово для работы!",
-            reply_markup=await back_main_menu_add_channel(channel_id)
-        )
-        await state.clear()
-    else:
-        await message.answer(
-            text="<b>⚠️ Неправильный формат ссылки!</b>\n"
-            "Ссылка должна начинаться с https://t.me/. Проверьте и отправьте корректную ссылку на пост из вашего канала.",
-            reply_markup=await back_main_menu_add_channel(channel_id)
-        )
 
 @dp.message(AddBattleName.q1)
 async def add_battle_name(message: types.Message, state: FSMContext):

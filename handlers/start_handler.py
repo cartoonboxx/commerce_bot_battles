@@ -684,7 +684,7 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
             await message.answer(f'{count} голосов добавлено')
             await state.clear()
         else:
-            await message.answer('Максимум можно наркутить 3 голоса')
+            await message.answer('За 1 раз максимум можно накрутить3 голоса')
     else:
         await message.answer('Не похоже на число, попробуйте ещё раз')
 

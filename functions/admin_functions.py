@@ -207,7 +207,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
         await db.update_battle_end(battle_id, "00:00")
         await db.update_participants_battle(battle_id, 2)
         await db.update_status_battle(battle_id, 0)
-        if battle_info[3] == '-'or battle_info[5] == '-' or battle_info[6] == '-' or battle_info[9] == '-' or battle_info[10] == 0 or battle_info[17] == 0:
+        if battle_info[3] == '-' or battle_info[5] == '-' or battle_info[6] == '-' or battle_info[17] == 0:
 
             await callback.answer('Заполните все поля', show_alert=True)
             return
@@ -308,20 +308,6 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
         await call.message.answer(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей.\n\nЛюбой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.''', reply_markup=await back_main_menu_add_channel(channel_id) )
         await call.message.answer('Для установки админ-чата используйте кнопку ниже', reply_markup=kb)
 
-    if action == 'create':
-        channel_info = await db.check_channel_info_by_id(channel_id)
-        if channel_info[4] == '0'or channel_info[5] == '-' or channel_info[6] == '-':
-            await call.answer('Заполните все поля', show_alert=True)
-            return
-        else:
-            await call.message.edit_text(
-            f'⚙️ <b>ВНИМАНИЕ</b>\n\n'
-            'Перепроверьте все поля, которые вы заполнили ранее. Бот не может проверить их корректность автоматически.\n\n'
-            '⚠️ Если данные неверны, это может привести к следующим проблемам:\n'
-            '- Фото могут не загружаться;\n'
-            '- Пользователи не смогут войти в канал;\n'
-            '- И другие неполадки.\n\n'
-            'Пожалуйста, убедитесь, что всё заполнено правильно!', reply_markup=await create_good(channel_id))
     if action == 'create_one':
         channel_id = call.data.split(';')[2]
 
@@ -388,36 +374,17 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 - Приз: {battle_info[6]}
 - Время начала: {time_now}                                                  
 ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
-    if action == 'channelpost':
-        await state.update_data(channel_id=channel_id)
-        await state.set_state(AddChannelPost.q1)
-        channel_info = await db.check_channel_info_by_id(channel_id)
-        await call.message.edit_text(
-    "<b>⚙️ Добавление ссылки на пост </b>\n\n"
-    f'Текущая ссылка на пост: {channel_info[6]}\n\n'
-    "ℹ️ Этот параметр необходим для технической работы бота.\n\n"
-    "<b>⁉️ Пожалуйста, отправьте ссылку на любой пост из вашего канала.</b>",
-    reply_markup=await back_main_menu_add_channel(channel_id), disable_web_page_preview=True)
-
     if action == 'choise_type':
-        channel_id = call.data.split(';')[2]
-        kb = InlineKeyboardBuilder()
-        kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
-        kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
-        kb.adjust(1)
-        await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
-
-    if action == 'channellink':
-        channel_info = await db.check_channel_info_by_id(channel_id)
-        await state.update_data(channel_id=channel_id)
-        await state.set_state(AddChannelLink.q1)
-        await call.message.edit_text(
-    f'<b>⚙️ Добавление ссылки на канал </b>\n\n'
-    f'Текущая ссылка на канал: {channel_info[5]}\n\n'
-    f'ℹ️ Ссылка на ваш канал будет использоваться для уведомлений участников батла, а также будет отображаться в информации о батле.\n\n'
-    f'<b>⁉️ Пожалуйста, отправьте корректную ссылку на канал, чтобы пользователи могли перейти на него.</b>',
-    reply_markup=await back_main_menu_add_channel(channel_id))
-
+     channel_info = await db.check_channel_info_by_id(channel_id)
+     if channel_info[4] == 0:
+        await call.answer('Заполните все поля', show_alert=True)
+        return
+     else:
+         kb = InlineKeyboardBuilder()
+         kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
+         kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
+         kb.adjust(1)
+         await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
 
 async def battle_one_message(message, battle_id):
 
@@ -527,14 +494,17 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
         count_photos = len(await db.check_all_battle_photos_where_battle_id(battle_info[0]))
         if count_photos % battle_info[13] != 0:
-            await call.answer(text='Нельзя начать раунд, пока не наберется четное количество фотографий', show_alert=True)
+            await call.answer(text='Нужно еще фото', show_alert=True)
             return
 
         if int(count_users_in_battle) < int(battle_info[10]):
-            await call.answer('Нельзя начать раунд, пока количество участников меньше минимального', show_alert=True)
+            await call.answer('Нельзя начать раунд, пока количество участников меньше 1', show_alert=True)
             return
         if battle_info[13] == 0:
             await call.answer('Нельзя начать раунд, пока не установлено количество участников в посте', show_alert=True)
+            return
+        if battle_info[7] == '-':
+            await call.answer('Нельзя начать раунд, пока не указано, какой раунд по счёту', show_alert=True)
             return
         if battle_info[11] == 0:
             await call.answer('Нельзя начать раунд, пока не установлено количество голосов для победы', show_alert=True)

@@ -32,13 +32,6 @@ class AddChannel(StatesGroup):
 class AddChat(StatesGroup):
     q1 = State()
 
-class AddChannelLink(StatesGroup):
-    q1 = State()
-
-class AddChannelPost(StatesGroup):
-    q1 = State()
-
-# added
 class AddLinkToBattle(StatesGroup):
     q1 = State()
 

@@ -470,6 +470,10 @@ async def one_battle_message(call: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('firstround;iagree'))
 async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]
+    battle_info = await db.check_battle_info(battle_id)
+    if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
+        await call.answer('Заполните все поля', show_alert=True)
+        return
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Запомнил(а)", callback_data=f"firstround;publish;{battle_id}")
     kb.adjust(1)
