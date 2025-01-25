@@ -272,14 +272,14 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 
         if channel_info[4] != 0:
             kb = InlineKeyboardBuilder()
-            kb.button(text='Изменить', url=f'http://t.me/{bot_name}?startgroup&admin=change_info+invite_users')
+            kb.button(text='Изменить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
             kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
             kb.adjust(1)
 
             await call.message.edit_text('Для изменения админ-чата нажмите кнопку ниже', reply_markup=kb.as_markup())
         else:
             kb = InlineKeyboardBuilder()
-            kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=change_info+invite_users',
+            kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics',
                       )
             kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
             kb.adjust(1)

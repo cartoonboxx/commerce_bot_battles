@@ -558,9 +558,8 @@ async def cooperation(message: types.Message, state: FSMContext):
 
     GetChannelId.user = message.chat.id
     print(message.chat.id)
-
     kb = InlineKeyboardBuilder()
-    kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=change_info+invite_users')
+    kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1)
 
