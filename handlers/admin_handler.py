@@ -14,7 +14,7 @@ from aiogram.types import InputMediaPhoto
 from functions.admin_functions import *
 from database.db import *
 import datetime
-from aiogram.enums import parse_mode
+from aiogram.enums import parse_mode, chat_type
 
 
 
@@ -83,6 +83,80 @@ async def channel_setting_handler(callback: types.CallbackQuery, state:FSMContex
     action = callback.data.split(';')[1]
     channel_id = callback.data.split(';')[2]
     await chennelsetting_func(callback,channel_id, action, state )
+
+@dp.message(lambda message: message.content_type == types.ContentType.NEW_CHAT_MEMBERS)
+async def send_welcome(message: types.Message):
+    bot_obj = await bot.get_me()
+    bot_id = bot_obj.id
+    user_id = message.from_user.id
+    channel_id = GetChannelId.id
+    print(message)
+    for chat_member in message.new_chat_members:
+        if chat_member.id == bot_id:
+            kb = InlineKeyboardBuilder()
+            kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channel_id}')
+            await bot.send_message(user_id, '''<b>✅ Чат успешно добавлен!</b>\n\nℹ️ Теперь фото для батлов и сообщения от пользователей будут отправляться в этот чат. Любой участник сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\nСпасибо, что доверяете нашему боту!''',
+                                   reply_markup=kb.as_markup())
+            '''Добавление чата в базу данных'''
+            await db.uopdate_admin_chat_by_chat_id(chat_id=channel_id, admin_chat=message.chat.id)
+
+@dp.my_chat_member()
+async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
+    if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
+        # Проверяем, добавлен ли бот в канал
+        if chat_member_update.new_chat_member.status in ["administrator", "member"]:
+            channel_id = chat_member_update.chat.id
+            channel_title = chat_member_update.chat.title
+            user_id = GetChannelId.user
+            print(f"Бот добавлен в канал: {channel_title} (ID: {channel_id})")
+            tg_id = user_id
+
+
+            result = await db.add_new_cahnnel_by_chan_id(tg_id, channel_id, channel_title)
+            if result is True:
+                await db.add_battles_statistic(tg_id)
+                channels = await db.check_all_channels()
+                channel_id_db = channels[-1][0]
+
+                chan_id = str(channel_id).replace('-100', '')
+                message_link = f'https://t.me/c/{chan_id}/-1'
+                await db.update_channels_post_link_where_id(message_link, channel_id_db)
+                channel = chat_member_update.chat
+
+                # Способ 1: Для публичных каналов с username
+                if channel.username:
+                    channel_link = f"https://t.me/{channel.username}"
+
+                # Способ 2: Для приватных каналов (создаем пригласительную ссылку)
+                else:
+                    try:
+                        # Создаем новую пригласительную ссылку
+                        invite = await bot.create_chat_invite_link(
+                            chat_id=channel.id,
+                            name="Bot auto-link",
+                            creates_join_request=False
+                        )
+                        channel_link = invite.invite_link
+                    except Exception as e:
+                        channel_link = None
+                        print(f"Ошибка при создании ссылки: {e}")
+
+
+
+                await db.update_channel_link_where_id(channel_link, channel_id_db)
+
+                await bot.send_message(user_id,
+                    "<b>Канал успешно добавлен! 🎉</b>\n\n"
+                    "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
+                    "<u><i>Удачного пользования! 😉</i></u>")
+            else:
+                await bot.send_message(user_id,
+                    "<b>Этот канал уже добавлен! 🔄</b>\n\n"
+                    "Вы можете продолжить пользоваться нашим ботом для автоматизации фото-батлов в этом канале.",
+                    )
+                return
+            return
+
 
 @dp.callback_query(lambda c: c.data.startswith('approvedelete'))
 async def approve_delete_channel_handler(callback: types.CallbackQuery):

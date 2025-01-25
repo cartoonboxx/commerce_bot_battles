@@ -519,8 +519,9 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         await state.update_data(battle_id=battle_id)
         await state.update_data(tg_id=tg_id)
         await state.update_data(correct_message_ID=correct_message_ID)
+        delete_message_id = await call.message.answer("Введите причину:")
+        await state.update_data(delete_message_id=delete_message_id.message_id)
 
-        await call.message.answer("Введите причину:")
         if action == 'decline':
             await state.set_state(ReasonRejectOrBlock.q1)
 
@@ -543,7 +544,7 @@ async def reject_photo(message: types.Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
     kb.button(text='❌ Отклонен', callback_data='nonefsafs')
     await message.delete()
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    await bot.delete_message(chat_id=message.chat.id, message_id=data.get('delete_message_id'))
 
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=data.get('correct_message_ID'), reply_markup=kb.as_markup())
     await db.delete_user_from_battle_photos(data['photo_battle_id'])

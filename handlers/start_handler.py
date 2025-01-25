@@ -553,51 +553,23 @@ async def cooperation(message: types.Message, state: FSMContext):
             await state.set_state(stats_bot.admin2)
             await message.answer("<b>🚫 Неизвестная команда.</b>",)
             return
-    await state.set_state(AddChannel.q1)
+    # await state.set_state(AddChannel.q1)
 
-    kb_list = [
-        [types.KeyboardButton(text='📝Добавить канал', request_chat=types.KeyboardButtonRequestChat(
-            request_id=1,
-            chat_is_channel=True,
-            chat_is_forum=False,
-            user_administrator_rights=types.ChatAdministratorRights(
-                is_anonymous=True,
-                can_manage_chat=True,
-                can_delete_messages=True,
-                can_manage_video_chats=True,
-                can_restrict_members=True,
-                can_promote_members=True,
-                can_change_info=True,
-                can_invite_users=True,
-                can_post_stories=True,
-                can_edit_stories=True,
-                can_delete_stories=True,
-            ),
-            bot_administrator_rights=types.ChatAdministratorRights(
-                is_anonymous=False,
-                can_manage_chat=True,
-                can_delete_messages=True,
-                can_manage_video_chats=True,
-                can_restrict_members=True,
-                can_promote_members=True,
-                can_change_info=True,
-                can_invite_users=True,
-                can_post_stories=False,
-                can_edit_stories=False,
-                can_delete_stories=False,
-                # can_post_messages=True,
-                # can_edit_messages=True
-            )
-        ))]
-    ]
 
-    kb = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+    GetChannelId.user = message.chat.id
+    print(message.chat.id)
 
-    await message.answer(
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=change_info+invite_users')
+    kb.button(text='🔙 Назад', callback_data='backtochannels')
+    kb.adjust(1)
+
+    await message.edit_text(
     "<b>Добавление канала 📝</b>\n\n"
     "Чтобы подключить канал:\n\n"
     "1️⃣ <i>Добавьте бота в администраторы канала</i> с разрешением на публикацию и редактирование постов ➕\n"
-    "2️⃣ <i>Нажмите кнопку внизу и выберите нужный канал</i>\n", reply_markup=kb, show_alert=True)
+    "2️⃣ <i>Нажмите кнопку внизу и выберите нужный канал</i>\n", reply_markup=kb.as_markup(), show_alert=True,
+        disable_web_page_preview=True)
 
 @dp.message(AddChannel.q1)
 async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):

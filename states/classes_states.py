@@ -117,3 +117,7 @@ class AddVoices(StatesGroup):
 class Mailing(StatesGroup):
     q1 = State()
     q2 = State()
+
+class GetChannelId:
+    id: int
+    user: int

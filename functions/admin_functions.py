@@ -265,49 +265,35 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
     if action == 'delete':
         await call.message.edit_text('Вы уверены что хотите удалить канал?', reply_markup=back_main_menu_add_channel2(channel_id))
     if action == 'adminchat':
-        await state.set_state(AddChat.q1)
-        await state.update_data(channel_id=channel_id)
+        # await state.set_state(AddChat.q1)
+        # await state.update_data(channel_id=channel_id)
+        GetChannelId.id = channel_id
         channel_info = await db.check_channel_info_by_id(channel_id)
 
-        kb_list = [
-            [types.KeyboardButton(text='📝Добавить админ чат', request_chat=types.KeyboardButtonRequestChat(
-                request_id=1,
-                chat_is_channel=False,
-                user_administrator_rights=types.ChatAdministratorRights(
-                    is_anonymous=False,
-                    can_manage_chat=True,
-                    can_delete_messages=True,
-                    can_manage_video_chats=True,
-                    can_restrict_members=True,
-                    can_promote_members=True,
-                    can_change_info=True,
-                    can_invite_users=True,
-                    can_post_stories=True,
-                    can_edit_stories=True,
-                    can_delete_stories=True,
-                ),
-                bot_administrator_rights=types.ChatAdministratorRights(
-                    is_anonymous=False,
-                    can_manage_chat=True,
-                    can_delete_messages=True,
-                    can_manage_video_chats=True,
-                    can_restrict_members=True,
-                    can_promote_members=True,
-                    can_change_info=True,
-                    can_invite_users=True,
-                    can_post_stories=False,
-                    can_edit_stories=False,
-                    can_delete_stories=False,
-                    # can_post_messages=True,
-                    # can_edit_messages=True
-                )
-            ))]
-        ]
+        if channel_info[4] != 0:
+            kb = InlineKeyboardBuilder()
+            kb.button(text='Изменить', url=f'http://t.me/{bot_name}?startgroup&admin=change_info+invite_users')
+            kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
+            kb.adjust(1)
 
-        kb = ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+            await call.message.edit_text('Для изменения админ-чата нажмите кнопку ниже', reply_markup=kb.as_markup())
+        else:
+            kb = InlineKeyboardBuilder()
+            kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=change_info+invite_users',
+                      )
+            kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
+            kb.adjust(1)
+            await call.message.edit_text('Админ-чат не установлен, для установки нажмите кнопку ниже', reply_markup=kb.as_markup())
 
-        await call.message.answer(f'''<b>⚙️ Добавление чата для администраторов </b>\n\nТекущий ID админ-чата: {channel_info[4]}\n\nℹ️ В этом чате будут появляться фото для батлов и сообщения от пользователей.\n\nЛюбой участник чата сможет принимать или отклонять фотографии, а также отвечать на сообщения.''', reply_markup=await back_main_menu_add_channel(channel_id) )
-        await call.message.answer('Для установки админ-чата используйте кнопку ниже', reply_markup=kb)
+    if action == 'correct_chat':
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        chat_info = await bot.get_chat(chat_id=channel_info[4])
+        print(chat_info)
+        kb = InlineKeyboardBuilder()
+        kb.button(text='⚒️ Изменить', callback_data=f'channelsetting;adminchat;{channel_id}')
+        kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channel_id}')
+        kb.adjust(1)
+        await call.message.edit_text(f'Текущий админ-чат <a href="{chat_info.invite_link}">{chat_info.title}</a>', reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
     if action == 'create_one':
         channel_id = call.data.split(';')[2]
