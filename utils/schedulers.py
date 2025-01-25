@@ -28,15 +28,18 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            if time_difference.total_seconds() > 600:
+            if time_difference.total_seconds() > 1:
                 tg_id = battle_photo[1]
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
                 try:
                     current_voices = 0
                     battle_info = await check_battle_info(battle_id)
                     min_voice = battle_info[11]
-                    users_in_battle = await check_all_battle_photos_where_status_1_and_battle_id(battle_id)
                     user_info = await check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
+                    users_in_battle = await check_all_battle_photos_where_status_1_and_battle_id_and_number_post(battle_id, user_info[6])
+                    print('Отладка')
+                    print(user_info)
+                    print(users_in_battle)
                     user_voices = user_info[4]
 
                     max_user_voices = 0
@@ -51,7 +54,8 @@ async def scheduled_task():
                     url = encode_url(tg_id)
 
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд\n\n<a href='https://t.me/{config.bot_name}?start=vote{battle_id}page{user_info[6]}'>Ваша ссылка на голосование</a>"
-                    if user_voices <= current_voices and user_info[6] != 0:
+                    if user_voices < current_voices and user_info[6] != 0:
+                        print(user_voices, current_voices)
                         kb = InlineKeyboardBuilder()
                         kb.button(text="Ссылка на канал", url=battle_info[5])
                         kb.adjust(1)

@@ -35,7 +35,7 @@ def build_items_kb33(categories, page, total_moments):
 
     for category in categories:
         if category[14] == 1:
-            categories_kb.button(text=f"{category[3]}", callback_data=f'battlecheckitem;{category[0]};{page}')
+            categories_kb.button(text=f"{category[3]}", callback_data=f'channelcheckitem;{category[0]};{page}')
     categories_kb.adjust(1)
     buttons = []
 
@@ -52,7 +52,7 @@ def build_items_kb33_channels(categories, page, total_moments):
     categories_kb = InlineKeyboardBuilder()
 
     for category in categories:
-        categories_kb.button(text=f"{category[3]}", callback_data=f'battlecheckitem;{category[0]};{page}')
+        categories_kb.button(text=f"{category[3]}", callback_data=f'channelcheckitem;{category[0]};{page}')
     categories_kb.adjust(1)
 
     buttons = []

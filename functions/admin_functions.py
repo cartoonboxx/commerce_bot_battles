@@ -66,7 +66,8 @@ async def active_battle_settings_kb(battle_id, status):
 
     if status == Status.CREATED.value:
         kb.button(text='✅ Начать раунд', callback_data=f'activebattlesettings;start;{battle_id}')
-        kb.button(text='🏞 Добавить фото', callback_data=f'activebattlesettings;fake;{battle_id}')
+        if battle_info[2] in config.admins:
+            kb.button(text='🏞 Добавить фото', callback_data=f'activebattlesettings;fake;{battle_id}')
 
     if status == Status.NEXTROUND.value:
         kb.button(text='✅ Запустить следующий раунд', callback_data=f'activebattlesettings;next;{battle_id}')

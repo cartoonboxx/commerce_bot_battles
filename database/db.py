@@ -444,6 +444,11 @@ async def check_all_battle_photos_where_status_1_and_battle_id(battle_id):
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ? AND number_post <> 0)', (battle_id, ))
         return await cursor.fetchall()
 
+async def check_all_battle_photos_where_status_1_and_battle_id_and_number_post(battle_id, number_post):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ? AND number_post = ?)', (battle_id, number_post))
+        return await cursor.fetchall()
+
 async def before_check_all_battle_photos_where_status_1_and_battle_id(battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE (status = 1 AND battle_id = ?)', (battle_id, ))
