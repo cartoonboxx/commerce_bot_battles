@@ -104,6 +104,11 @@ async def send_welcome(message: types.Message):
             await bot.send_message(user_id, '''<b>✅ Чат успешно добавлен!</b>\n\nℹ️ Теперь фото для батлов и сообщения от пользователей будут отправляться в этот чат. Любой участник сможет принимать или отклонять фотографии, а также отвечать на сообщения.\n\nСпасибо, что доверяете нашему боту!''',
                                    reply_markup=kb.as_markup())
             '''Добавление чата в базу данных'''
+            channel_info = await db.check_channel_info_by_id(channel_id)
+            try:
+                await bot.leave_chat(channel_info[4])
+            except Exception as ex:
+                print('Бот уже покинул чат')
             await db.uopdate_admin_chat_by_chat_id(chat_id=channel_id, admin_chat=message.chat.id)
 
 
@@ -167,6 +172,8 @@ async def approve_delete_channel_handler(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('2approvedelete'))
 async def approve_delete_channel_handler2(callback: types.CallbackQuery):
     channel_id = callback.data.split(';')[1]
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    await bot.leave_chat(chat_id=channel_info[2])
     await delete_channel_func2(callback, channel_id)
 
 @dp.callback_query(lambda c: c.data.startswith('battlesettings'))

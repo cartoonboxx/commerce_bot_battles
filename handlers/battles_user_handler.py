@@ -86,9 +86,9 @@ async def user_menu_handler(message: types.Message, state: FSMContext):
         items_kb = build_items_kb33(categories, 0, total_items)
         await message.answer('<b>📸 Активные фото-батлы</b>\n\n' + 'Выбирайте батл и участвуйте прямо сейчас. Все они прошли проверку администрацией.\n\n' + '<b>💥 Покажите, на что способны, и станьте победителем!</b>', reply_markup=items_kb.as_markup(), parse_mode="HTML")
 
-@dp.message(lambda message: message.text == "✅ Приступим")   
-async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
-    await add_channel_func(callback, state)
+# @dp.message(lambda message: message.text == "✅ Приступим")
+# async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
+#     await add_channel_func(callback, state)
     
 @dp.callback_query(lambda c: c.data.startswith('battlespageitems'))
 async def battles_page_items_handler(call: types.CallbackQuery):
