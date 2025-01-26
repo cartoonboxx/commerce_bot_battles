@@ -555,9 +555,16 @@ async def cooperation(message: types.Message, state: FSMContext):
             return
     # await state.set_state(AddChannel.q1)
 
+    admins_db = await db.check_all_admins()
+    for admin in admins_db:
+        if admin[1] == message.chat.id:
+            break
+    else:
+        await db.add_admin(message.chat.id)
+        await db.add_admins_count(message.chat.id, 1000)
 
     GetChannelId.user = message.chat.id
-    print(message.chat.id)
+
     kb = InlineKeyboardBuilder()
     kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=manage_chat+delete_messages+manage_video_chats+restrict_members+promote_members+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
     kb.button(text='🔙 Назад', callback_data='backtochannels')

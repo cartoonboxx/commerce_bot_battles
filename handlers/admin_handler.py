@@ -1,5 +1,7 @@
 from aiogram import types
 import asyncio
+
+import keyboards.admin_kb
 from data.config import *
 from keyboards.another import back_main_menu_add_channel_opt
 from aiogram import types, Router
@@ -114,24 +116,23 @@ async def send_welcome(message: types.Message):
 
 @dp.my_chat_member()
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
-    print(chat_member_update.new_chat_member.user)
-    print(chat_member_update.chat.id)
     try:
         info = await bot.get_chat(chat_member_update.chat.id)
     except Exception as ex:
 
         if chat_member_update.new_chat_member.status == ChatMemberStatus.ADMINISTRATOR:
             await bot.send_message(chat_id=GetChannelId.user, text='Произошла ошибка добавления бота в канал, попробуйте добавить бота чуть позже.')
+            await bot.leave_chat(chat_id=chat_member_update.chat.id)
         return
 
     if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
         channel_link = info.invite_link
-        # Проверяем, добавлен ли бот в канал
+
         if chat_member_update.new_chat_member.status in ["administrator", "member"]:
             channel_id = chat_member_update.chat.id
             channel_title = chat_member_update.chat.title
             user_id = GetChannelId.user
-            print(f"Бот добавлен в канал: {channel_title} (ID: {channel_id})")
+
             tg_id = user_id
 
             result = await db.add_new_cahnnel_by_chan_id(tg_id, channel_id, channel_title)
@@ -154,11 +155,12 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                 await bot.send_message(user_id,
                     "<b>Канал успешно добавлен! 🎉</b>\n\n"
                     "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
-                    "<u><i>Удачного пользования! 😉</i></u>")
+                    "<u><i>Удачного пользования! 😉</i></u>", reply_markup=keyboards.admin_kb.start_menu_for_admins())
             else:
                 await bot.send_message(user_id,
                     "<b>Этот канал уже добавлен! 🔄</b>\n\n"
                     "Вы можете продолжить пользоваться нашим ботом для автоматизации фото-батлов в этом канале.",
+                                       reply_markup=keyboards.admin_kb.start_menu_for_admins()
                     )
                 return
             return
