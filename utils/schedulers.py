@@ -28,7 +28,7 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            if time_difference.total_seconds() > 1:
+            if time_difference.total_seconds() > 600:
                 tg_id = battle_photo[1]
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
                 try:
