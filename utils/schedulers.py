@@ -28,7 +28,7 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            if time_difference.total_seconds() > 600:
+            if time_difference.total_seconds() > 1:
                 tg_id = battle_photo[1]
                 await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
                 try:
@@ -53,11 +53,19 @@ async def scheduled_task():
 
                     url = encode_url(tg_id)
 
+                    user_data = await db.check_info_users_by_tg_id(user_info[1])
+
                     text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд\n\n<a href='https://t.me/{config.bot_name}?start=vote{battle_id}page{user_info[6]}'>Ваша ссылка на голосование</a>"
-                    if user_voices < current_voices and user_info[6] != 0:
+                    if user_voices < current_voices and user_info[6] != 0 and user_data[7]:
                         print(user_voices, current_voices)
                         kb = InlineKeyboardBuilder()
+                        user_data = await db.check_info_users_by_tg_id(user_info[1])
+                        if user_data[7]:
+                            kb.button(text='🔕 Выкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{battle_info[5]};{battle_id}')
+                        else:
+                            kb.button(text='🔔 Вкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{battle_info[5]};{battle_id}')
                         kb.button(text="Ссылка на канал", url=battle_info[5])
+                        kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
                         kb.adjust(1)
                         await bot.send_message(
                             chat_id=tg_id,

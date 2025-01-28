@@ -113,6 +113,20 @@ async def send_welcome(message: types.Message):
                 print('Бот уже покинул чат')
             await db.uopdate_admin_chat_by_chat_id(chat_id=channel_id, admin_chat=message.chat.id)
 
+@dp.callback_query(lambda c: c.data == 'check_subscribe_admin')
+async def check_subscribe_admin(call: types.CallbackQuery):
+    admin_link_chat_id = '-1002308104655'
+    info_chat = await bot.get_chat(admin_link_chat_id)
+    try:
+        is_subscribed = info_chat.get_member(call.message.chat.id)
+        await call.message.answer('Доступ разрешен, вы можете создавать фото-батлы!')
+    except Exception as ex:
+        kb = InlineKeyboardBuilder()
+        kb.button(text='Ссылка на канал', url='https://t.me/+4zcITx2WK_9jZTU6')
+        kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
+        kb.adjust(1)
+        await call.message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
+
 
 @dp.my_chat_member()
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
@@ -555,6 +569,12 @@ async def one_battle_message(call: types.CallbackQuery):
 async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]
     battle_info = await db.check_battle_info(battle_id)
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
+    try:
+        await bot.get_chat(channel_info[2])
+    except Exception as ex:
+        await call.message.answer('Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
+        return
     if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
         await call.answer('Заполните все поля', show_alert=True)
         return

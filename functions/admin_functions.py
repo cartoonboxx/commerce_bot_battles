@@ -199,6 +199,14 @@ async def firstround_menu_setting(message: types.Message, battle_id):
     kb.adjust(1)
     await message.answer(f'''<b>🛠 Создание фото-батла (2 ШАГ ИЗ 2):\n\n⚙️ Введение настроек для 1 раунда:</b>\n\nВремя завершения раунда: {battle_info[13]}\nМинимальное кол-во голосов для победы в раунде: {battle_info[15]}\nУчастников в одном посте: {battle_info[11]}''', reply_markup=kb.as_markup())
 
+async def admin_subscribed_to_channel(admin_user_id) -> bool:
+    admin_link_chat_id = '-1002308104655'
+    try:
+        chat_info = await bot.get_chat(admin_link_chat_id)
+        result = await chat_info.get_member(admin_user_id)
+        return True
+    except Exception as ex:
+        return False
 
 async def battle_settings_func(callback: types.CallbackQuery, battle_id, action, state):
     battle_info = await db.check_battle_info(battle_id)
@@ -303,6 +311,14 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
         battle_info = await db.check_battle_info(battle_id)
         post_start_battle = battle_info[17]
         channel_info = await db.check_channel_info_by_id(channel_id)
+
+        try:
+            await bot.get_chat(channel_info[2])
+        except Exception as ex:
+            await call.message.answer(
+                'Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
+            return
+
         channel_tg_id = channel_info[5]
         time_now = datetime.datetime.now().strftime("%H:%M")
 
@@ -346,6 +362,14 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
         battle_info = await db.check_battle_info(battle_id)
         post_start_battle = battle_info[17]
         channel_info = await db.check_channel_info_by_id(channel_id)
+
+        try:
+            await bot.get_chat(channel_info[2])
+        except Exception as ex:
+            await call.message.answer(
+                'Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
+            return
+
         channel_tg_id = channel_info[5]
         time_now = datetime.datetime.now().strftime("%H:%M")
 
@@ -363,16 +387,23 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
 - Время начала: {time_now}                                                  
 ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
     if action == 'choise_type':
-     channel_info = await db.check_channel_info_by_id(channel_id)
-     if channel_info[4] == 0:
-        await call.answer('Заполните все поля', show_alert=True)
-        return
-     else:
-         kb = InlineKeyboardBuilder()
-         kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
-         kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
-         kb.adjust(1)
-         await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
+        channel_info = await db.check_channel_info_by_id(channel_id)
+        try:
+            await bot.get_chat(channel_info[2])
+        except Exception as ex:
+            await call.message.answer(
+                'Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
+            return
+
+        if channel_info[4] == 0:
+            await call.answer('Заполните все поля', show_alert=True)
+            return
+        else:
+            kb = InlineKeyboardBuilder()
+            kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
+            kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
+            kb.adjust(1)
+            await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
 
 async def battle_one_message(message, battle_id):
 

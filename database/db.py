@@ -41,7 +41,9 @@ async def db_start():
                 username TEXT,
                 wins INTEGER DEFAULT 0,
                 today_voices INTEGER DEFAULT 0,
-                all_voices INTEGER DEFAULT 0
+                all_voices INTEGER DEFAULT 0,
+                notification INTEGER DEFAULT 1,
+                add_voices INTEGER DEFAULT 0
             )
         ''')
         await db.execute('''
@@ -331,6 +333,15 @@ async def check_info_users_by_tg_id(tg_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM users WHERE tg_id = ?', (tg_id,))
         return await cursor.fetchone()
+
+async def update_mailing_user_by_tg_id(tg_id):
+    async with aiosqlite.connect(name_db) as db:
+        user_info = await check_info_users_by_tg_id(tg_id)
+        if user_info[7] == 1:
+            await db.execute('UPDATE users SET notification = 0 WHERE tg_id = ?', (tg_id, ))
+        else:
+            await db.execute('UPDATE users SET notification = 1 WHERE tg_id = ?', (tg_id, ))
+        await db.commit()
 
 async def update_users_today_voices_and_all_voices(tg_id):
     async with aiosqlite.connect(name_db) as db:
@@ -690,4 +701,22 @@ async def update_type_battle(battle_id, type_battle) -> None:
     ''' Обновляет значение типа батла в таблице по айди '''
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battles SET type_battle = ? WHERE id = ?', (type_battle, battle_id))
+        await db.commit()
+
+async def check_channel_where_channel_id(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM channels WHERE channel_id = ?', (channel_id,))
+        row = await cursor.fetchone()
+        await cursor.close()
+        return row
+
+async def update_add_voices_users(add_voices, tg_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE users SET add_voices = add_voices + ? WHERE tg_id = ?', (add_voices, tg_id))
+        await db.commit()
+
+async def use_add_voices(votes, battle_id, tg_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battle_photos SET votes = votes + ? WHERE battle_id = ? AND tg_id = ?', (votes, battle_id, tg_id))
+        await db.execute('UPDATE users SET add_voices = 0 WHERE tg_id = ?', (tg_id, ))
         await db.commit()
