@@ -29,6 +29,12 @@ class WriteQuestion(StatesGroup):
     
 class AddChannel(StatesGroup):
     q1 = State()
+    q2 = State()
+
+class AddAdminChatAdmins(StatesGroup):
+    q1 = State()
+    q2 = State()
+
 class AddChat(StatesGroup):
     q1 = State()
 

@@ -264,6 +264,112 @@ async def vote_in_battle(callback: types.CallbackQuery):
                              reply_markup=kb.as_markup())
     return
 
+@dp.message(lambda message: message.text == "🥇 Спонсорство и админ-канал")
+async def sponsors_and_chats(message: types.Message, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Спонсоры', callback_data='sponsors')
+    kb.button(text='Изменить чат для админов', callback_data='change_chat_for_admins')
+    kb.adjust(1)
+    await message.answer('<b>Выберите действие:</b>', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data == 'change_chat_for_admins')
+async def change_chat_for_admins(call: types.CallbackQuery):
+    kb = InlineKeyboardBuilder()
+    if await db.check_admin_channel_from_table():
+        channel = await db.check_admin_channel_from_table()
+        kb.button(text='Изменить канал', callback_data='set_channel_admins')
+        await call.message.edit_text(f'Текущий канал для админов: <b>{channel[1]}</b>', reply_markup=kb.as_markup())
+    else:
+        kb.button(text='Установить канал', callback_data='set_channel_admins')
+        await call.message.edit_text('Канал для админов не установлен', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data == 'set_channel_admins')
+async def set_channel_admins(call: types.CallbackQuery, state: FSMContext):
+    await state.set_state(AddAdminChatAdmins.q1)
+    await call.message.edit_text('Отправьте боту любое сообщение из этого канала')
+
+@dp.message(AddAdminChatAdmins.q1)
+async def add_admin_chat_admins(message: types.Message, state: FSMContext):
+    if message.forward_from_chat.type == 'channel':
+        chat_id = message.forward_from_chat.id
+        title = message.forward_from_chat.title
+        await state.update_data(chat_id=chat_id)
+        await state.update_data(title=title)
+        await state.set_state(AddAdminChatAdmins.q2)
+        await message.answer('Отправьте ссылку на этот канал.')
+    else:
+        await message.answer('Это не канал! Попробуйте еще раз.')
+
+@dp.message(AddAdminChatAdmins.q2)
+async def adding_admin_channel_link(message: types.Message, state: FSMContext):
+    if 'https://t.me/' in message.text:
+        url = message.text
+        data = await state.get_data()
+        chat_id = data.get('chat_id')
+        title = data.get('title')
+        await db.add_admin_channel_to_table(title, chat_id, url)
+        await state.clear()
+        await message.answer('Канал для админов добавлен!')
+    else:
+        await message.answer('Некорректная ссылка, попробуйте еще раз')
+
+@dp.callback_query(lambda c: c.data == 'sponsors')
+async def watch_sponsors(call: types.CallbackQuery):
+    kb = InlineKeyboardBuilder()
+    sponsors = await db.check_all_sponsors()
+    for sponsor in sponsors:
+        kb.button(text=sponsor[1], callback_data=f'checksponsor;{sponsor[0]}')
+
+    kb.button(text='Добавить спонсора', callback_data=f'add_sponsor')
+    kb.adjust(1)
+    await call.message.edit_text('<b>Все спонсоры:</b>', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('add_sponsor'))
+async def add_sponsor_handler(call: types.CallbackQuery, state: FSMContext):
+    await state.set_state(AddChannel.q1)
+    await call.message.edit_text('Добавьте бота в этот канал (это понадобится для проверки на подписку со стороны пользователя)\n\nОтправьте боту любое сообщение из этого канала')
+
+@dp.message(AddChannel.q1)
+async def adding_sponsor(message: types.Message, state: FSMContext):
+    if message.forward_from_chat.type == 'channel':
+        chat_id = message.forward_from_chat.id
+        title = message.forward_from_chat.title
+        await state.update_data(chat_id=chat_id)
+        await state.update_data(title=title)
+        await state.set_state(AddChannel.q2)
+        await message.answer('Отправьте ссылку на этот канал.')
+    else:
+        await message.answer('Это не канал! Попробуйте еще раз.')
+
+@dp.message(AddChannel.q2)
+async def adding_sponsor_link(message: types.Message, state: FSMContext):
+    if 'https://t.me/' in message.text:
+        url = message.text
+        data = await state.get_data()
+        chat_id = data.get('chat_id')
+        title = data.get('title')
+        await db.add_sponsor_to_table(title, chat_id, url)
+        await state.clear()
+        await message.answer('Канал спонсора добавлен!')
+    else:
+        await message.answer('Некорректная ссылка, попробуйте еще раз')
+
+@dp.callback_query(lambda c: c.data.startswith('checksponsor'))
+async def check_sponsor(call: types.CallbackQuery):
+    spon_id = call.data.split(';')[1]
+    info = await db.check_sponsor_by_id(spon_id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Удалить спонсора', callback_data=f'delete_sponsor;{spon_id}')
+    kb.adjust(1)
+    await call.message.edit_text(f'Название канала: {info[1]}', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('delete_sponsor'))
+async def delete_sponsor(call: types.CallbackQuery):
+    spon_id = call.data.split(';')[1]
+    await db.delete_sponsor_from_table(spon_id)
+    await call.answer('Спонсор удален!', show_alert=True)
+    await watch_sponsors(call)
+
 @dp.message(lambda message: message.text == "🧱 Создать фото-батл")
 async def handle_profile(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
@@ -277,12 +383,15 @@ async def handle_profile(message: types.Message, state: FSMContext):
                     reply_markup=create_battle())
                 return
             else:
-                kb = InlineKeyboardBuilder()
-                kb.button(text='Ссылка на канал', url='https://t.me/+4zcITx2WK_9jZTU6')
-                kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
-                kb.adjust(1)
-                await message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
-                return
+                admin_channel = await db.check_admin_channel_from_table()
+                if admin_channel:
+                    admin_link = admin_channel[2]
+                    kb = InlineKeyboardBuilder()
+                    kb.button(text='Ссылка на канал', url=admin_link)
+                    kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
+                    kb.adjust(1)
+                    await message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
+                    return
         await message.answer(
             "<b>🚫 Неизвестная команда.</b>")
         return
@@ -347,6 +456,7 @@ async def wanted_more_voices(call: types.CallbackQuery):
     status_voiced = status_voiced.boosts
 
     user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
+    user_in_battle_info = await db.check_user_photo_by_tg_id(tg_id=call.message.chat.id, battle_id=battle_id)
 
     kb = InlineKeyboardBuilder()
     kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
@@ -355,12 +465,58 @@ async def wanted_more_voices(call: types.CallbackQuery):
             kb.button(text='✅ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
         else:
             kb.button(text='❌ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
-    kb.button(text='❌/✅ Подписаться на спонсоров', callback_data='fdgndfjkgdf')
+    if user_in_battle_info[10]:
+        kb.button(text='✅ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
+    else:
+        kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
     kb.button(text='♾️ Пригласить друга на фото-батл\n(отображается только тогда, когда набор открыт)', callback_data='fdgndfjkgdf')
     kb.button(text='🔙 Назад', callback_data=f'back_to_notification;{battle_id};{link_channel}')
     kb.adjust(1)
 
     await call.message.edit_text(text=f'''Вы можете получить дополнительные голоса, выполнив задания.\n\n💰 Накопленные голоса: {user_info[8]}\n\nДоступные задания:''', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('spon_subs'))
+async def sponsors_subscribe(call: types.CallbackQuery):
+    battle_id = call.data.split(';')[1]
+    link_channel = call.data.split(';')[2]
+    user_battle_info = await db.check_user_photo_by_tg_id(tg_id=call.message.chat.id, battle_id=battle_id)
+
+    if user_battle_info[10]:
+        await call.answer('Вы уже выполнили это задание!', show_alert=True)
+        return
+
+    kb = InlineKeyboardBuilder()
+    sponsors = await db.check_all_sponsors()
+    for sponsor in sponsors:
+        kb.button(text=sponsor[1], url=sponsor[2])
+    kb.button(text='✅ Проверить', callback_data=f'check_subscribe_sponsors;{battle_id};{link_channel}')
+    kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    kb.adjust(1)
+    await call.message.edit_text('<b>📝 Задание - Подписаться на спонсоров:</b>\n\n✅ За выполнение будет выдано 2 голоса', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('check_subscribe_sponsors'))
+async def check_subscribe_sponsors(call: types.CallbackQuery):
+    battle_id = call.data.split(';')[1]
+    link_channel = call.data.split(';')[2]
+    sponsors = await db.check_all_sponsors()
+    for sponsor in sponsors:
+        print(sponsor[3])
+        member = await call.message.bot.get_chat_member(sponsor[3], user_id=call.message.chat.id)
+        if member.status == 'left':
+            await call.message.answer('❌ Не выполнено')
+            return
+
+
+    await db.update_user_sponsor_data(call.message.chat.id, battle_id)
+    await db.update_add_voices_users(2, call.message.chat.id)
+
+    user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
+    kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    kb.adjust(1)
+    await call.message.edit_text(f'✅ Начислено 2 голосов за подписку\n\n💰 Ваш баланс голосов: {user_info[8]} шт',
+                                 reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('voice_to_channel_premium'))
 async def voice_to_channel_premium(call: types.CallbackQuery):
@@ -724,56 +880,6 @@ async def cooperation(message: types.Message, state: FSMContext):
     "1️⃣ <i>Добавьте бота в администраторы канала</i> с разрешением на публикацию и редактирование постов ➕\n"
     "2️⃣ <i>Нажмите кнопку внизу и выберите нужный канал</i>\n", reply_markup=kb.as_markup(), show_alert=True,
         disable_web_page_preview=True)
-
-@dp.message(AddChannel.q1)
-async def add_channel_func(message: types.Message, state: FSMContext, bot: Bot):
-    tg_id = message.from_user.id
-    channel_id = message.chat_shared.chat_id
-    try:
-        info = await bot.get_chat(channel_id)
-    except Exception as ex:
-        await message.answer(
-            "<b>Что-то пошло не так! 😟</b>\n\n"
-            "Убедитесь, что бот добавлен в канал как администратор и пересылаете сообщение из канала. Попробуйте еще раз.")
-        return
-    channel_title = info.title
-    if channel_title and info.type == 'channel':
-        try:
-            admin_exists = await db.check_admin_exist_return_bool(tg_id)
-            if not admin_exists:
-                await db.add_admin(tg_id)
-            chat_member = await bot.get_chat_member(channel_id, bot.id)
-            if chat_member.status in ['administrator', 'creator']:
-                result = await db.add_new_cahnnel_by_chan_id(tg_id, channel_id, channel_title)
-                if result is True:
-                    await db.add_battles_statistic(tg_id)
-                    channels = await db.check_all_channels()
-                    channel_id_db = channels[-1][0]
-
-                    chan_id = str(channel_id).replace('-100', '')
-                    message_link = f'https://t.me/c/{chan_id}/-1'
-                    await db.update_channels_post_link_where_id(message_link, channel_id_db)
-                    channel_link = info.invite_link
-
-                    await db.update_channel_link_where_id(channel_link, channel_id_db)
-
-                    await message.answer(
-                        "<b>Канал успешно добавлен! 🎉</b>\n\n"
-                        "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
-                        "<u><i>Удачного пользования! 😉</i></u>",reply_markup=admin_kb.start_menu_for_admins())
-                else:
-                    await message.answer(
-                    "<b>Этот канал уже добавлен! 🔄</b>\n\n"
-                    "Вы можете продолжить пользоваться нашим ботом для автоматизации фото-батлов в этом канале.", reply_markup=admin_kb.start_menu_for_admins())
-                    await state.clear()
-                    return
-                await state.clear()
-                return
-        except Exception as e:
-            print(f"Ошибка: {e}")
-    await message.answer(
-        "<b>Что-то пошло не так! 😟</b>\n\n"
-        "Убедитесь, что бот добавлен в канал как администратор и пересылаете сообщение из канала. Попробуйте еще раз.")
 
 @dp.callback_query(lambda c: c.data.startswith('nakrutka'))
 async def create_mailing(callback: types.CallbackQuery, state: FSMContext):

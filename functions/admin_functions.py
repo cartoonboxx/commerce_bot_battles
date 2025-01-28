@@ -200,7 +200,9 @@ async def firstround_menu_setting(message: types.Message, battle_id):
     await message.answer(f'''<b>🛠 Создание фото-батла (2 ШАГ ИЗ 2):\n\n⚙️ Введение настроек для 1 раунда:</b>\n\nВремя завершения раунда: {battle_info[13]}\nМинимальное кол-во голосов для победы в раунде: {battle_info[15]}\nУчастников в одном посте: {battle_info[11]}''', reply_markup=kb.as_markup())
 
 async def admin_subscribed_to_channel(admin_user_id) -> bool:
-    admin_link_chat_id = '-1002308104655'
+    admin_channel = await db.check_admin_channel_from_table()
+
+    admin_link_chat_id = admin_channel[3]
     try:
         chat_info = await bot.get_chat(admin_link_chat_id)
         result = await chat_info.get_member(admin_user_id)

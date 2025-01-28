@@ -57,7 +57,8 @@ async def db_start():
                 number_post INTEGER DEFAULT 0,
                 notification INTEGER DEFAULT 0,
                 post_id INTEGER DEFAULT 0,
-                last_like TEXT DEFAULT '2024-10-20 01:18:32'
+                last_like TEXT DEFAULT '2024-10-20 01:18:32',
+                sponsor INTEGER DEFAULT 0
             )
         ''')
         await db.execute('''
@@ -116,6 +117,18 @@ async def db_start():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 battle_id INTEGER,
                 post_id INTEGER)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS sponsors (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT DEFAULT '-',
+                url TEXT DEFAULT '-',
+                channel_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS chat_for_admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT DEFAULT '-',
+                url TEXT DEFAULT '-',
+                channel_id INTEGER DEFAULT 0)''')
         await db.commit()
 
 
@@ -719,4 +732,54 @@ async def use_add_voices(votes, battle_id, tg_id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battle_photos SET votes = votes + ? WHERE battle_id = ? AND tg_id = ?', (votes, battle_id, tg_id))
         await db.execute('UPDATE users SET add_voices = 0 WHERE tg_id = ?', (tg_id, ))
+        await db.commit()
+
+async def check_all_sponsors():
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM sponsors')
+        return await cursor.fetchall()
+
+async def check_sponsor_by_id(spon_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM sponsors WHERE id = ?', (spon_id, ))
+        return await cursor.fetchone()
+
+async def delete_sponsor_from_table(spon_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM sponsors WHERE id = ?', (spon_id,))
+        await db.commit()
+
+async def add_sponsor_to_table(title, chat_id, url):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO sponsors (title, channel_id, url) VALUES (?, ?, ?)', (title, chat_id, url))
+        await db.commit()
+
+async def check_admin_channel_from_table():
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM chat_for_admins')
+        return await cursor.fetchone()
+
+async def add_admin_channel_to_table(title, chat_id, url):
+    async with aiosqlite.connect(name_db) as db:
+        if await check_admin_channel_from_table() is not None:
+            print('Зашел сюда', await check_admin_channel_from_table())
+            await db.execute('UPDATE chat_for_admins SET title = ?, channel_id = ?, url = ? WHERE channel_id = ?', (title, chat_id, url, chat_id))
+            await db.commit()
+        else:
+            await db.execute('INSERT INTO chat_for_admins (title, channel_id, url) VALUES (?, ?, ?)', (title, chat_id, url))
+            await db.commit()
+
+async def check_user_photo_by_tg_id(tg_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?', (tg_id, battle_id))
+        return await cursor.fetchone()
+
+async def update_user_sponsor_data(tg_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?', (tg_id, battle_id))
+        user = await cursor.fetchone()
+        if user[10]:
+            await db.execute('UPDATE battle_photos SET sponsor = 0 WHERE tg_id = ?', (tg_id, ))
+        else:
+            await db.execute('UPDATE battle_photos SET sponsor = 1 WHERE tg_id = ?', (tg_id, ))
         await db.commit()

@@ -115,14 +115,15 @@ async def send_welcome(message: types.Message):
 
 @dp.callback_query(lambda c: c.data == 'check_subscribe_admin')
 async def check_subscribe_admin(call: types.CallbackQuery):
-    admin_link_chat_id = '-1002308104655'
+    admin_channel = await db.check_admin_channel_from_table()
+    admin_link_chat_id = admin_channel[3]
     info_chat = await bot.get_chat(admin_link_chat_id)
     try:
         is_subscribed = info_chat.get_member(call.message.chat.id)
         await call.message.answer('Доступ разрешен, вы можете создавать фото-батлы!')
     except Exception as ex:
         kb = InlineKeyboardBuilder()
-        kb.button(text='Ссылка на канал', url='https://t.me/+4zcITx2WK_9jZTU6')
+        kb.button(text='Ссылка на канал', url=admin_channel[2])
         kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
         kb.adjust(1)
         await call.message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
@@ -178,7 +179,6 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                     )
                 return
             return
-
 
 @dp.callback_query(lambda c: c.data.startswith('approvedelete'))
 async def approve_delete_channel_handler(callback: types.CallbackQuery):

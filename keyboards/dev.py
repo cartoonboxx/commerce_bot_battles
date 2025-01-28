@@ -11,6 +11,7 @@ def start_menu_for_dev():
     kb.button(text='📊 Статистика бота')
     kb.button(text='🆘 Тех. поддержка')
     kb.button(text='⚔️ Наборы на фото-батлы')
+    kb.button(text='🥇 Спонсорство и админ-канал')
     kb.adjust(2)
     return kb.as_markup(resize_keyboard=True)
 
