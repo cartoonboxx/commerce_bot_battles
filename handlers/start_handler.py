@@ -93,7 +93,12 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     return
 
                 if account_id.startswith('b'):
-                    battle_id = account_id[1:]
+                    if '_from' not in account_id:
+                        battle_id = account_id[1:]
+                    else:
+                        account_id = account_id.split('_')
+                        battle_id = account_id[0][1:]
+
                     is_user_blocked = await db.check_battle_block_battle_id_tg_id_exist_return_bool(
                         battle_id, message.from_user.id)
                     if is_user_blocked:
@@ -110,6 +115,11 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     if is_user_exist:
                         await message.answer('Вы уже участвуете в этом батле')
                         return
+
+                    if len(account_id) == 2:
+                        from_user = account_id[1][4:]
+                        '''Сохраняем отправленного пользователя'''
+
 
                     await state.set_state(SendPhotoForBattle.q1)
                     await state.update_data(battle_id=battle_id)
@@ -457,6 +467,7 @@ async def wanted_more_voices(call: types.CallbackQuery):
 
     user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
     user_in_battle_info = await db.check_user_photo_by_tg_id(tg_id=call.message.chat.id, battle_id=battle_id)
+    battle_info = await db.check_battle_info(battle_id)
 
     kb = InlineKeyboardBuilder()
     kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
@@ -469,11 +480,31 @@ async def wanted_more_voices(call: types.CallbackQuery):
         kb.button(text='✅ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
     else:
         kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
-    kb.button(text='♾️ Пригласить друга на фото-батл\n(отображается только тогда, когда набор открыт)', callback_data='fdgndfjkgdf')
+    if battle_info[21]:
+        kb.button(text='♾️ Пригласить друга на фото-батл', callback_data=f'invite_friend;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'back_to_notification;{battle_id};{link_channel}')
     kb.adjust(1)
 
     await call.message.edit_text(text=f'''Вы можете получить дополнительные голоса, выполнив задания.\n\n💰 Накопленные голоса: {user_info[8]}\n\nДоступные задания:''', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('invite_friend'))
+async def invite_friend_handler(call: types.CallbackQuery):
+    battle_id = call.data.split(';')[1]
+    link_channel = call.data.split(';')[2]
+    kb = InlineKeyboardBuilder()
+
+    base_url = 'https://t.me/share/url'
+    share_url = f'https://t.me/{bot_name}?start=b{battle_id}'
+    text = f"Привет, можешь по-участвовать в фото-батле, приз выдают за победу в финале"
+    encoded_text = urllib.parse.quote(text, safe='')
+    encoded_url = urllib.parse.quote(share_url, safe='')
+    full_url = f"{base_url}?url={encoded_url}&text={encoded_text}_from{call.message.chat.id}"
+
+    kb.button(text='Пригласить друга', url=full_url)
+    kb.button(text='✅ Проверить', callback_data='gfdhjgb')
+    kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    kb.adjust(1)
+    await call.message.edit_text('📝 Задание - Пригласить друга на фото-батл:\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 2 голоса', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('spon_subs'))
 async def sponsors_subscribe(call: types.CallbackQuery):
