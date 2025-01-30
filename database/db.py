@@ -58,7 +58,8 @@ async def db_start():
                 notification INTEGER DEFAULT 0,
                 post_id INTEGER DEFAULT 0,
                 last_like TEXT DEFAULT '2024-10-20 01:18:32',
-                sponsor INTEGER DEFAULT 0
+                sponsor INTEGER DEFAULT 0,
+                invited_friend INTEGER DEFAULT 0
             )
         ''')
         await db.execute('''
@@ -129,6 +130,12 @@ async def db_start():
                 title TEXT DEFAULT '-',
                 url TEXT DEFAULT '-',
                 channel_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS invited_friends (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_invited_id TEXT DEFAULT '-',
+                invited_from_id TEXT DEFAULT '-',
+                battle_id INTEGER DEFAULT 0)''')
         await db.commit()
 
 
@@ -783,3 +790,39 @@ async def update_user_sponsor_data(tg_id, battle_id):
         else:
             await db.execute('UPDATE battle_photos SET sponsor = 1 WHERE tg_id = ?', (tg_id, ))
         await db.commit()
+
+async def save_invited_user(user_invited_id, invited_from_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        if not check_user_photo_by_tg_id(user_invited_id, battle_id):
+            await db.execute('INSERT INTO invited_friends (user_invited_id, invited_from_id, battle_id) VALUES (?, ?, ?)',
+                             (user_invited_id, invited_from_id, battle_id))
+            await db.execute('UPDATE battle_photos SET invited_friend = ? WHERE tg_id = ?',
+                             (user_invited_id, invited_from_id))
+            await db.commit()
+
+async def check_invited_friends(user_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM invited_friends WHERE invited_from_id = ? AND battle_id = ?',
+                         (user_id, battle_id))
+        return await cursor.fetchall()
+
+async def clear_invites(user_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM invited_friends WHERE invited_from_id = ? AND battle_id = ?',
+                         (user_id, battle_id))
+
+async def is_invited_friend(user_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM invited_friends WHERE user_invited_id = ? AND battle_id = ?',
+                                  (user_id, battle_id))
+        if await cursor.fetchone():
+            return True
+        return False
+
+async def find_invited_from_friend(user_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM invited_friends WHERE user_invited_id = ? AND battle_id = ?',
+                                  (user_id, battle_id))
+        if cursor:
+            return await cursor.fetchone()
+        return None

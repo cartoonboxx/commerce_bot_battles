@@ -119,6 +119,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     if len(account_id) == 2:
                         from_user = account_id[1][4:]
                         '''Сохраняем отправленного пользователя'''
+                        await db.save_invited_user(message.chat.id, from_user, battle_id)
 
 
                     await state.set_state(SendPhotoForBattle.q1)
@@ -494,17 +495,36 @@ async def invite_friend_handler(call: types.CallbackQuery):
     kb = InlineKeyboardBuilder()
 
     base_url = 'https://t.me/share/url'
-    share_url = f'https://t.me/{bot_name}?start=b{battle_id}'
+    share_url = f'https://t.me/{bot_name}?start=b{battle_id}_from{call.message.chat.id}'
     text = f"Привет, можешь по-участвовать в фото-батле, приз выдают за победу в финале"
     encoded_text = urllib.parse.quote(text, safe='')
     encoded_url = urllib.parse.quote(share_url, safe='')
-    full_url = f"{base_url}?url={encoded_url}&text={encoded_text}_from{call.message.chat.id}"
+    full_url = f"{base_url}?url={encoded_url}&text={encoded_text}"
 
     kb.button(text='Пригласить друга', url=full_url)
-    kb.button(text='✅ Проверить', callback_data='gfdhjgb')
+    kb.button(text='✅ Проверить', callback_data=f'check_invites;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
     await call.message.edit_text('📝 Задание - Пригласить друга на фото-батл:\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 2 голоса', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('check_invites'))
+async def check_invites_handler(call: types.CallbackQuery):
+    '''Проверить'''
+    battle_id = call.data.split(';')[1]
+    link_channel = call.data.split(';')[2]
+    user_id = call.message.chat.id
+    users_invited = await db.check_invited_friends(user_id, battle_id)
+    if users_invited:
+        voices_added = len(users_invited) * 2
+        await db.clear_invites(user_id, battle_id)
+        await db.update_add_voices_users(voices_added, user_id)
+        user_info = await db.check_info_users_by_tg_id(user_id)
+        kb = InlineKeyboardBuilder()
+        kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
+        kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+        await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт')
+    else:
+        await call.message.answer('❌ Не выполнено, пока никто не перешел по вашей ссылке')
 
 @dp.callback_query(lambda c: c.data.startswith('spon_subs'))
 async def sponsors_subscribe(call: types.CallbackQuery):
@@ -1179,6 +1199,21 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.update_users_today_voices_and_all_voices(battle_photos_info[1])
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
     await callback.answer('✅ Вы успешно проголосовали', show_alert=True)
+
+    user_info = await db.check_user_photo_by_tg_id(account_id, battle_id)
+    '''Отправка приглашенных друзей'''
+    if await db.is_invited_friend(account_id, battle_id) and user_info[4] == 3:
+        row = await db.find_invited_from_friend(account_id, battle_id)
+        invited_from_id = row[2]
+        user_invited_info = await bot.get_chat(chat_id=account_id)
+        invited_from_id_user_info = await db.check_info_users_by_tg_id(invited_from_id)
+        await db.update_add_voices_users(3, invited_from_id)
+        kb = InlineKeyboardBuilder()
+        kb.button(text=f'Использовать доп. голоса ({invited_from_id_user_info[8]} шт)',
+                  callback_data=f'add_voices_use;{battle_id}')
+        kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
+        await bot.send_message(chat_id=invited_from_id, text=f'✅ Ваш друг @{user_invited_info.username} набрал 3 голоса в 1 раунде. За это вы получили 3 голоса\n\n💰 Ваш баланс голосов: {invited_from_id_user_info[8]} шт')
+
     time_now = datetime.datetime.now()
     await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
     min_votes = battle_info[11]
