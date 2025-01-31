@@ -452,7 +452,24 @@ async def back_to_notification(call: types.CallbackQuery):
 
     vote_link = f'https://t.me/{bot_name}?start=vote{battle_id}page{user_info[6]}'
 
-    text_reply = '''‼️ ВЫ ПРОИГРЫВАЕТЕ\n\nВам не хватает 13 голосов, чтобы пройти в следующий раунд\n\nВаша ссылка на голосование'''
+    battle_info = await db.check_battle_info(battle_id)
+    min_voice = battle_info[11]
+    user_info = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
+    users_in_battle = await db.check_all_battle_photos_where_status_1_and_battle_id_and_number_post(battle_id,
+                                                                                                 user_info[6])
+
+    user_voices = user_info[4]
+
+    max_user_voices = 0
+    for user in users_in_battle:
+        max_user_voices = max(max_user_voices, user[4])
+
+    if max_user_voices == 0 or max_user_voices < min_voice:
+        current_voices = min_voice
+    else:
+        current_voices = max_user_voices
+
+    text_reply = f'''‼️ ВЫ ПРОИГРЫВАЕТЕ\n\nВам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд\n\nВаша ссылка на голосование'''
     text_reply = text_reply.replace('‼️ ВЫ ПРОИГРЫВАЕТЕ', '<b>‼️ ВЫ ПРОИГРЫВАЕТЕ</b>')
     text_reply = text_reply.replace('Ваша ссылка на голосование',
                                     f'<a href="{vote_link}">Ваша ссылка на голосование</a>')
