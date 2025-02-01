@@ -492,7 +492,7 @@ async def wanted_more_voices(call: types.CallbackQuery):
 
     kb = InlineKeyboardBuilder()
     kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
-    if call.message.from_user.is_premium:
+    if call.from_user.is_premium:
         if status_voiced:
             kb.button(text='✅ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
         else:
