@@ -497,11 +497,8 @@ async def wanted_more_voices(call: types.CallbackQuery):
             kb.button(text='✅ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
         else:
             kb.button(text='❌ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
-    if await db.check_all_sponsors():
-        if user_in_battle_info[10]:
-            kb.button(text='✅ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
-        else:
-            kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
+    if await db.check_all_sponsors() and not user_in_battle_info[10]:
+        kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
     if battle_info[21]:
         kb.button(text='♾️ Пригласить друга на фото-батл', callback_data=f'invite_friend;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'back_to_notification;{battle_id};{link_channel}')
