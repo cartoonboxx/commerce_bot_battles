@@ -69,6 +69,7 @@ def back_from_addchannel():
 
 async def settings_channel(callback: types.CallbackQuery, channel_id):
     channel_info = await db.check_channel_info_by_id(channel_id)
+    print(channel_info, channel_id)
     name = channel_info[3]  
     await callback.message.edit_text(f'<b>⚙️ Настройки канала "{name}"</b>\n\nВаша ссылка для принятия вопросов от пользователей анонимно: \n\nhttps://t.me/{bot_name}?start=support_{channel_info[0]}', reply_markup=await back_main_menu_add_channel_opt(channel_id), disable_web_page_preview=True)
 
@@ -97,8 +98,9 @@ async def send_welcome(message: types.Message):
     bot_obj = await bot.get_me()
     bot_id = bot_obj.id
     user_id = message.from_user.id
-    channel_id = GetChannelId.id
-    print(message)
+    await db.add_admin_chat_id_new_user(message.chat.id, user_id)
+    user = await db.check_temp_admin_chats_by_user(user_id)
+    channel_id = user[3]
     for chat_member in message.new_chat_members:
         if chat_member.id == bot_id:
             kb = InlineKeyboardBuilder()
@@ -112,6 +114,7 @@ async def send_welcome(message: types.Message):
             except Exception as ex:
                 print('Бот уже покинул чат')
             await db.uopdate_admin_chat_by_chat_id(chat_id=channel_id, admin_chat=message.chat.id)
+            await db.clear_info_user_temp_admin_chats(user[2])
 
 @dp.callback_query(lambda c: c.data == 'check_subscribe_admin')
 async def check_subscribe_admin(call: types.CallbackQuery):
@@ -133,10 +136,22 @@ async def check_subscribe_admin(call: types.CallbackQuery):
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
     try:
         info = await bot.get_chat(chat_member_update.chat.id)
+        current_user = await info.get_administrators()
+        for user in current_user:
+            if user.status == 'creator' and await db.check_temp_channels_by_user(user.user.id):
+                channel_id = chat_member_update.chat.id
+                await db.add_chat_channel_id_new_user(channel_id, user.user.id)
+                break
     except Exception as ex:
 
         if chat_member_update.new_chat_member.status == ChatMemberStatus.ADMINISTRATOR:
-            await bot.send_message(chat_id=GetChannelId.user, text='Произошла ошибка добавления бота в канал, попробуйте добавить бота чуть позже.')
+            admins = await chat_member_update.chat.get_administrators()
+            current_user_id_error = 0
+            for admin in admins:
+                if admin.status == 'creator' and await db.check_temp_channels_by_user(admin.user.id):
+                    current_user_id_error = admin.user.id
+                    break
+            await bot.send_message(chat_id=current_user_id_error, text='Произошла ошибка добавления бота в канал, попробуйте добавить бота чуть позже.')
             await bot.leave_chat(chat_id=chat_member_update.chat.id)
         return
 
@@ -146,7 +161,9 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
         if chat_member_update.new_chat_member.status in ["administrator", "member"]:
             channel_id = chat_member_update.chat.id
             channel_title = chat_member_update.chat.title
-            user_id = GetChannelId.user
+
+            user = await db.check_temp_channels_by_channel_id(channel_id)
+            user_id = user[2]
 
             tg_id = user_id
 
@@ -161,7 +178,6 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                 await db.update_channels_post_link_where_id(message_link, channel_id_db)
                 channel = chat_member_update.chat
 
-                # Способ 1: Для публичных каналов с username
                 if channel.username:
                     channel_link = f"https://t.me/{channel.username}"
 
@@ -171,12 +187,14 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                     "<b>Канал успешно добавлен! 🎉</b>\n\n"
                     "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
                     "<u><i>Удачного пользования! 😉</i></u>", reply_markup=keyboards.admin_kb.start_menu_for_admins())
+                await db.clear_info_user_temp_channels(user_id)
             else:
                 await bot.send_message(user_id,
                     "<b>Этот канал уже добавлен! 🔄</b>\n\n"
                     "Вы можете продолжить пользоваться нашим ботом для автоматизации фото-батлов в этом канале.",
                                        reply_markup=keyboards.admin_kb.start_menu_for_admins()
                     )
+                await db.clear_info_user_temp_channels(user_id)
                 return
             return
 
@@ -189,7 +207,10 @@ async def approve_delete_channel_handler(callback: types.CallbackQuery):
 async def approve_delete_channel_handler2(callback: types.CallbackQuery):
     channel_id = callback.data.split(';')[1]
     channel_info = await db.check_channel_info_by_id(channel_id)
-    await bot.leave_chat(chat_id=channel_info[2])
+    try:
+        await bot.leave_chat(chat_id=channel_info[2])
+    except Exception as ex:
+        print('Бот уже покинул чат')
     await delete_channel_func2(callback, channel_id)
 
 @dp.callback_query(lambda c: c.data.startswith('battlesettings'))

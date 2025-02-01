@@ -275,9 +275,11 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
     if action == 'delete':
         await call.message.edit_text('Вы уверены что хотите удалить канал?', reply_markup=back_main_menu_add_channel2(channel_id))
     if action == 'adminchat':
-        # await state.set_state(AddChat.q1)
-        # await state.update_data(channel_id=channel_id)
-        GetChannelId.id = channel_id
+
+        if not await db.check_temp_admin_chats_by_user(call.message.chat.id):
+            await db.add_new_user_temp_admin_chats(call.message.chat.id)
+            await db.update_channel_id_temp_admin_chats(call.message.chat.id, channel_id)
+
         channel_info = await db.check_channel_info_by_id(channel_id)
 
         if channel_info[4] != 0:

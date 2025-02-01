@@ -136,6 +136,17 @@ async def db_start():
                 user_invited_id TEXT DEFAULT '-',
                 invited_from_id TEXT DEFAULT '-',
                 battle_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS temp_channels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id INTEGER DEFAULT 0,
+                user_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS temp_admin_chats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER DEFAULT 0,
+                user_id INTEGER DEFAULT 0,
+                channel_id INTEGER DEFAULT 0)''')
         await db.commit()
 
 
@@ -727,7 +738,6 @@ async def check_channel_where_channel_id(channel_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM channels WHERE channel_id = ?', (channel_id,))
         row = await cursor.fetchone()
-        await cursor.close()
         return row
 
 async def update_add_voices_users(add_voices, tg_id):
@@ -810,6 +820,7 @@ async def clear_invites(user_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('DELETE FROM invited_friends WHERE invited_from_id = ? AND battle_id = ?',
                          (user_id, battle_id))
+        await db.commit()
 
 async def is_invited_friend(user_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
@@ -826,3 +837,77 @@ async def find_invited_from_friend(user_id, battle_id):
         if cursor:
             return await cursor.fetchone()
         return None
+
+async def check_temp_channels_by_user(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM temp_channels WHERE user_id = ?',
+                                  (user_id,))
+        if cursor:
+            return await cursor.fetchone()
+        return None
+
+async def add_new_user_temp_channels(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO temp_channels (user_id) VALUES (?)',
+                         (user_id, ))
+        await db.commit()
+
+async def add_chat_channel_id_new_user(channel_id, user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE temp_channels SET channel_id = ? WHERE user_id = ?',
+                         (channel_id, user_id))
+        await db.commit()
+
+async def check_temp_channels_by_channel_id(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM temp_channels WHERE channel_id = ?',
+                                  (channel_id,))
+        if cursor:
+            return await cursor.fetchone()
+        return None
+
+async def clear_info_user_temp_channels(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM temp_channels WHERE user_id = ?',
+                         (user_id,))
+        await db.commit()
+
+async def check_temp_admin_chats_by_user(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM temp_admin_chats WHERE user_id = ?',
+                                  (user_id,))
+        if cursor:
+            return await cursor.fetchone()
+        return None
+
+async def add_new_user_temp_admin_chats(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO temp_admin_chats (user_id) VALUES (?)',
+                         (user_id, ))
+        await db.commit()
+
+async def add_admin_chat_id_new_user(chat_id, user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE temp_admin_chats SET chat_id = ? WHERE user_id = ?',
+                         (chat_id, user_id))
+        await db.commit()
+
+async def check_temp_admin_chats_by_channel_id(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM temp_admin_chats WHERE chat_id = ?',
+                                  (channel_id,))
+        if cursor:
+            return await cursor.fetchone()
+        return None
+
+async def clear_info_user_temp_admin_chats(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM temp_admin_chats WHERE user_id = ?',
+                         (user_id,))
+        await db.commit()
+
+async def update_channel_id_temp_admin_chats(user_id, channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE temp_admin_chats SET channel_id = ? WHERE user_id = ?',
+                         (channel_id, user_id))
+        await db.commit()

@@ -488,16 +488,17 @@ async def wanted_more_voices(call: types.CallbackQuery):
     battle_info = await db.check_battle_info(battle_id)
 
     kb = InlineKeyboardBuilder()
-    kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
+    kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
     if call.message.from_user.is_premium:
         if status_voiced:
             kb.button(text='✅ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
         else:
             kb.button(text='❌ Проголосовать за канал', callback_data=f'voice_to_channel_premium;{battle_id};{link_channel}')
-    if user_in_battle_info[10]:
-        kb.button(text='✅ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
-    else:
-        kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
+    if await db.check_all_sponsors():
+        if user_in_battle_info[10]:
+            kb.button(text='✅ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
+        else:
+            kb.button(text='❌ Подписаться на спонсоров', callback_data=f'spon_subs;{battle_id};{link_channel}')
     if battle_info[21]:
         kb.button(text='♾️ Пригласить друга на фото-батл', callback_data=f'invite_friend;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'back_to_notification;{battle_id};{link_channel}')
@@ -537,7 +538,7 @@ async def check_invites_handler(call: types.CallbackQuery):
         await db.update_add_voices_users(voices_added, user_id)
         user_info = await db.check_info_users_by_tg_id(user_id)
         kb = InlineKeyboardBuilder()
-        kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
+        kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
         kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
         await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт')
     else:
@@ -580,7 +581,7 @@ async def check_subscribe_sponsors(call: types.CallbackQuery):
 
     user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
     kb = InlineKeyboardBuilder()
-    kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
+    kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
     kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
     await call.message.edit_text(f'✅ Начислено 2 голосов за подписку\n\n💰 Ваш баланс голосов: {user_info[8]} шт',
@@ -643,6 +644,15 @@ async def add_voices_use(call: types.CallbackQuery):
         await call.answer('У вас больше нет голосов!', show_alert=True)
     await db.use_add_voices(votes, battle_id, tg_id)
     await call.answer('Вы использовали доп.голоса', show_alert=True)
+    text_edit = call.message.html_text
+    print(text_edit)
+    text_edit = text_edit.replace(f'{votes}', '0')
+    print(text_edit)
+    try:
+        await call.message.edit_text(text=text_edit, reply_markup=call.message.reply_markup)
+    except Exception as ex:
+        print('Менять нечего!')
+
 
 @dp.callback_query(lambda c: c.data.startswith('create_battle'))
 async def go_create_battle(call: types.CallbackQuery):
@@ -928,7 +938,10 @@ async def cooperation(message: types.Message, state: FSMContext):
         await db.add_admin(message.chat.id)
         await db.add_admins_count(message.chat.id, 1000)
 
-    GetChannelId.user = message.chat.id
+    if not await db.check_temp_channels_by_user(message.chat.id):
+        await db.add_new_user_temp_channels(message.chat.id)
+
+    '''Записываем или создаем пометку с пользователем'''
 
     kb = InlineKeyboardBuilder()
     kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=manage_chat+delete_messages+manage_video_chats+restrict_members+promote_members+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
