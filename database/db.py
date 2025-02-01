@@ -59,7 +59,8 @@ async def db_start():
                 post_id INTEGER DEFAULT 0,
                 last_like TEXT DEFAULT '2024-10-20 01:18:32',
                 sponsor INTEGER DEFAULT 0,
-                invited_friend INTEGER DEFAULT 0
+                invited_friend INTEGER DEFAULT 0,
+                give_votes INTEGER DEFAULT 0
             )
         ''')
         await db.execute('''
@@ -389,7 +390,7 @@ async def check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id):
             return False
 
 
-async def add_one_voice_to_battle_photos_by_id(id: int):
+async def add_one_voice_to_battle_photos_by_id(id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battle_photos SET votes = votes + 1 WHERE id = ?', (id,))
         await db.commit()
@@ -779,7 +780,6 @@ async def check_admin_channel_from_table():
 async def add_admin_channel_to_table(title, chat_id, url):
     async with aiosqlite.connect(name_db) as db:
         if await check_admin_channel_from_table() is not None:
-            print('Зашел сюда', await check_admin_channel_from_table())
             await db.execute('UPDATE chat_for_admins SET title = ?, channel_id = ?, url = ? WHERE channel_id = ?', (title, chat_id, url, chat_id))
             await db.commit()
         else:
@@ -789,6 +789,11 @@ async def add_admin_channel_to_table(title, chat_id, url):
 async def check_user_photo_by_tg_id(tg_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?', (tg_id, battle_id))
+        return await cursor.fetchone()
+
+async def check_user_photo_by_id(tg_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE id = ? AND battle_id = ?', (tg_id, battle_id))
         return await cursor.fetchone()
 
 async def check_registration_invite(tg_id, invited_friend, battle_id):
@@ -811,7 +816,6 @@ async def save_invited_user(user_invited_id, invited_from_id, battle_id):
         if not await check_registration_invite(invited_from_id, user_invited_id, battle_id):
             await db.execute('INSERT INTO invited_friends (user_invited_id, invited_from_id, battle_id) VALUES (?, ?, ?)',
                              (user_invited_id, invited_from_id, battle_id))
-            print('Попал сюда')
             await db.execute('UPDATE battle_photos SET invited_friend = ? WHERE tg_id = ?',
                              (user_invited_id, invited_from_id))
             await db.commit()
@@ -822,15 +826,17 @@ async def check_invited_friends(user_id, battle_id):
                          (user_id, battle_id))
         return await cursor.fetchall()
 
-async def clear_invites(user_id, battle_id):
+async def clear_invites_but_save_one(user_id, battle_id, save_user):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('DELETE FROM invited_friends WHERE invited_from_id = ? AND battle_id = ?',
                          (user_id, battle_id))
+        await db.execute('INSERT INTO invited_friends (user_invited_id, invited_from_id, battle_id) VALUES (?, ?, ?)',
+                         (save_user, user_id, battle_id))
         await db.commit()
 
 async def is_invited_friend(user_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
-        cursor = await db.execute('SELECT * FROM invited_friends WHERE user_invited_id = ? AND battle_id = ?',
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE invited_friend = ? AND battle_id = ?',
                                   (user_id, battle_id))
         if await cursor.fetchone():
             return True
@@ -916,4 +922,10 @@ async def update_channel_id_temp_admin_chats(user_id, channel_id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE temp_admin_chats SET channel_id = ? WHERE user_id = ?',
                          (channel_id, user_id))
+        await db.commit()
+
+async def update_give_votes_battle_photos(user_id, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battle_photos SET give_votes = 1 WHERE tg_id = ? AND battle_id = ?',
+                         (user_id, battle_id))
         await db.commit()

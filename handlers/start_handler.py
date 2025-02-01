@@ -535,15 +535,33 @@ async def check_invites_handler(call: types.CallbackQuery):
     link_channel = call.data.split(';')[2]
     user_id = call.message.chat.id
     users_invited = await db.check_invited_friends(user_id, battle_id)
+    save_user = ''
     if users_invited:
-        voices_added = len(users_invited) * 2
-        await db.clear_invites(user_id, battle_id)
+        vote_counter = 0
+        user_battle_info = await db.check_user_photo_by_tg_id(user_id, battle_id)
+        for user in users_invited:
+            if str(user_battle_info[11]) != str(user[1]):
+                vote_counter += 1
+            else:
+                save_user_battle_info = await db.check_user_photo_by_tg_id(user[1], battle_id)
+                if save_user_battle_info[6] == 0 and save_user_battle_info[12] == 0:
+                    vote_counter += 1
+                    await db.update_give_votes_battle_photos(user[1], battle_id)
+                save_user = user[1]
+
+        voices_added = vote_counter * 2
+
+        await db.clear_invites_but_save_one(user_id, battle_id, save_user)
         await db.update_add_voices_users(voices_added, user_id)
         user_info = await db.check_info_users_by_tg_id(user_id)
         kb = InlineKeyboardBuilder()
         kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
         kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
-        await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт')
+        kb.adjust(1)
+        if voices_added != 0:
+            await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
+        else:
+            await call.message.edit_text(f'Кто-то из пользователей уже перешел по вашей ссылке!', reply_markup=kb.as_markup())
     else:
         await call.message.answer('❌ Не выполнено, пока никто не перешел по вашей ссылке')
 
@@ -1233,14 +1251,18 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
     await callback.answer('✅ Вы успешно проголосовали', show_alert=True)
 
-    user_info = await db.check_user_photo_by_tg_id(account_id, battle_id)
+    user_info = await db.check_user_photo_by_id(account_id, battle_id)
+    print(account_id, battle_id)
     '''Отправка приглашенных друзей'''
+    account_id = user_info[1]
+    print(await db.is_invited_friend(account_id, battle_id), user_info)
     if await db.is_invited_friend(account_id, battle_id) and user_info[4] == 3:
+        print('Попал сюда')
         row = await db.find_invited_from_friend(account_id, battle_id)
         invited_from_id = row[2]
         user_invited_info = await bot.get_chat(chat_id=account_id)
-        invited_from_id_user_info = await db.check_info_users_by_tg_id(invited_from_id)
         await db.update_add_voices_users(3, invited_from_id)
+        invited_from_id_user_info = await db.check_info_users_by_tg_id(invited_from_id)
         kb = InlineKeyboardBuilder()
         kb.button(text=f'Использовать доп. голоса ({invited_from_id_user_info[8]} шт)',
                   callback_data=f'add_voices_use;{battle_id}')
