@@ -121,6 +121,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
                         '''Сохраняем отправленного пользователя'''
                         await db.save_invited_user(message.chat.id, from_user, battle_id)
 
+                        print(from_user)
+
+                    print(account_id, len(account_id), account_id[1][4:])
 
                     await state.set_state(SendPhotoForBattle.q1)
                     await state.update_data(battle_id=battle_id)

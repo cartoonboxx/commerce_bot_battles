@@ -791,6 +791,11 @@ async def check_user_photo_by_tg_id(tg_id, battle_id):
         cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?', (tg_id, battle_id))
         return await cursor.fetchone()
 
+async def check_registration_invite(tg_id, invited_friend, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND invited_friend = ? AND battle_id = ?', (tg_id, invited_friend, battle_id))
+        return await cursor.fetchone()
+
 async def update_user_sponsor_data(tg_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?', (tg_id, battle_id))
@@ -803,9 +808,10 @@ async def update_user_sponsor_data(tg_id, battle_id):
 
 async def save_invited_user(user_invited_id, invited_from_id, battle_id):
     async with aiosqlite.connect(name_db) as db:
-        if not check_user_photo_by_tg_id(user_invited_id, battle_id):
+        if not await check_registration_invite(invited_from_id, user_invited_id, battle_id):
             await db.execute('INSERT INTO invited_friends (user_invited_id, invited_from_id, battle_id) VALUES (?, ?, ?)',
                              (user_invited_id, invited_from_id, battle_id))
+            print('Попал сюда')
             await db.execute('UPDATE battle_photos SET invited_friend = ? WHERE tg_id = ?',
                              (user_invited_id, invited_from_id))
             await db.commit()
