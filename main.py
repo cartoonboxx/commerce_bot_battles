@@ -28,8 +28,7 @@ async def main_start():
 
     dp.startup.register(set_main_menu)
     await db.db_start()
-
-    scheduler.add_job(scheduled_task, 'interval', seconds=60)  # Run every 60 seconds
+    scheduler.add_job(scheduled_task, 'interval', seconds=60)  
     scheduler.add_job(scheduled_task2, 'interval', seconds=55)
     scheduler.start()
     await bot.delete_webhook(drop_pending_updates=False)

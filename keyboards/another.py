@@ -17,12 +17,6 @@ def statics_back():
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
-def faq():
-    kb = ReplyKeyboardBuilder()
-    kb.button(text='🔙 Назад')
-    kb.adjust(1)
-    return kb.as_markup(resize_keyboard=True)
-
 def question():
     kb = ReplyKeyboardBuilder()
     kb.button(text='🔙 Назад')

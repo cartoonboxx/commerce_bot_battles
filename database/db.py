@@ -1,24 +1,12 @@
-import aiosqlite
 from datetime import datetime
+import aiosqlite
 
 name_db = 'photobattle.db'
 
-async def check_table_columns(db, table_name, expected_columns):
-    """Проверяет и добавляет отсутствующие столбцы в таблицу"""
-    cursor = await db.execute(f"PRAGMA table_info({table_name})")
-    existing_columns = {row[1] for row in await cursor.fetchall()}
-
-    for column, definition in expected_columns.items():
-        if column not in existing_columns:
-            try:
-                await db.execute(f'ALTER TABLE {table_name} ADD COLUMN {column} {definition}')
-                print(f"Column {column} added to {table_name}")
-            except Exception as e:
-                print(f"Error adding column {column} to {table_name}: {e}")
 
 async def db_start():
     async with aiosqlite.connect(name_db) as db:
-        # Создание основных таблиц
+        
         await db.execute('''
             CREATE TABLE IF NOT EXISTS channels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,22 +18,21 @@ async def db_start():
                 post_link TEXT DEFAULT '-',
                 status INTEGER DEFAULT 0
             )''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battles_statistic (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tg_id INTEGER,
                 all_battles INTEGER DEFAULT 0,
                 count_end INTEGER DEFAULT 0
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS admins (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tg_id INTEGER,
                 count INTEGER DEFAULT 0
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,8 +44,8 @@ async def db_start():
                 all_voices INTEGER DEFAULT 0,
                 notification INTEGER DEFAULT 1,
                 add_voices INTEGER DEFAULT 0
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battle_photos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,34 +61,33 @@ async def db_start():
                 sponsor INTEGER DEFAULT 0,
                 invited_friend INTEGER DEFAULT 0,
                 give_votes INTEGER DEFAULT 0
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battle_voices (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 battle_id INTEGER,
                 tg_id INTEGER
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battle_blocks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 battle_id INTEGER,
                 tg_id INTEGER
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battle_winners (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 battle_id INTEGER,
                 tg_id INTEGER
-            )''')
-
+            )
+        ''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS blocked (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 count INTEGER DEFAULT 0)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,68 +114,42 @@ async def db_start():
                 photo_send INTEGER DEFAULT 1,
                 current_round INTEGER DEFAULT 0,
                 type_battle INTEGER DEFAULT 2)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS posts_correcting (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 battle_id INTEGER,
                 post_id INTEGER)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS sponsors (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT DEFAULT '-',
                 url TEXT DEFAULT '-',
                 channel_id INTEGER DEFAULT 0)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS chat_for_admins (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT DEFAULT '-',
                 url TEXT DEFAULT '-',
                 channel_id INTEGER DEFAULT 0)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS invited_friends (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_invited_id TEXT DEFAULT '-',
                 invited_from_id TEXT DEFAULT '-',
                 battle_id INTEGER DEFAULT 0)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS temp_channels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 channel_id INTEGER DEFAULT 0,
                 user_id INTEGER DEFAULT 0)''')
-
         await db.execute('''
             CREATE TABLE IF NOT EXISTS temp_admin_chats (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 chat_id INTEGER DEFAULT 0,
                 user_id INTEGER DEFAULT 0,
                 channel_id INTEGER DEFAULT 0)''')
-
-        # Проверка и добавление столбцов для battle_photos
-        battle_photos_columns = {
-            'tg_id': 'INTEGER',
-            'battle_id': 'INTEGER',
-            'photo': 'TEXT',
-            'votes': 'INTEGER DEFAULT 0',
-            'status': 'INTEGER DEFAULT 0',
-            'number_post': 'INTEGER DEFAULT 0',
-            'notification': 'INTEGER DEFAULT 0',
-            'post_id': 'INTEGER DEFAULT 0',
-            'last_like': 'TEXT DEFAULT \'2024-10-20 01:18:32\'',
-            'sponsor': 'INTEGER DEFAULT 0',
-            'invited_friend': 'INTEGER DEFAULT 0',
-            'give_votes': 'INTEGER DEFAULT 0'
-        }
-        await check_table_columns(db, 'battle_photos', battle_photos_columns)
-
-        # Дополнительные проверки для других таблиц при необходимости
-        # await check_table_columns(db, 'other_table', other_columns)
-
         await db.commit()
+
 
 async def check_all_battle_photos_where_battle_id(id):
     async with aiosqlite.connect(name_db) as db:

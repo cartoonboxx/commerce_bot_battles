@@ -11,7 +11,7 @@ from database import db
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup
 from functions.admin_functions import back_main_menu_channels, delete_channel_func, admin_subscribed_to_channel
 from handlers.admin_handler import settings_channel
-from keyboards.another import cabinet_back, create_battle, faq, statics_back
+from keyboards.another import cabinet_back, create_battle, statics_back
 from keyboards.kb import gocooperation
 from keyboards.dev import channel_is_deletes, channels_dev, mailing_dev, nakrutka_menu, start_menu_for_dev, true_channels_delete
 from states.classes_states import *
@@ -236,11 +236,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
             await message.answer("🏘 Меню", reply_markup=kb.start_menu_for_users())
             return
 
-        # Если никаких параметров не передано
         await message.answer(
             f"👋 Добро пожаловать, @{username}!\n\n"
-            "📖 Пожалуйста, ознакомьтесь с <a href='https://telegra.ph/Polzovatelskoe-soglashenie-kanала-PhotoBattliys-10-05'>пользовательским соглашением</a> и "
-            "<a href='https://telegra.ph/Politika-konfidencialnosti-kanala-PhotoBattliys-10-05'>политикой конфиденциальности</a>.\n\n"
+            "📖 Пожалуйста, ознакомьтесь с <a href='https://telegra.ph/Politika-konfidencialnosti-kanala-PhotoBattliys-10-05'>политикой конфиденциальности</a>.\n\n"
             "<b>💬 Используя бота, вы автоматически соглашаетесь с данными условиями. Приятного использования!</b>",
             reply_markup=kb.start_menu_for_users(),
             parse_mode='HTML',
@@ -959,8 +957,6 @@ async def cooperation(message: types.Message, state: FSMContext):
     if not await db.check_temp_channels_by_user(message.chat.id):
         await db.add_new_user_temp_channels(message.chat.id)
 
-    '''Записываем или создаем пометку с пользователем'''
-
     kb = InlineKeyboardBuilder()
     kb.button(text='Добавить канал', url=f'http://t.me/{bot_name}?startchannel&admin=manage_chat+delete_messages+manage_video_chats+restrict_members+promote_members+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics')
     kb.button(text='🔙 Назад', callback_data='backtochannels')
@@ -982,7 +978,7 @@ async def cooperation(message: types.Message, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data.startswith('nakrutka'))
 async def create_mailing(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer('Введите tg_id пользователя, которому хотите накрутить голоса')
+    await callback.message.answer('<b>[1/2]Введите tg_id пользователя, которому хотите накрутить голоса.</b>')
     await state.set_state(AddVoices.q1)
 
 @dp.callback_query(lambda c: c.data.startswith('cancel_nakrutka'))
@@ -998,10 +994,10 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
     tg_id = message.text
     if tg_id.isdigit():
         await state.update_data(tg_id=tg_id)
-        await message.answer('Введите кол-во голосов')
+        await message.answer('<b>[2/2]Введите кол-во голосов.</b>')
         await state.set_state(AddVoices.q2)
     else:
-        await message.answer('Не похоже на tg_id, попробуйте ещё раз')
+        await message.answer('<b>❌ Не похоже на tg_id, попробуйте ещё раз.</b>')
 
 @dp.message(AddVoices.q2)
 async def add_voices_handler(message: types.Message, state: FSMContext):
@@ -1015,9 +1011,9 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
             await message.answer(f'{count} голосов добавлено')
             await state.clear()
         else:
-            await message.answer('За 1 раз максимум можно накрутить3 голоса')
+            await message.answer('<b>❌ За раз максимум можно накрутить до 3 голосов.</b>')
     else:
-        await message.answer('Не похоже на число, попробуйте ещё раз')
+        await message.answer('<b>❌ Не похоже на число, попробуйте ещё раз.</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('backtosettings'))
 async def option_channel_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -1071,7 +1067,7 @@ async def mailing_handler_q2(message: types.Message, state: FSMContext):
                     markup.button(text=btn_text, url=btn_url)
 
                 else:
-                    await message.answer(f"Ошибка: ссылка должна начинаться с 'https://'. Проверьте: {btn_url}")
+                    await message.answer(f"<b>❌ Ошибка: ссылка должна начинаться с 'https://'. Проверьте: {btn_url}</b>")
                     return
         markup.adjust(1)
     await send_copy_to_all_users(message.chat.id, mess_id, markup.as_markup())
@@ -1139,7 +1135,7 @@ async def statics(message: types.Message, state: FSMContext):
 
         active_battles = await db.check_all_battles_where_all_ran_return_id()
 
-        await message.answer(f"""<b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n\n- Количество активных батлов: {len(items)}\n\n- Количество пользователей: {users}\n\n- Активные батлы: {len(active_battles)}\n\n<b>ℹ️ Ваша статистика представлена в личном кабинете</b>""",reply_markup=statics_back(),parse_mode="HTML",)
+        await message.answer(f"""<b>📊 Статистика бота "Помощник фото-батлов | Участвовать"</b>\n\n- Количество пользователей: {users}\n\n- Активные батлы: {len(active_battles)}\n\n<b>ℹ️ Ваша статистика представлена в личном кабинете</b>""",reply_markup=statics_back(),parse_mode="HTML",)
 
 @dp.message(lambda message: message.text == '🔙 Назад')
 async def statics(message: types.Message, state: FSMContext):
@@ -1161,48 +1157,15 @@ async def statics(message: types.Message, state: FSMContext):
     username = message.from_user.username
     await state.set_state(stats_bot.user2)
     await message.answer(
-            f" 👋 Добро пожаловать, @{username}!\n\n"
-            "📖 Пожалуйста, ознакомьтесь с <a href='https://telegra.ph/Polzovatelskoe-soglashenie-kanala-PhotoBattliys-10-05'>пользовательским соглашением</a> и "
-            "<a href='https://telegra.ph/Politika-konfidencialnosti-kanala-PhotoBattliys-10-05'>политикой конфиденциальности</a>.\n\n"
+            f"👋 Добро пожаловать, @{username}!\n\n"
+            "📖 Пожалуйста, ознакомьтесь с <a href='https://telegra.ph/Politika-konfidencialnosti-kanala-PhotoBattliys-10-05'>политикой конфиденциальности</a>.\n\n"
             "<b>💬 Используя бота, вы автоматически соглашаетесь с данными условиями. Приятного использования!</b>",reply_markup=kb.start_menu_for_users(),parse_mode='HTML',disable_web_page_preview=True)
 
 @dp.message(lambda message: message.text == '🆘 Тех. поддержка')
 async def tech_support_start(message: Message, state: FSMContext):
     if message.chat.type == 'private':
         await state.clear()
-        await message.answer("""💬 Здесь вы можете задать вопрос только администраторам этого бота. Мы не сможем ответить на вопросы, не связанные с ботом и каналом данного бота.        
-\n\n<i>Прежде чем написать, прочтите “Часто задаваемые вопросы (FAQ)”</i>""", reply_markup=kb.support(), parse_mode="HTML")
-
-@dp.message(lambda message: message.text == '📚 FAQ')
-async def show_faq(message: types.Message, state: FSMContext):
-    await message.answer(
-    """❓ *Что такое "Фотобатлы"?*
-Это развлекательный проект в Telegram, где участники соревнуются в фотодуэлях.
-Присылайте свои лучшие фото и боритесь за призы!
-
-🌟 *Как участвовать?*
-1. Отправьте фотографию через нашего Telegram-бота.
-2. Дождитесь старта батла.
-3. Соревнуйтесь за голоса зрителей.
-
-🏆 *Как определяется победитель?*
-- Побеждает фотография, набравшая наибольшее количество голосов.
-- Результат зависит только от участников голосования.
-
-💸 *Есть ли денежные игры?*
-Да, проводятся конкурсы с денежными призами, например:
-- *Аукционы:* участник, предложивший наибольшую ставку, забирает весь банк. Эти игры не являются азартными.
-
-⚠️ *Что делать, если я проиграл?*
-- Средства не возвращаются.
-- Организатор не несет ответственности за убытки. (Проект предназначен для развлечения.)
-
-🚪 *Как прекратить участие?*
-- Просто отпишитесь от канала, либо перестаньте участвовать в батлах.
-
-📜 *Могут ли измениться правила?*
-Да, организатор оставляет за собой право изменять условия.
-Все изменения публикуются в постах и закрепленных сообщениях канала.""",parse_mode="MARKDOWN", reply_markup=faq())
+        await message.answer("""<b>💬 Здесь вы можете задать вопрос только касающийся работы бота.</b>\n\nНашим ботом пользуется много каналов, мы не отвечаем за них.""", reply_markup=kb.support(), parse_mode="HTML")
 
 @dp.callback_query(lambda c: c.data.startswith('subcribed'))
 async def subcribed_handler(callback: types.CallbackQuery):

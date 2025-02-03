@@ -82,13 +82,6 @@ async def user_menu_handler(message: types.Message, state: FSMContext):
         if tg_id in admins or admin_exist:
             await message.answer('<b>🔠 Выберите нужный батл для управления: \n\n</b> 💁 Вы не можете участвовать в батлах, так как вы админ. \nОтправляйте фото с других аккаунтов.', reply_markup=await active_battles_kb(active_battles))
             return
-        categories, total_items = await get_paginated_items33(0)
-        items_kb = build_items_kb33(categories, 0, total_items)
-        await message.answer('<b>📸 Активные фото-батлы</b>\n\n' + 'Выбирайте батл и участвуйте прямо сейчас. Все они прошли проверку администрацией.\n\n' + '<b>💥 Покажите, на что способны, и станьте победителем!</b>', reply_markup=items_kb.as_markup(), parse_mode="HTML")
-
-# @dp.message(lambda message: message.text == "✅ Приступим")
-# async def add_channel_handler(callback: types.CallbackQuery, state: FSMContext):
-#     await add_channel_func(callback, state)
     
 @dp.callback_query(lambda c: c.data.startswith('battlespageitems'))
 async def battles_page_items_handler(call: types.CallbackQuery):
@@ -165,14 +158,9 @@ async def process_question(message: types.Message, state: FSMContext):
             question_text = message.caption.strip()
             photo = message.photo[-1]
 
-    if question_text and len(question_text) < 5:
+    if question_text and len(question_text) > 500:
         await message.answer(
-            "<b>💬 Пожалуйста, опишите ваш вопрос подробнее (минимум 5 символов).</b>", parse_mode="HTML")
-        return
-
-    if question_text and len(question_text) > 100:
-        await message.answer(
-            "<b>💬 Пожалуйста, опишите ваш вопрос короче (максимум 100 символов).</b>", parse_mode="HTML")
+            "<b>💬 Пожалуйста, опишите ваш вопрос короче (максимум 500 символов).</b>", parse_mode="HTML")
 
         await state.set_state(waiting_for_answers.q2)
         return
@@ -247,14 +235,9 @@ async def process_question(message: types.Message, state: FSMContext):
             question_text = message.caption.strip()
             photo = message.photo[-1]
 
-    if question_text and len(question_text) < 5:
+    if question_text and len(question_text) > 500:
         await message.answer(
-            text="<b>💬 Пожалуйста, опишите ваш вопрос подробнее (минимум 5 символов).</b>", parse_mode="HTML")
-        return
-
-    if question_text and len(question_text) > 100:
-        await message.answer(
-            text="<b>💬 Пожалуйста, опишите ваш вопрос короче (максимум 100 символов).</b>", parse_mode="HTML")
+            text="<b>💬 Пожалуйста, опишите ваш вопрос короче (максимум 500 символов).</b>", parse_mode="HTML")
 
         await state.set_state(waiting_for_answers.q3)
         return
@@ -336,8 +319,8 @@ async def process_answers(message: types.Message, state: FSMContext):
             photo = message.photo[-1]
             answer_text = message.caption.strip()
 
-    if len(answer_text) < 5 or len(answer_text) > 100:
-        await message.answer("<b>💬 Ответ должен быть от 5 до 100 символов.</b>", parse_mode="HTML")
+    if len(answer_text) > 500:
+        await message.answer("<b>💬 Ответ должен быть короче 500 символов.</b>", parse_mode="HTML")
         await state.set_state(waiting_for_answers.q1)
         return
     answer_text_message = f"<b>📩 Новый ответ от администратора:</b>\n\n {answer_text}"
@@ -366,20 +349,20 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[1]
     is_user_blocked = await db.check_battle_block_battle_id_tg_id_exist_return_bool(battle_id, call.from_user.id)
     if is_user_blocked:
-        await call.answer('Вы заблокированы в этом батле', show_alert=True)
+        await call.answer('<b>🚫 Вы заблокированы в этом батле.</b>', show_alert=True)
         return
     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(battle_id, call.from_user.id)
 
     is_user_exist_battle = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_0_return_bool(battle_id, call.from_user.id)
     if is_user_exist_battle:
-        await call.answer('Вы уже отправили фото на проверку, ожидайте...', show_alert=True)
+        await call.answer('<b>🕖 Вы уже отправили фото на проверку, ожидайте...</b>', show_alert=True)
         return
     if is_user_exist:
-        await call.answer('Вы уже участвуете в этом батле', show_alert=True)
+        await call.answer('<b>❌ Вы уже участвуете в этом батле</b>', show_alert=True)
         return
     await state.set_state(SendPhotoForBattle.q1)
     await state.update_data(battle_id=battle_id)
-    await call.message.edit_text('Отправьте фото, которое не несет 18+ и оскорбительного характера')
+    await call.message.edit_text('<b>📝 Отправьте фото, которое не несет 18+ и оскорбительного характера.</b>')
 
 @dp.message(SendPhotoForBattle.q1)
 async def send_photo_for_battle_handler(message: types.Message, state: FSMContext):
@@ -480,7 +463,6 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         except Exception as e:
             print(e)
         kb.button(text='✅ Принят', callback_data='nonefsafs')
-        # await call.message.edit_reply_markup(reply_markup=kb.as_markup())
         await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=correct_message_ID, reply_markup=kb.as_markup())
 
         if battle_info[23] == 1:

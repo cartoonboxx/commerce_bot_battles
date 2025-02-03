@@ -182,7 +182,7 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                     channel_link = f"https://t.me/{channel.username}"
 
                 await db.update_channel_link_where_id(channel_link, channel_id_db)
-
+					 
                 await bot.send_message(user_id,
                     "<b>Канал успешно добавлен! 🎉</b>\n\n"
                     "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
@@ -767,7 +767,3 @@ async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContex
 - Приз: {battle_info[6]}
 - Время начала: {time_now}                                                   
     ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
-
-
-    
-

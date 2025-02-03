@@ -267,7 +267,7 @@ async def delete_channel_func2(call: types.CallbackQuery, channel_id):
     await message.edit_text('<b>✅ Канал удален </b>', reply_markup= back_main_menu_channels(channels))
 
 def generate_support_link(channel_id):
-    base_url = f"https://t.me/{config.bot_name}?start=support_{channel_id}"  # Ссылка для запуска бота
+    base_url = f"https://t.me/{config.bot_name}?start=support_{channel_id}"
     return base_url
 
 async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, state:FSMContext):
