@@ -195,6 +195,8 @@ async def admin_subscribed_to_channel(admin_user_id) -> bool:
     try:
         chat_info = await bot.get_chat(admin_link_chat_id)
         result = await chat_info.get_member(admin_user_id)
+        if result.status == 'left':
+            return False
         return True
     except Exception as ex:
         return False
