@@ -491,7 +491,10 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
 
             kb = InlineKeyboardBuilder()
             kb.button(text='Ссылка на пост', url=new_channel_link)
-            kb.button(text='Ссылка на канал', url=battle_info[5])
+            channel_info = await db.check_channel_info_by_id(battle_info[1])
+            channel_data = await bot.get_chat(channel_info[2])
+            if not channel_data.username:
+                kb.button(text="Ссылка на канал", url=battle_info[5])
             kb.adjust(1)
             await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 

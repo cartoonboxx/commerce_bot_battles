@@ -180,7 +180,7 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
         if round is None:
             await active_battle_answer_func(message, battle_id)
         else:
-            await firstround_menu_setting(message, battle_id)
+            await battle_answer_func_message(message, battle_id, state)
         await state.clear()
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -201,7 +201,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
             await active_battle_answer_func(message, battle_id)
         else:
             if battle_info[23] == 2:
-                await firstround_menu_setting(message, battle_id)
+                await battle_answer_func_message(message, battle_id, state)
             else:
                 await battle_one_message(message, battle_id)
         await state.clear()

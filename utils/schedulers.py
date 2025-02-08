@@ -2,6 +2,7 @@ from database import db
 from database.db import *
 from .utils import *
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from functions.admin_functions import check_users_tasks
 from data.loader import *
 from datetime import time
 import datetime
@@ -64,8 +65,12 @@ async def scheduled_task():
                             kb.button(text='🔕 Выкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{battle_info[5]};{battle_id}')
                         else:
                             kb.button(text='🔔 Вкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{battle_info[5]};{battle_id}')
-                        kb.button(text="Ссылка на канал", url=battle_info[5])
-                        kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
+                        channel_info = await db.check_channel_info_by_id(battle_info[1])
+                        channel_data = await bot.get_chat(channel_info[2])
+                        if not channel_data.username:
+                            kb.button(text="Ссылка на канал", url=battle_info[5])
+                        if await check_users_tasks(battle_id, tg_id):
+                            kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
                         kb.adjust(1)
                         await bot.send_message(
                             chat_id=tg_id,

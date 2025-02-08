@@ -88,20 +88,24 @@ async def create_battle_kb(battle_id, channel_id):
         kb.button(text='❌ Название', callback_data=f'battlesettings;name;{battle_id}')
     else:
         kb.button(text='✅ Название', callback_data=f'battlesettings;name;{battle_id}')
-    if battle_info[5] == '-':
-        kb.button(text='❌ Ссылка на канал', callback_data=f'battlesettings;channel_link;{battle_id}')
+    if battle_info[11] == 0:
+        kb.button(text='❌ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
     else:
-        kb.button(text='✅ Ссылка на канал', callback_data=f'battlesettings;channel_link;{battle_id}')
+        kb.button(text='✅ Мин. голосов для победы', callback_data=f'firstround;min_votes_win;{battle_id}')
+    if battle_info[6] == "-":
+        kb.button(text='❌ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
+    else:
+        kb.button(text='✅ Текст для каждого поста', callback_data=f'battlesettings;prize;{battle_id}')
     if battle_info[17] == 0:
         kb.button(text='❌ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
     else:
         kb.button(text='✅ Пост о батле', callback_data=f'battlesettings;battlepost;{battle_id}')
-    if battle_info[6] == "-":
-        kb.button(text='❌ Приз', callback_data=f'battlesettings;prize;{battle_id}')
+    if battle_info[13] == 0:
+        kb.button(text='❌ Участников в посте', callback_data=f'firstround;users_in_post;{battle_id}')
     else:
-        kb.button(text='✅ Приз', callback_data=f'battlesettings;prize;{battle_id}')
+        kb.button(text='✅ Участников в посте', callback_data=f'firstround;users_in_post;{battle_id}')
 
-    kb.button(text='✅ Перейти к следующему шагу', callback_data=f'battlesettings;createbattle;{battle_id}; {channel_id}')
+    kb.button(text='✅ Создать батл', callback_data=f'firstround;iagree;{battle_id}')
     kb.button(text='🔙 Назад', callback_data=f'channelsetting;choise_type;{channel_id}')
-    kb.adjust(1,1,2,1,1,1)
+    kb.adjust(1)
     return kb.as_markup()

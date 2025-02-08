@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from data import loader, config
 from database import db
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup
-from functions.admin_functions import back_main_menu_channels, delete_channel_func, admin_subscribed_to_channel
+from functions.admin_functions import back_main_menu_channels, delete_channel_func, admin_subscribed_to_channel, check_users_tasks
 from handlers.admin_handler import settings_channel
 from keyboards.another import cabinet_back, create_battle, statics_back
 from keyboards.kb import gocooperation
@@ -413,6 +413,7 @@ async def mailing_callback(call: types.CallbackQuery):
     tg_id = call.data.split(';')[1]
     link_channel = call.data.split(';')[2]
     battle_id = call.data.split(';')[3]
+    battle_info = await db.check_battle_info(battle_id)
     await db.update_mailing_user_by_tg_id(tg_id)
     user_data = await db.check_info_users_by_tg_id(tg_id)
     user_info = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
@@ -421,8 +422,12 @@ async def mailing_callback(call: types.CallbackQuery):
         kb.button(text='🔕 Выкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{link_channel};{battle_id}')
     else:
         kb.button(text='🔔 Вкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{link_channel};{battle_id}')
-    kb.button(text="Ссылка на канал", url=link_channel)
-    kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
+    channel_data = await bot.get_chat(channel_info[2])
+    if not channel_data.username:
+        kb.button(text="Ссылка на канал", url=battle_info[5])
+    if await check_users_tasks(battle_id, tg_id):
+        kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
     kb.adjust(1)
 
     vote_link = f'https://t.me/{bot_name}?start=vote{battle_id}page{user_info[6]}'
@@ -436,6 +441,7 @@ async def back_to_notification(call: types.CallbackQuery):
     tg_id = call.message.chat.id
     battle_id = call.data.split(';')[1]
     link_channel = call.data.split(';')[2]
+    battle_info = await db.check_battle_info(battle_id)
 
     user_data = await db.check_info_users_by_tg_id(tg_id)
     user_info = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1(battle_id, tg_id)
@@ -447,8 +453,12 @@ async def back_to_notification(call: types.CallbackQuery):
     else:
         kb.button(text='🔔 Вкл. уведомления',
                   callback_data=f'mailing_callback;{user_data[1]};{link_channel};{battle_id}')
-    kb.button(text="Ссылка на канал", url=link_channel)
-    kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
+    channel_data = await bot.get_chat(channel_info[2])
+    if not channel_data.username:
+        kb.button(text="Ссылка на канал", url=battle_info[5])
+    if await check_users_tasks(battle_id, tg_id):
+        kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
     kb.adjust(1)
 
     vote_link = f'https://t.me/{bot_name}?start=vote{battle_id}page{user_info[6]}'
@@ -551,7 +561,8 @@ async def check_invites_handler(call: types.CallbackQuery):
         user_info = await db.check_info_users_by_tg_id(user_id)
         kb = InlineKeyboardBuilder()
         kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
-        kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+        if await check_users_tasks(battle_id, tg_id):
+            kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
         kb.adjust(1)
         if voices_added != 0:
             await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
@@ -598,7 +609,8 @@ async def check_subscribe_sponsors(call: types.CallbackQuery):
     user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
     kb = InlineKeyboardBuilder()
     kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
-    kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+    if await check_users_tasks(battle_id, call.message.chat.id):
+        kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
     await call.message.edit_text(f'✅ Начислено 2 голосов за подписку\n\n💰 Ваш баланс голосов: {user_info[8]} шт',
                                  reply_markup=kb.as_markup())
@@ -641,7 +653,9 @@ async def check_boost_channel(call: types.CallbackQuery):
             user_info = await db.check_info_users_by_tg_id(call.message.chat.id)
             kb = InlineKeyboardBuilder()
             kb.button(text=f'Использовать доп. голоса ({user_info[8]} шт)', callback_data=f'add_voices_use;{battle_id}')
-            kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
+            if await check_users_tasks(battle_id, call.message.chat.id):
+                kb.button(text="🔥 Хочу больше голосов",
+                          callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
             kb.adjust(1)
             await call.message.edit_text(text=f'✅ Начислено 3 голосов\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
             return
@@ -742,7 +756,11 @@ async def build_items_kb34(channels, page, total_moments):
     for channel in channels:
         channel_info = await db.check_channel_info_by_id(channel[0])
         name = channel_info[3]
-        categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
+        try:
+            await bot.get_chat(channel_info[2])
+            categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
+        except Exception as ex:
+            print(f'Бот был удален из канала {name}')
 
     categories_kb.adjust(1)
     buttons = [
@@ -761,6 +779,12 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     channel_id = call.data.split(';')[1]
     kb = InlineKeyboardBuilder()
     channel_info = await db.check_channel_info_by_id(channel_id)
+    channel_data = await bot.get_chat(channel_info[2])
+    admins = await channel_data.get_administrators()
+    creator = ''
+    for admin in admins:
+        if admin.status == 'creator':
+            creator = admin
     name = channel_info[3]
     link = channel_info[5]
 
@@ -768,7 +792,7 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     kb.button(text='🗑️ Удалить канал', callback_data=f'channel_delete;{channel_id}')
     kb.button(text='🔙 Назад', callback_data=f'backtochannel_list')
     kb.adjust(1)
-    await call.message.edit_text(f'''<b>Канал {name}</b>\n\nСсылка: {link}''',disable_web_page_preview=True, reply_markup=kb.as_markup())
+    await call.message.edit_text(f'''<b>Канал {name}</b>\n\nСсылка: {link}\n\nВладелец канала @{creator.user.username}''',disable_web_page_preview=True, reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('channel_battles'))
 async def show_battles(call: types.CallbackQuery):
@@ -945,14 +969,6 @@ async def cooperation(message: types.Message, state: FSMContext):
             await message.answer("<b>🚫 Неизвестная команда.</b>",)
             return
     # await state.set_state(AddChannel.q1)
-
-    admins_db = await db.check_all_admins()
-    for admin in admins_db:
-        if admin[1] == message.chat.id:
-            break
-    else:
-        await db.add_admin(message.chat.id)
-        await db.add_admins_count(message.chat.id, 1000)
 
     if not await db.check_temp_channels_by_user(message.chat.id):
         await db.add_new_user_temp_channels(message.chat.id)
@@ -1226,7 +1242,8 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
         kb = InlineKeyboardBuilder()
         kb.button(text=f'Использовать доп. голоса ({invited_from_id_user_info[8]} шт)',
                   callback_data=f'add_voices_use;{battle_id}')
-        kb.button(text='🔥 Хочу больше голосов', callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
+        if await check_users_tasks(battle_id, tg_id):
+            kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
         await bot.send_message(chat_id=invited_from_id, text=f'✅ Ваш друг @{user_invited_info.username} набрал 3 голоса в 1 раунде. За это вы получили 3 голоса\n\n💰 Ваш баланс голосов: {invited_from_id_user_info[8]} шт')
 
     time_now = datetime.datetime.now()

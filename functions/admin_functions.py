@@ -83,11 +83,6 @@ async def active_battle_settings_kb(battle_id, status):
         else:
             kb.button(text='✅ Участников в посте', callback_data=f'activebattlesettings;participants;{battle_id}')
 
-        if battle_info[15] == "-":
-            kb.button(text='❌ Время завершения раунда', callback_data=f'activebattlesettings;time;{battle_id}')
-        else:
-            kb.button(text='✅ Время завершения раунда', callback_data=f'activebattlesettings;time;{battle_id}')
-
         if battle_info[11] == 0:
             kb.button(text='❌ Мин. голосов для победы', callback_data=f'activebattlesettings;voices;{battle_id}')
         else:
@@ -152,13 +147,7 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
         post_start_battle = 'Не нужен'
     else:
         post_start_battle = f'Нужен'
-    await message.answer(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
-
-- Название:  {battle_info[3]}
-- Ссылка на канал: {battle_info[5]}
-- Пост о начале батла: {post_start_battle}
-- Приз: {battle_info[6]}
-- Время начала: {time_now}                                                  
+    await message.answer(f'''<b>🛠️ Настройки фото-батла</b>                                                
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
 
 async def kb_return_2page_battlecreate(battle_id):
@@ -218,6 +207,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
         await db.update_battle_end(battle_id, "00:00")
         await db.update_participants_battle(battle_id, 2)
         await db.update_status_battle(battle_id, 0)
+        await db.update_battle_prize(battle_id, 'Приз')
         if battle_info[3] == '-' or battle_info[5] == '-' or battle_info[6] == '-' or battle_info[17] == 0:
 
             await callback.answer('Заполните все поля', show_alert=True)
@@ -240,10 +230,7 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
     if action == 'prize':
         await state.set_state(AddBattlePrize.q1)
         await state.update_data(battle_id=battle_id)
-        if battle_info[23] == 2:
-            await message.edit_text('<b>⚙️ Введите приз для победителя в фото-батле:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
-        else:
-            await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
     if action == 'battlepost':
         await state.set_state(AddBattlePost.q1)
         await state.update_data(battle_id=battle_id)
@@ -382,13 +369,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
             post_start_battle = 'Не нужен'
         else:
             post_start_battle = f'Нужен'
-        await call.message.edit_text(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
-
-- Название:  {battle_info[3]}
-- Ссылка на канал: {channel_tg_id}
-- Пост о начале батла: {post_start_battle}
-- Приз: {battle_info[6]}
-- Время начала: {time_now}                                                  
+        await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>                                                
 ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
     if action == 'choise_type':
         channel_info = await db.check_channel_info_by_id(channel_id)
@@ -406,6 +387,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
             kb = InlineKeyboardBuilder()
             kb.button(text='Пост с одной фотографией (Соло-батл)', callback_data=f'channelsetting;create_one;{channel_id}')
             kb.button(text='Пост с несколькими фото (Стандартный)', callback_data=f'channelsetting;create_good;{channel_id}')
+            kb.button(text='🔙 Назад', callback_data=f'optionchannel;{channel_id}')
             kb.adjust(1)
             await call.message.edit_text(text='<b>⚙️ Выберите тип батла:</b>', reply_markup=kb.as_markup())
 
@@ -452,12 +434,9 @@ async def active_battle_func(call: types.CallbackQuery, battle_id):
 <b>⚔️ Батл: {battle_info[3]}</b>
 
 - Раунд: {battle_info[7]}
-- Итоги раунда: {battle_info[15]}
 - Минимум для прохождения: {battle_info[11]}
 
 - Участников в одном посте: {battle_info[13]}
-- Приз: {battle_info[6]}
-- Всего участников в батле
 - Текущее количество участников: {count_users_in_battle}
 
 - Набор фото: {photo_send}
@@ -476,12 +455,9 @@ async def active_battle_answer_func(msg: types.Message, battle_id):
 <b>⚔️ Батл: {battle_info[3]}</b>
 
 - Раунд: {battle_info[7]}
-- Итоги раунда: {battle_info[15]}
 - Минимум для прохождения: {battle_info[11]}
 
 - Участников в одном посте: {battle_info[13]}
-- Приз: {battle_info[6]}
-- Всего участников в батле
 - Текущее количество участников: {count_users_in_battle}
 
 - Набор фото: {photo_send}
@@ -501,11 +477,9 @@ async def redact_all_status_posts(battle_id, photo_send):
         kb.button(text='✅ Проголосовать', url=f'https://t.me/{bot_name}?start=vote{battle_id}page{index+1}')
         kb.adjust(1)
         if photo_send and battle_info[22] == 0:
-            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
-        ''', chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
+            await bot.edit_message_text(text=battle_info[6], chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
         else:
-            await bot.edit_message_text(text=f'''<b>⚔️ {battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b>📝 Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n<b>⏳Итоги:</b> {battle_info[15]} по МСК
-                    ''', chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
+            await bot.edit_message_text(text=battle_info[6], chat_id=channel_id, message_id=post[2], disable_web_page_preview=True, reply_markup=kb.as_markup())
 
 
 
@@ -566,17 +540,14 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await state.update_data(battle_id=battle_id)
 
     if action == 'photo_send':
-        await call.answer('✅ Записи постов были успешно изменены!')
+        await call.answer('✅ Статус набора на фото изменен!')
         battle_info = await db.check_battle_info(battle_id)
         photo_send = battle_info[21]
-        if photo_send:
-            photo_send = 0
-        else:
-            photo_send = 1
+        photo_send = int(not photo_send)
 
         await db.update_photo_send_battle(photo_send, battle_id)
 
-        await redact_all_status_posts(battle_id, photo_send)
+        # await redact_all_status_posts(battle_id, photo_send)
 
         await active_battle_func(call, battle_id)
         await state.update_data(battle_id=battle_id)
@@ -626,10 +597,8 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     break
             index = start_page
 
-            if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
-            else:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            text = battle_info[6]
+
             await asyncio.sleep(5)
             await bot.send_media_group(chat_id=channel_tg_id, media=media_group)
             kb = InlineKeyboardBuilder()
@@ -675,10 +644,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             kb = InlineKeyboardBuilder()
 
             if battle_info[20] == '-':
-                if battle_info[22] == 0:
-                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
-                else:
-                    text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+                text = battle_info[6]
             else:
                 text = battle_info[20]
             await asyncio.sleep(5)
@@ -724,7 +690,10 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 try:
                     kb = InlineKeyboardBuilder()
                     kb.button(text='Ссылка на пост', url=new_channel_link)
-                    kb.button(text='Ссылка на канал', url=battle_info[5])
+                    channel_info = await db.check_channel_info_by_id(battle_info[1])
+                    channel_data = await bot.get_chat(channel_info[2])
+                    if not channel_data.username:
+                        kb.button(text="Ссылка на канал", url=battle_info[5])
                     kb.adjust(1)
 
                     current_battle = await check_battle_info(battle_id)
@@ -918,3 +887,28 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         await state.set_state(AddFakePhoto.q1)
         await state.update_data(battle_id=battle_id)
         return
+
+async def check_users_tasks(battle_id, user_id) -> bool:
+    battle_info = await db.check_battle_info(battle_id)
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
+    link_channel = channel_info[5]
+    chat_user = await bot.get_chat(chat_id=user_id)
+    user_info = await db.check_info_users_by_tg_id(user_id)
+    print(chat_user)
+    is_premium = chat_user.is_premium
+    user_in_battle_info = await db.check_user_photo_by_tg_id(tg_id=user_id, battle_id=battle_id)
+
+    status_voiced = await bot.get_user_chat_boosts(chat_id=channel_info[2], user_id=user_id)
+    status_voiced = status_voiced.boosts
+
+    if is_premium:
+        if not status_voiced:
+            return True
+    if await db.check_all_sponsors() and not user_in_battle_info[10]:
+        return True
+    if battle_info[21]:
+        return True
+    if user_info[8]:
+        return True
+
+    return False

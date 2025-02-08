@@ -45,13 +45,7 @@ async def create_battle(call: types.CallbackQuery, battle_id):
             post_start_battle = 'Не нужен'
     else:
             post_start_battle = f'Нужен'
-    await call.message.edit_text(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
-
-- Название:  {battle_info[3]}
-- Ссылка на канал: {battle_info[5]}
-- Пост о начале батла: {post_start_battle}
-- Приз: {battle_info[6]}
-- Время начала: {battle_info[8]}                                                    
+    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>                                                  
 ''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
     
 @dp.callback_query(lambda c: c.data.startswith('spisokadminov'))
@@ -188,6 +182,14 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                     "Теперь вы можете использовать все функции нашего бота для автоматизации фото-батлов в этом канале.\n\n"
                     "<u><i>Удачного пользования! 😉</i></u>", reply_markup=keyboards.admin_kb.start_menu_for_admins())
                 await db.clear_info_user_temp_channels(user_id)
+                admins_db = await db.check_all_admins()
+                for admin in admins_db:
+                    if admin[1] == tg_id:
+                        break
+                else:
+                    await db.add_admin(tg_id)
+                    await db.add_admins_count(tg_id, 1000)
+
             else:
                 await bot.send_message(user_id,
                     "<b>Этот канал уже добавлен! 🔄</b>\n\n"
@@ -282,10 +284,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         kb = InlineKeyboardBuilder()
 
         if battle_info[20] == '-':
-            if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
-            else:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            text = battle_info[6]
         else:
             text = battle_info[20]
         await asyncio.sleep(5)
@@ -330,7 +329,10 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             try:
                 kb = InlineKeyboardBuilder()
                 kb.button(text='Ссылка на пост', url=new_channel_link)
-                kb.button(text='Ссылка на канал', url=battle_info[5])
+                channel_info = await db.check_channel_info_by_id(battle_info[1])
+                channel_data = await bot.get_chat(channel_info[2])
+                if not channel_data.username:
+                    kb.button(text="Ссылка на канал", url=battle_info[5])
                 kb.adjust(1)
 
                 current_battle = await check_battle_info(battle_id)
@@ -377,10 +379,7 @@ async def approve_continue_battle_handler(callback: types.CallbackQuery):
         kb.button(text=f'✅ Проголосовать', url=f'https://t.me/{config.bot_name}?start=vote{battle_id}')
         kb.adjust(1)
         if battle_info[20] == '-':
-            if battle_info[22] == 0:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n<b><a href="https://t.me/{bot_name}?start=b{battle_id}">✅ Хочешь участвовать? Жми тут</a></b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
-            else:
-                text = f'''⚔️ <b>{battle_info[7]}</b>\n<b>💰 ПРИЗ — {battle_info[6]}</b>\n\n📝 <b>Условия:</b> обогнать соперника и набрать минимум {battle_info[11]} голосов\n⏳<b>Итоги:</b> {battle_info[15]} по МСК'''
+            text = battle_info[6]
         else:
             text = battle_info[20]
         await asyncio.sleep(5)
@@ -589,6 +588,7 @@ async def one_battle_message(call: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('firstround;iagree'))
 async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]
+    await db.update_end_round_battle(battle_id, 'empty')
     battle_info = await db.check_battle_info(battle_id)
     channel_info = await db.check_channel_info_by_id(battle_info[1])
     try:
@@ -597,6 +597,7 @@ async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSM
         await call.message.answer('Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
         return
     if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
+        print(battle_info[13], battle_info[11], battle_info[15])
         await call.answer('Заполните все поля', show_alert=True)
         return
     kb = InlineKeyboardBuilder()
@@ -668,7 +669,10 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
 
     kb = InlineKeyboardBuilder()
     kb.button(text='Ссылка на пост', url=new_channel_link)
-    kb.button(text='Ссылка на канал', url=battle_info[5])
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
+    channel_data = await bot.get_chat(channel_info[2])
+    if not channel_data.username:
+        kb.button(text="Ссылка на канал", url=battle_info[5])
     kb.adjust(1)
     await bot.send_message(chat_id=user_id, text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
@@ -759,11 +763,5 @@ async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContex
     else:
         post_start_battle = f'Нужен'
 
-    await call.message.edit_text(f'''<b>🛠️ Создание фото-батла: (1 ШАГ ИЗ 2)</b>
-
-- Название:  {battle_info[3]}
-- Ссылка на канал: {channel_tg_id}
-- Пост о начале батла: {post_start_battle}
-- Приз: {battle_info[6]}
-- Время начала: {time_now}                                                   
+    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>                                                   
     ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
