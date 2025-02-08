@@ -100,9 +100,8 @@ async def active_battle_settings_kb(battle_id, status):
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             if battle_info[23] == 2:
                 kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
-                kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
-            else:
-                kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
+            kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
+
 
 
     if status == Status.Error.value:
