@@ -443,16 +443,26 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
     user_id = battle_photo_info[1]
     battle_id = battle_photo_info[2]
 
+
+
     battle_info = await db.check_battle_info(battle_id)
     if action == 'approve':
         try:
+            channel_info = await db.check_channel_info_by_id(battle_info[1])
+            channel_data = await bot.get_chat(channel_info[2])
             def url_channel():
-             kb = InlineKeyboardBuilder()
-             kb.button(text='Ссылка на канал', url=battle_info[5])
-             kb.adjust(1)
-             return kb.as_markup(resize_keyboard=True)
+                kb = InlineKeyboardBuilder()
+                if not channel_data.username:
+                    kb.button(text="Ссылка на канал", url=battle_info[5])
+                kb.adjust(1)
+                return kb.as_markup(resize_keyboard=True)
             if battle_info[23] == 2:
-                await bot.send_message(chat_id=user_id, text=f'''<b>✅ ФОТО ОДОБРЕНО</b>\n\nОжидайте, вас скоро опубликуем и  пришлём уведомление.''', disable_web_page_preview=True, reply_markup=url_channel())
+                if not channel_data.username:
+                    await bot.send_message(chat_id=user_id, text=f'''<b>✅ ФОТО ОДОБРЕНО</b>\n\nОжидайте, вас скоро опубликуем и  пришлём уведомление.''', disable_web_page_preview=True, reply_markup=url_channel())
+                else:
+                    await bot.send_message(chat_id=user_id,
+                                           text=f'''<b>✅ ФОТО ОДОБРЕНО</b>\n\nОжидайте, вас скоро опубликуем и  пришлём уведомление.''',
+                                           disable_web_page_preview=True)
         except Exception as e:
             print(e)
         await db.battle_photos_status_by_id(photo_battle_id, 1)
