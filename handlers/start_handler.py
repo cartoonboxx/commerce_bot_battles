@@ -561,8 +561,8 @@ async def check_invites_handler(call: types.CallbackQuery):
         user_info = await db.check_info_users_by_tg_id(user_id)
         kb = InlineKeyboardBuilder()
         kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
-        if await check_users_tasks(battle_id, tg_id):
-            kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
+        if await check_users_tasks(battle_id, user_id):
+            kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
         kb.adjust(1)
         if voices_added != 0:
             await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
@@ -776,6 +776,7 @@ async def build_items_kb34(channels, page, total_moments):
 
 @dp.callback_query(lambda c: c.data.startswith('channelcheckitem'))
 async def battle_check_item_handler(call: types.CallbackQuery):
+    current_page = call.data.split(';')[2]
     channel_id = call.data.split(';')[1]
     kb = InlineKeyboardBuilder()
     channel_info = await db.check_channel_info_by_id(channel_id)
@@ -790,7 +791,7 @@ async def battle_check_item_handler(call: types.CallbackQuery):
 
     kb.button(text='⚔️ Активные наборы на фото-батлы', callback_data=f'channel_battles;{channel_id}')
     kb.button(text='🗑️ Удалить канал', callback_data=f'channel_delete;{channel_id}')
-    kb.button(text='🔙 Назад', callback_data=f'backtochannel_list')
+    kb.button(text='🔙 Назад', callback_data=f'backtochannel_list;{current_page}')
     kb.adjust(1)
     await call.message.edit_text(f'''<b>Канал {name}</b>\n\nСсылка: {link}\n\nВладелец канала @{creator.user.username}''',disable_web_page_preview=True, reply_markup=kb.as_markup())
 
@@ -1059,10 +1060,32 @@ async def handle_profile(message: types.Message, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('cancel_mailing'))
 async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
-@dp.callback_query(lambda c: c.data.startswith('create_mailling'))
-async def create_mailing(callback_query: types.CallbackQuery, state: FSMContext):
+
+@dp.callback_query(lambda c: c.data.startswith('chose_mailing_type'))
+async def chose_mailing_type(call: types.CallbackQuery, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='1. Пересылка поста - ✅ TG PREM EMODZI', callback_data='create_mailling_post')
+    kb.button(text='2. Свое сообщение  - 🚫 TG PREM EMODZI', callback_data='create_mailling_text')
+    kb.adjust(1)
+    await call.message.edit_text('⚒️ Выберите метод рассылки:', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('create_mailling_post'))
+async def create_mailling_post(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.answer('<b>Перешлите необходимый пост</b>')
+    await state.set_state(MailingPost.q1)
+@dp.callback_query(lambda c: c.data.startswith('create_mailling_text'))
+async def create_mailing_text(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.message.answer('<b>[1/2] Введите сообщение для рассылки</b>')
     await state.set_state(Mailing.q1)
+
+@dp.message(MailingPost.q1)
+async def mailing_post(message: types.Message, state: FSMContext):
+    '''Пересылка поста всем'''
+    print('Попал сюда')
+    mess_id = message.message_id
+    await send_forward_to_all_users(message.chat.id, mess_id)
+    await state.clear()
+    await message.answer("<b>🏁 Рассылка завершена.</b>")
 @dp.message(Mailing.q1)
 async def mailing_handler(message: types.Message, state: FSMContext):
     await state.update_data(message_id=message.message_id)
@@ -1086,21 +1109,48 @@ async def mailing_handler_q2(message: types.Message, state: FSMContext):
                     await message.answer(f"<b>❌ Ошибка: ссылка должна начинаться с 'https://'. Проверьте: {btn_url}</b>")
                     return
         markup.adjust(1)
-    await send_copy_to_all_users(message.chat.id, mess_id, markup.as_markup())
     await state.clear()
+    await send_copy_to_all_users(message.chat.id, mess_id, markup.as_markup())
     await message.answer("<b>🏁 Рассылка завершена.</b>")
-async def send_copy_to_all_users(chat_id, message_id, reply_markup):
+async def send_copy_to_all_users(chat_id, message_id, reply_markup=None):
     user_ids = await db.get_all_users_tg_id()
     count = 0
     for user_id in user_ids:
         try:
-            await bot.copy_message(
-                chat_id=user_id[0],
-                from_chat_id=chat_id,
-                message_id=message_id,
-                reply_markup=reply_markup)
+            if reply_markup:
+                await bot.copy_message(
+                    chat_id=user_id[0],
+                    from_chat_id=chat_id,
+                    message_id=message_id,
+                    reply_markup=reply_markup)
+            else:
+                await bot.copy_message(
+                    chat_id=user_id[0],
+                    from_chat_id=chat_id,
+                    message_id=message_id)
         except Exception as e:
             count +=1
+            print(e)
+    await db.update_blocked_count(count)
+
+async def send_forward_to_all_users(chat_id, message_id, reply_markup=None):
+    user_ids = await db.get_all_users_tg_id()
+    count = 0
+    for user_id in user_ids:
+        try:
+            if reply_markup:
+                await bot.forward_message(
+                    chat_id=user_id[0],
+                    from_chat_id=chat_id,
+                    message_id=message_id,
+                    reply_markup=reply_markup)
+            else:
+                await bot.forward_message(
+                    chat_id=user_id[0],
+                    from_chat_id=chat_id,
+                    message_id=message_id)
+        except Exception as e:
+            count += 1
             print(e)
     await db.update_blocked_count(count)
 async def send_text_with_buttons_to_all_users(text: str, markup):

@@ -155,7 +155,7 @@ async def kb_return_2page_battlecreate(battle_id):
 
     kb = InlineKeyboardBuilder()
     if battle_info[23] == 2:
-        kb.button(text='🔙 Назад', callback_data=f"firstround;returnstep2;{battle_id}")
+        kb.button(text='🔙 Назад', callback_data=f"firstround;returnback;{battle_id}")
     else:
         kb.button(text='🔙 Назад', callback_data=f"one_battle_message;{battle_id}")
 
@@ -892,23 +892,27 @@ async def check_users_tasks(battle_id, user_id) -> bool:
     battle_info = await db.check_battle_info(battle_id)
     channel_info = await db.check_channel_info_by_id(battle_info[1])
     link_channel = channel_info[5]
-    chat_user = await bot.get_chat(chat_id=user_id)
-    user_info = await db.check_info_users_by_tg_id(user_id)
-    print(chat_user)
-    is_premium = chat_user.is_premium
-    user_in_battle_info = await db.check_user_photo_by_tg_id(tg_id=user_id, battle_id=battle_id)
 
-    status_voiced = await bot.get_user_chat_boosts(chat_id=channel_info[2], user_id=user_id)
-    status_voiced = status_voiced.boosts
+    try:
+        chat_user = await bot.get_chat_member(chat_id=user_id, user_id=user_id)
+        user_info = await db.check_info_users_by_tg_id(user_id)
+        print('chat_user', chat_user)
+        is_premium = chat_user.user.is_premium
+        user_in_battle_info = await db.check_user_photo_by_tg_id(tg_id=user_id, battle_id=battle_id)
 
-    if is_premium:
-        if not status_voiced:
+        status_voiced = await bot.get_user_chat_boosts(chat_id=channel_info[2], user_id=user_id)
+        status_voiced = status_voiced.boosts
+        print(is_premium)
+        if is_premium:
+            if not status_voiced:
+                return True
+        if await db.check_all_sponsors() and not user_in_battle_info[10]:
             return True
-    if await db.check_all_sponsors() and not user_in_battle_info[10]:
-        return True
-    if battle_info[21]:
-        return True
-    if user_info[8]:
-        return True
+        if battle_info[21]:
+            return True
+        if user_info[8]:
+            return True
+    except Exception as ex:
+        print('Произошла ошибка в проверке')
 
     return False

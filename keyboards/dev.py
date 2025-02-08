@@ -23,7 +23,7 @@ def question_chat(user_id, has_photo=False):
 
 def mailing_dev():
     kb = InlineKeyboardBuilder()
-    kb.button(text='📢 Создать рассылку', callback_data="create_mailling")
+    kb.button(text='📢 Создать рассылку', callback_data="chose_mailing_type")
     kb.button(text='❌ Отмена', callback_data="cancel_mailing")
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
