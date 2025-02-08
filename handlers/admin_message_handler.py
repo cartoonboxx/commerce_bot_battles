@@ -94,7 +94,7 @@ async def add_battle_post_link(message: types.Message, state: FSMContext):
         await message.answer("Не похоже на ссылку... Попробуйте ещё раз.", reply_markup=await back_main_menu_create_battle(battle_id))
 @dp.message(AddBattlePrize.q1)
 async def add_battle_prize(message: types.Message, state: FSMContext):
-    prize = message.text
+    prize = message.html_text or message.text
     data = await state.get_data()
     battle_id = data['battle_id']
     battle_info = await db.check_battle_info(battle_id)
