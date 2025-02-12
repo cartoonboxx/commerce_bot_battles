@@ -277,14 +277,14 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
             kb.button(text='🔙 Назад', callback_data=f'channelsetting;correct_chat;{channel_id}')
             kb.adjust(1)
 
-            await call.message.edit_text('Для изменения админ-чата нажмите кнопку ниже', reply_markup=kb.as_markup())
+            await call.message.edit_text('<b>⚒️ Для изменения админ-чата нажмите кнопку ниже</b>', reply_markup=kb.as_markup())
         else:
             kb = InlineKeyboardBuilder()
             kb.button(text='⚒️Установить', url=f'http://t.me/{bot_name}?startgroup&admin=manage_chat+delete_messages+change_info+invite_users+post_messages+edit_messages+pin_messages+manage_topics&claim=owner',
                       )
             kb.button(text='🔙 Назад', callback_data=f'backtosettings;{channel_id}')
             kb.adjust(1)
-            await call.message.edit_text('Админ-чат не установлен, для установки нажмите кнопку ниже', reply_markup=kb.as_markup())
+            await call.message.edit_text('<b>❌ Админ-чат не установлен, для установки нажмите кнопку ниже</b>', reply_markup=kb.as_markup())
 
     if action == 'correct_chat':
         channel_info = await db.check_channel_info_by_id(channel_id)
@@ -492,10 +492,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
         battle_info = await db.check_battle_info(battle_id)
         count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
         count_photos = len(await db.check_all_battle_photos_where_battle_id(battle_info[0]))
-        if count_photos % battle_info[13] != 0:
-            await call.answer(text='Нужно еще фото', show_alert=True)
-            return
-
         if int(count_users_in_battle) < int(battle_info[10]):
             await call.answer('Нельзя начать раунд, пока количество участников меньше 1', show_alert=True)
             return
@@ -507,9 +503,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             return
         if battle_info[11] == 0:
             await call.answer('Нельзя начать раунд, пока не установлено количество голосов для победы', show_alert=True)
-            return
-        if battle_info[15] == '-':
-            await call.answer('Нельзя начать раунд, пока не установлено время завершения батла', show_alert=True)
             return
         if int(count_users_in_battle) < int(battle_info[13]):
             await call.answer('Нельзя начать раунд, участников в посте больше текущего количества участников', show_alert=True)
@@ -865,9 +858,6 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
             return
         if battle_info[11] == 0:
             await call.answer('Нельзя начать раунд, пока не установлено количество голосов для победы', show_alert=True)
-            return
-        if battle_info[15] == '-':
-            await call.answer('Нельзя начать раунд, пока не установлено время завершения батла', show_alert=True)
             return
         if int(count_users_in_battle) < int(battle_info[13]):
             await call.answer('Нельзя начать раунд, участников в посте больше текущего количества участников', show_alert=True)

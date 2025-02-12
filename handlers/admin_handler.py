@@ -123,7 +123,7 @@ async def check_subscribe_admin(call: types.CallbackQuery):
         kb.button(text='Ссылка на канал', url=admin_channel[2])
         kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
         kb.adjust(1)
-        await call.message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
+        await call.message.answer('<b>✅ Чтобы пользоваться ботом, нужно подписаться на канал.</b>', reply_markup=kb.as_markup())
 
 
 @dp.my_chat_member()
@@ -340,7 +340,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
                 if current_battle[22] == 0:
                     await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 elif current_battle[22] != 0 and current_battle[7] != 'Финал':
-                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nВы прошли предыдущий раунд. Набирайте голоса и увидимся в ФИНАЛЕ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nНабирайте голоса и увидимся в ФИНАЛЕ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 if current_battle[7] == "Финал":
                     await bot.send_message(chat_id=user[1], text=f'''✅💪 <b>ВЫ В ФИНАЛЕ</b>\n\nПоздравляем, вы победили всех на своем пути и остались с наисельнейшими участниками. Набирайте голоса и заберете приз.''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 

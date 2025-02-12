@@ -127,7 +127,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
                     await state.set_state(SendPhotoForBattle.q1)
                     await state.update_data(battle_id=battle_id)
-                    await message.answer('Отправьте фото, которое не несет 18+ и оскорбительного характера')
+                    await message.answer('<b>📝 Отправьте фото, которое не несет 18+ и оскорбительного характера.</b>')
                     return
 
                 if account_id.startswith('vote'):
@@ -276,13 +276,13 @@ async def vote_in_battle(callback: types.CallbackQuery):
                              reply_markup=kb.as_markup())
     return
 
-@dp.message(lambda message: message.text == "🥇 Спонсорство и админ-канал")
+@dp.message(lambda message: message.text == "🥇 Рекламные инструменты")
 async def sponsors_and_chats(message: types.Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
-    kb.button(text='Спонсоры', callback_data='sponsors')
-    kb.button(text='Изменить чат для админов', callback_data='change_chat_for_admins')
+    kb.button(text='1. Спонсоры (задания)', callback_data='sponsors')
+    kb.button(text='2. Изменить обязательный канал для админов', callback_data='change_chat_for_admins')
     kb.adjust(1)
-    await message.answer('<b>Выберите действие:</b>', reply_markup=kb.as_markup())
+    await message.answer('<b>⚙️ Выберите инструмент:</b>', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data == 'change_chat_for_admins')
 async def change_chat_for_admins(call: types.CallbackQuery):
@@ -293,12 +293,12 @@ async def change_chat_for_admins(call: types.CallbackQuery):
         await call.message.edit_text(f'Текущий канал для админов: <b>{channel[1]}</b>', reply_markup=kb.as_markup())
     else:
         kb.button(text='Установить канал', callback_data='set_channel_admins')
-        await call.message.edit_text('Канал для админов не установлен', reply_markup=kb.as_markup())
+        await call.message.edit_text('<b>❌ Канал для админов не установлен. </b>', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data == 'set_channel_admins')
 async def set_channel_admins(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(AddAdminChatAdmins.q1)
-    await call.message.edit_text('Отправьте боту любое сообщение из этого канала')
+    await call.message.edit_text('<b>[1/2] Отправьте боту любое сообщение из этого канала.</b>')
 
 @dp.message(AddAdminChatAdmins.q1)
 async def add_admin_chat_admins(message: types.Message, state: FSMContext):
@@ -308,9 +308,9 @@ async def add_admin_chat_admins(message: types.Message, state: FSMContext):
         await state.update_data(chat_id=chat_id)
         await state.update_data(title=title)
         await state.set_state(AddAdminChatAdmins.q2)
-        await message.answer('Отправьте ссылку на этот канал.')
+        await message.answer('<b>[2/2] Отправьте ссылку на этот канал.</b>')
     else:
-        await message.answer('Это не канал! Попробуйте еще раз.')
+        await message.answer('<b>❌ Это не канал! Попробуйте еще раз.</b>')
 
 @dp.message(AddAdminChatAdmins.q2)
 async def adding_admin_channel_link(message: types.Message, state: FSMContext):
@@ -321,9 +321,9 @@ async def adding_admin_channel_link(message: types.Message, state: FSMContext):
         title = data.get('title')
         await db.add_admin_channel_to_table(title, chat_id, url)
         await state.clear()
-        await message.answer('Канал для админов добавлен!')
+        await message.answer('<b>✅ Канал для админов добавлен!</b>')
     else:
-        await message.answer('Некорректная ссылка, попробуйте еще раз')
+        await message.answer('<b>❌ Некорректная ссылка, попробуйте еще раз. </b>')
 
 @dp.callback_query(lambda c: c.data == 'sponsors')
 async def watch_sponsors(call: types.CallbackQuery):
@@ -334,12 +334,12 @@ async def watch_sponsors(call: types.CallbackQuery):
 
     kb.button(text='Добавить спонсора', callback_data=f'add_sponsor')
     kb.adjust(1)
-    await call.message.edit_text('<b>Все спонсоры:</b>', reply_markup=kb.as_markup())
+    await call.message.edit_text('<b>Текущие спонсоры:</b>', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('add_sponsor'))
 async def add_sponsor_handler(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(AddChannel.q1)
-    await call.message.edit_text('Добавьте бота в этот канал (это понадобится для проверки на подписку со стороны пользователя)\n\nОтправьте боту любое сообщение из этого канала')
+    await call.message.edit_text('<b>⚒️ Чтобы добавить спонсора, выполните следующее:</b>\n\n1. Добавьте бота в админы канала.\n\n2. Отправьте боту любое сообщение из этого канала')
 
 @dp.message(AddChannel.q1)
 async def adding_sponsor(message: types.Message, state: FSMContext):
@@ -349,9 +349,9 @@ async def adding_sponsor(message: types.Message, state: FSMContext):
         await state.update_data(chat_id=chat_id)
         await state.update_data(title=title)
         await state.set_state(AddChannel.q2)
-        await message.answer('Отправьте ссылку на этот канал.')
+        await message.answer('<b>[2/2] Отправьте ссылку на этот канал.</b>')
     else:
-        await message.answer('Это не канал! Попробуйте еще раз.')
+        await message.answer('<b>❌ Это не канал! Попробуйте еще раз.</b>')
 
 @dp.message(AddChannel.q2)
 async def adding_sponsor_link(message: types.Message, state: FSMContext):
@@ -362,16 +362,16 @@ async def adding_sponsor_link(message: types.Message, state: FSMContext):
         title = data.get('title')
         await db.add_sponsor_to_table(title, chat_id, url)
         await state.clear()
-        await message.answer('Канал спонсора добавлен!')
+        await message.answer('<b>✅ Канал спонсора добавлен!</b>')
     else:
-        await message.answer('Некорректная ссылка, попробуйте еще раз')
+        await message.answer('<b>❌ Некорректная ссылка, попробуйте еще раз. </b>')
 
 @dp.callback_query(lambda c: c.data.startswith('checksponsor'))
 async def check_sponsor(call: types.CallbackQuery):
     spon_id = call.data.split(';')[1]
     info = await db.check_sponsor_by_id(spon_id)
     kb = InlineKeyboardBuilder()
-    kb.button(text='Удалить спонсора', callback_data=f'delete_sponsor;{spon_id}')
+    kb.button(text='🗑️ Удалить спонсора', callback_data=f'delete_sponsor;{spon_id}')
     kb.adjust(1)
     await call.message.edit_text(f'Название канала: {info[1]}', reply_markup=kb.as_markup())
 
@@ -379,7 +379,7 @@ async def check_sponsor(call: types.CallbackQuery):
 async def delete_sponsor(call: types.CallbackQuery):
     spon_id = call.data.split(';')[1]
     await db.delete_sponsor_from_table(spon_id)
-    await call.answer('Спонсор удален!', show_alert=True)
+    await call.answer('<b>✅ Спонсор удален!</b>', show_alert=True)
     await watch_sponsors(call)
 
 @dp.message(lambda message: message.text == "🧱 Создать фото-батл")
@@ -402,7 +402,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
                     kb.button(text='Ссылка на канал', url=admin_link)
                     kb.button(text='✅ Проверить', callback_data='check_subscribe_admin')
                     kb.adjust(1)
-                    await message.answer('Чтобы пользоваться ботом, нужно подписаться на канал.', reply_markup=kb.as_markup())
+                    await message.answer('<b>✅ Чтобы пользоваться ботом, нужно подписаться на канал.</b>', reply_markup=kb.as_markup())
                     return
         await message.answer(
             "<b>🚫 Неизвестная команда.</b>")
@@ -512,7 +512,7 @@ async def wanted_more_voices(call: types.CallbackQuery):
     kb.button(text='🔙 Назад', callback_data=f'back_to_notification;{battle_id};{link_channel}')
     kb.adjust(1)
 
-    await call.message.edit_text(text=f'''Вы можете получить дополнительные голоса, выполнив задания.\n\n💰 Накопленные голоса: {user_info[8]}\n\nДоступные задания:''', reply_markup=kb.as_markup())
+    await call.message.edit_text(text=f'''<b>📝 Вы можете получить дополнительные голоса, выполнив задания:</b>\n\n💰 Накопленные голоса: {user_info[8]}''', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('invite_friend'))
 async def invite_friend_handler(call: types.CallbackQuery):
@@ -531,7 +531,7 @@ async def invite_friend_handler(call: types.CallbackQuery):
     kb.button(text='✅ Проверить', callback_data=f'check_invites;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
-    await call.message.edit_text('📝 Задание - Пригласить друга на фото-батл:\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 2 голоса', reply_markup=kb.as_markup())
+    await call.message.edit_text('<b>📝 Задание - Пригласить друга на фото-батл:</b>\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 3 голоса', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('check_invites'))
 async def check_invites_handler(call: types.CallbackQuery):
@@ -554,22 +554,22 @@ async def check_invites_handler(call: types.CallbackQuery):
                     await db.update_give_votes_battle_photos(user[1], battle_id)
                 save_user = user[1]
 
-        voices_added = vote_counter * 2
+        voices_added = vote_counter * 3
 
         await db.clear_invites_but_save_one(user_id, battle_id, save_user)
         await db.update_add_voices_users(voices_added, user_id)
         user_info = await db.check_info_users_by_tg_id(user_id)
         kb = InlineKeyboardBuilder()
-        kb.button(text=f'Использовать доп. голоса', callback_data=f'add_voices_use;{battle_id}')
+        kb.button(text=f'Использовать накопленные голоса', callback_data=f'add_voices_use;{battle_id}')
         if await check_users_tasks(battle_id, user_id):
             kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
         kb.adjust(1)
         if voices_added != 0:
             await call.message.edit_text(f'✅ Начислено {voices_added} голосов за {len(users_invited)} друзей\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
         else:
-            await call.message.edit_text(f'Кто-то из пользователей уже перешел по вашей ссылке!', reply_markup=kb.as_markup())
+            await call.message.edit_text(f'<b>❌ Кто-то из пользователей уже перешел по вашей ссылке!</b>', reply_markup=kb.as_markup())
     else:
-        await call.message.answer('❌ Не выполнено, пока никто не перешел по вашей ссылке')
+        await call.message.answer('<b>❌ Не выполнено, пока никто не перешел по вашей ссылке.</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('spon_subs'))
 async def sponsors_subscribe(call: types.CallbackQuery):
@@ -578,7 +578,7 @@ async def sponsors_subscribe(call: types.CallbackQuery):
     user_battle_info = await db.check_user_photo_by_tg_id(tg_id=call.message.chat.id, battle_id=battle_id)
 
     if user_battle_info[10]:
-        await call.answer('Вы уже выполнили это задание!', show_alert=True)
+        await call.answer('❌ Вы уже выполнили это задание!', show_alert=True)
         return
 
     kb = InlineKeyboardBuilder()
@@ -624,7 +624,7 @@ async def voice_to_channel_premium(call: types.CallbackQuery):
     try:
         channel_boost = await bot.get_user_chat_boosts(chat_id=channel_info[2], user_id=call.message.chat.id)
         if channel_boost.boosts:
-            await call.answer('Вы уже проголосовали за канал', show_alert=True)
+            await call.answer('❌ Вы уже проголосовали за канал', show_alert=True)
             return
     except Exception as ex:
         print('Ошибка:', ex)
@@ -982,20 +982,17 @@ async def cooperation(message: types.Message, state: FSMContext):
     try:
         await message.edit_text(
     "<b>Добавление канала 📝</b>\n\n"
-    "Чтобы подключить канал:\n\n"
-    "1️⃣ <i>Добавьте бота в администраторы канала</i> с разрешением на публикацию и редактирование постов ➕\n"
-    "2️⃣ <i>Нажмите кнопку внизу и выберите нужный канал</i>\n", reply_markup=kb.as_markup(), show_alert=True,
+    "Чтобы подключить канал нажмите кнопку ниже:", reply_markup=kb.as_markup(), show_alert=True,
         disable_web_page_preview=True)
     except Exception as ex:
-        await message.answer("<b>Добавление канала 📝</b>\n\n"
-    "Чтобы подключить канал:\n\n"
-    "1️⃣ <i>Добавьте бота в администраторы канала</i> с разрешением на публикацию и редактирование постов ➕\n"
-    "2️⃣ <i>Нажмите кнопку внизу и выберите нужный канал</i>\n", reply_markup=kb.as_markup(), show_alert=True,
+        await message.answer(
+    "<b>Добавление канала 📝</b>\n\n"
+    "Чтобы подключить канал нажмите кнопку ниже:", reply_markup=kb.as_markup(), show_alert=True,
         disable_web_page_preview=True)
 
 @dp.callback_query(lambda c: c.data.startswith('nakrutka'))
 async def create_mailing(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer('<b>[1/2]Введите tg_id пользователя, которому хотите накрутить голоса.</b>')
+    await callback.message.answer('<b>[1/2] Введите tg_id пользователя, которому хотите накрутить голоса.</b>')
     await state.set_state(AddVoices.q1)
 
 @dp.callback_query(lambda c: c.data.startswith('cancel_nakrutka'))
@@ -1011,7 +1008,7 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
     tg_id = message.text
     if tg_id.isdigit():
         await state.update_data(tg_id=tg_id)
-        await message.answer('<b>[2/2]Введите кол-во голосов.</b>')
+        await message.answer('<b>[2/2] Введите кол-во голосов.</b>')
         await state.set_state(AddVoices.q2)
     else:
         await message.answer('<b>❌ Не похоже на tg_id, попробуйте ещё раз.</b>')
@@ -1025,7 +1022,7 @@ async def add_voices_handler(message: types.Message, state: FSMContext):
             data = await state.get_data()
             tg_id = data.get('tg_id')
             await db.add_battle_photos_votes_where_tg_id(tg_id, count)
-            await message.answer(f'{count} голосов добавлено')
+            await message.answer(f'<b>✅ {count} голосов добавлено.</b>')
             await state.clear()
         else:
             await message.answer('<b>❌ За раз максимум можно накрутить до 3 голосов.</b>')

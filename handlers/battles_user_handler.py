@@ -80,7 +80,7 @@ async def user_menu_handler(message: types.Message, state: FSMContext):
         active_battles = await db.check_battles_where_status_1_and_tg_id(tg_id)
 
         if tg_id in admins or admin_exist:
-            await message.answer('<b>🔠 Выберите нужный батл для управления: \n\n</b> 💁 Вы не можете участвовать в батлах, так как вы админ. \nОтправляйте фото с других аккаунтов.', reply_markup=await active_battles_kb(active_battles))
+            await message.answer('<b>🔠 Выберите нужный батл для управления:</b>', reply_markup=await active_battles_kb(active_battles))
             return
     
 @dp.callback_query(lambda c: c.data.startswith('battlespageitems'))
@@ -584,7 +584,7 @@ async def send_again_photo(call: types.CallbackQuery, state: FSMContext):
 
     await state.set_state(SendPhotoForBattle.q1)
     await state.update_data(battle_id=battle_id)
-    await call.message.answer('Отправьте фото, которое не несет 18+ и оскорбительного характера')
+    await call.message.answer('<b>📝 Отправьте фото, которое не несет 18+ и оскорбительного характера.</b>')
 
 @dp.message(waiting_for_because.q1)
 async def process_answers(message: types.Message, state: FSMContext):
