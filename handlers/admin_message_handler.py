@@ -49,6 +49,7 @@ async def add_battle_name(message: types.Message, state: FSMContext):
     battle_name = message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    delete_message_id = data['delete_message_id']
     battle_info = await db.check_battle_info(battle_id)
     await db.update_battle_name_by_battle_id(battle_id, battle_name)
     if battle_info[23] == 2:
@@ -58,7 +59,7 @@ async def add_battle_name(message: types.Message, state: FSMContext):
     await state.clear()
 
     await bot.delete_message(message.chat.id, message.message_id)
-    await bot.delete_message(message.chat.id, message.message_id - 1)
+    await bot.delete_message(message.chat.id, delete_message_id.message_id)
 
 @dp.message(AddLinkToBattle.q1)
 async def add_link_to_battle(message: types.Message, state: FSMContext):
@@ -97,6 +98,7 @@ async def add_battle_prize(message: types.Message, state: FSMContext):
     prize = message.html_text or message.text
     data = await state.get_data()
     battle_id = data['battle_id']
+    delete_message_id = data['delete_message_id']
     battle_info = await db.check_battle_info(battle_id)
     await db.update_battle_prize(battle_id, prize)
     if battle_info[23] == 2:
@@ -106,7 +108,7 @@ async def add_battle_prize(message: types.Message, state: FSMContext):
     await state.clear()
 
     await bot.delete_message(message.chat.id, message.message_id)
-    await bot.delete_message(message.chat.id, message.message_id - 1)
+    await bot.delete_message(message.chat.id, delete_message_id.message_id)
 
 @dp.message(AddBattleDescr.q1)
 async def add_battle_descr(message: types.Message, state: FSMContext):
@@ -169,8 +171,9 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
     data = await state.get_data()
     battle_id = data['battle_id']
     round = data.get('round')
+    delete_message_id = data.get('delete_message_id')
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    await bot.delete_message(chat_id=message.chat.id, message_id=delete_message_id.message_id)
     if participants.isdigit():
         if int(participants) < 2 or int(participants) > 10:
             await message.answer("Минимальное кол-во участников должно быть от 2х до 10", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -192,6 +195,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     battle_id = data['battle_id']
     battle_info = await db.check_battle_info(battle_id)
     round = data.get('round')
+    delete_message_id = data.get('delete_message_id')
     if voices.isdigit():
         if int(voices) < 1:
             await message.answer("Минимальное кол-во голосов должно быть больше 1", reply_markup=await back_battle__active_setting_kb(battle_id))
@@ -208,7 +212,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     else:
         await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
     await bot.delete_message(message.chat.id, message.message_id)
-    await bot.delete_message(message.chat.id, message.message_id - 1)
+    await bot.delete_message(message.chat.id, delete_message_id.message_id)
 
 @dp.message(SetTextToPublish.post_text)
 async def SetTextToPublish_handler(message: types.Message, state: FSMContext):
@@ -220,7 +224,14 @@ async def SetTextToPublish_handler(message: types.Message, state: FSMContext):
     await bot.delete_message(message.chat.id, message_id=message.message_id - 1)
     await bot.delete_message(message.chat.id, message_id=message.message_id)
     await state.clear()
-    battle_info_text = '<b>Меню управления</b>'
+    if battle_info[23] == 1:
+        battle_info_text = '<b>Меню управления</b>'
+    else:
+        photo_send = "Открыт" if battle_info[21] else "Закрыт"
+        count_users_in_battle = await db.check_count_battle_photos_where_battle_id_and_status_1(battle_info[0])
+        battle_info_text = f'''
+        <b>⚔️ Батл: {battle_info[3]}</b>\n\n- Раунд: {battle_info[7]}\n- Минимум для прохождения: {battle_info[11]}\n\n- Участников в одном посте: {battle_info[13]}\n- Текущее количество участников: {count_users_in_battle}\n\n- Набор фото: {photo_send}
+        '''
     await message.answer(battle_info_text, disable_web_page_preview=True,
                                  reply_markup=await active_battle_settings_kb(battle_id, 3))
 

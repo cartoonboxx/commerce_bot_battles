@@ -29,9 +29,10 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            if time_difference.total_seconds() > 600:
+            print('Секунды', time_difference.total_seconds())
+            if int(time_difference.total_seconds()) in range(600, 660) or\
+                    int(time_difference.total_seconds()) in range(1200, 1260):
                 tg_id = battle_photo[1]
-                await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
                 try:
                     current_voices = 0
                     battle_info = await check_battle_info(battle_id)
@@ -56,7 +57,7 @@ async def scheduled_task():
 
                     user_data = await db.check_info_users_by_tg_id(user_info[1])
 
-                    text = f"‼️ <b>ВЫ ПРОИГРЫВАЕТЕ</b>\n\nВам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд\n\n<a href='https://t.me/{config.bot_name}?start=vote{battle_id}page{user_info[6]}'>Ваша ссылка на голосование</a>"
+                    text = f"‼️ <b>Вам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд</b>\n\nЖмите <b>🔥 Хочу больше голосов</b>, чтобы получить больше голосов"
                     if user_voices < current_voices and user_info[6] != 0 and user_data[7]:
                         print(user_voices, current_voices)
                         kb = InlineKeyboardBuilder()
@@ -67,6 +68,9 @@ async def scheduled_task():
                             kb.button(text='🔔 Вкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{battle_info[5]};{battle_id}')
                         channel_info = await db.check_channel_info_by_id(battle_info[1])
                         channel_data = await bot.get_chat(channel_info[2])
+                        new_postlink = await db.get_user_link_post(tg_id)
+                        print(new_postlink)
+                        kb.button(text='Ссылка на пост', url=new_postlink[2])
                         if not channel_data.username:
                             kb.button(text="Ссылка на канал", url=battle_info[5])
                         if await check_users_tasks(battle_id, tg_id):

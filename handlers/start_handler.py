@@ -424,16 +424,16 @@ async def mailing_callback(call: types.CallbackQuery):
         kb.button(text='🔔 Вкл. уведомления', callback_data=f'mailing_callback;{user_data[1]};{link_channel};{battle_id}')
     channel_info = await db.check_channel_info_by_id(battle_info[1])
     channel_data = await bot.get_chat(channel_info[2])
+    new_postlink = await db.get_user_link_post(tg_id)
+    print(new_postlink)
+    kb.button(text='Ссылка на пост', url=new_postlink[2])
     if not channel_data.username:
         kb.button(text="Ссылка на канал", url=battle_info[5])
     if await check_users_tasks(battle_id, tg_id):
         kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
     kb.adjust(1)
 
-    vote_link = f'https://t.me/{bot_name}?start=vote{battle_id}page{user_info[6]}'
-
-    text_reply = call.message.text.replace('‼️ ВЫ ПРОИГРЫВАЕТЕ', '<b>‼️ ВЫ ПРОИГРЫВАЕТЕ</b>')
-    text_reply = text_reply.replace('Ваша ссылка на голосование', f'<a href="{vote_link}">Ваша ссылка на голосование</a>')
+    text_reply = call.message.html_text
     await call.message.edit_text(text=text_reply, reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
 @dp.callback_query(lambda c: c.data.startswith('back_to_notification'))
@@ -455,6 +455,9 @@ async def back_to_notification(call: types.CallbackQuery):
                   callback_data=f'mailing_callback;{user_data[1]};{link_channel};{battle_id}')
     channel_info = await db.check_channel_info_by_id(battle_info[1])
     channel_data = await bot.get_chat(channel_info[2])
+    new_postlink = await db.get_user_link_post(tg_id)
+    print(new_postlink)
+    kb.button(text='Ссылка на пост', url=new_postlink[2])
     if not channel_data.username:
         kb.button(text="Ссылка на канал", url=battle_info[5])
     if await check_users_tasks(battle_id, tg_id):
@@ -480,10 +483,7 @@ async def back_to_notification(call: types.CallbackQuery):
     else:
         current_voices = max_user_voices
 
-    text_reply = f'''‼️ ВЫ ПРОИГРЫВАЕТЕ\n\nВам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд\n\nВаша ссылка на голосование'''
-    text_reply = text_reply.replace('‼️ ВЫ ПРОИГРЫВАЕТЕ', '<b>‼️ ВЫ ПРОИГРЫВАЕТЕ</b>')
-    text_reply = text_reply.replace('Ваша ссылка на голосование',
-                                    f'<a href="{vote_link}">Ваша ссылка на голосование</a>')
+    text_reply = f'''‼️ <b>Вам не хватает {current_voices - user_voices + 1} голосов, чтобы пройти в следующий раунд</b>\n\nЖмите <b>🔥 Хочу больше голосов</b>, чтобы получить больше голосов'''
     await call.message.edit_text(text=text_reply, reply_markup=kb.as_markup(), disable_web_page_preview=True)
 
 @dp.callback_query(lambda c: c.data.startswith('wanted_more_voices'))
@@ -730,9 +730,11 @@ async def handle_profile(message: types.Message, state: FSMContext):
         if tg_id in admins:
             channels, total_moments = await get_paginated_items34(0)
             items_kb = await build_items_kb34(channels, 0, total_moments)
-            await message.answer(
+            message = await message.answer(
                 "<b>Список каналов, использующие бота:</b>",
                 reply_markup=items_kb.as_markup())
+
+            await db.update_info_watcher_channels(message.message_id)
             return
         admin_exist = await db.check_admin_exist_return_bool(tg_id)
         if admin_exist:
@@ -892,8 +894,9 @@ async def back_to_channel_list_handler(call: types.CallbackQuery):
     page = int(call.data.split(';')[1]) if ';' in call.data else 0
     channels, total_channels = await get_paginated_items34(page)
     categories_kb = await build_items_kb34(channels, page, total_channels)
-    await call.message.edit_text(
+    message = await call.message.edit_text(
         text=f"<b>Список каналов, использующие бота:</b>", reply_markup=categories_kb.as_markup())
+    await db.update_info_watcher_channels(message.message_id)
 
 @dp.callback_query(lambda c: c.data.startswith('cancel_delete_channel'))
 async def cancel_delete_channel_handler(call: types.CallbackQuery):
@@ -1080,8 +1083,8 @@ async def mailing_post(message: types.Message, state: FSMContext):
     '''Пересылка поста всем'''
     print('Попал сюда')
     mess_id = message.message_id
-    await send_forward_to_all_users(message.chat.id, mess_id)
     await state.clear()
+    await send_forward_to_all_users(message.chat.id, mess_id)
     await message.answer("<b>🏁 Рассылка завершена.</b>")
 @dp.message(Mailing.q1)
 async def mailing_handler(message: types.Message, state: FSMContext):
@@ -1091,6 +1094,7 @@ async def mailing_handler(message: types.Message, state: FSMContext):
 @dp.message(Mailing.q2)
 async def mailing_handler_q2(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
+    await state.clear()
     markup = InlineKeyboardBuilder()
     mess_id = user_data['message_id']
 
@@ -1106,7 +1110,6 @@ async def mailing_handler_q2(message: types.Message, state: FSMContext):
                     await message.answer(f"<b>❌ Ошибка: ссылка должна начинаться с 'https://'. Проверьте: {btn_url}</b>")
                     return
         markup.adjust(1)
-    await state.clear()
     await send_copy_to_all_users(message.chat.id, mess_id, markup.as_markup())
     await message.answer("<b>🏁 Рассылка завершена.</b>")
 async def send_copy_to_all_users(chat_id, message_id, reply_markup=None):

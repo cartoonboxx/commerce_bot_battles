@@ -498,6 +498,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
             channel_info = await db.check_channel_info_by_id(channel_id)
             post_link = channel_info[6]
             new_channel_link = replace_last_digits(post_link, str(message_send.message_id))
+            await db.add_user_link_post(call.message.chat.id, new_channel_link)
 
             kb = InlineKeyboardBuilder()
             kb.button(text='Ссылка на пост', url=new_channel_link)

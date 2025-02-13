@@ -1,4 +1,5 @@
 from datetime import datetime
+from data.config import admins
 import aiosqlite
 
 name_db = 'photobattle.db'
@@ -148,6 +149,16 @@ async def db_start():
                 chat_id INTEGER DEFAULT 0,
                 user_id INTEGER DEFAULT 0,
                 channel_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS watcher_channels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                admin_id INTEGER DEFAULT 0,
+                message_id INTEGER DEFAULT 0)''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS posts_links_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                link TEXT)''')
         await db.commit()
 
 
@@ -929,3 +940,38 @@ async def update_give_votes_battle_photos(user_id, battle_id):
         await db.execute('UPDATE battle_photos SET give_votes = 1 WHERE tg_id = ? AND battle_id = ?',
                          (user_id, battle_id))
         await db.commit()
+
+async def update_info_watcher_channels(message_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM watcher_channels')
+        if await result.fetchone():
+            '''Обновляем'''
+            await db.execute('UPDATE watcher_channels SET message_id = ? WHERE admin_id = ?',
+                             (message_id, admins[0]))
+        else:
+            '''Добавляем'''
+            await db.execute('INSERT INTO watcher_channels (admin_id, message_id) VALUES (?, ?)',
+                             (admins[0], message_id))
+        await db.commit()
+
+async def get_admin_from_watcher_channels():
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM watcher_channels')
+        return await result.fetchone()
+
+async def add_user_link_post(user_id, link):
+    async with aiosqlite.connect(name_db) as db:
+        result = await get_user_link_post(user_id)
+        if result is None:
+            print('Зашел сюда')
+            await db.execute('INSERT INTO posts_links_users (user_id, link) VALUES (?, ?)',
+                             (user_id, link))
+            await db.commit()
+
+async def get_user_link_post(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        try:
+            result = await db.execute('SELECT * FROM posts_links_users WHERE user_id = ?', (user_id, ))
+            return await result.fetchone()
+        except Exception as ex:
+            return None

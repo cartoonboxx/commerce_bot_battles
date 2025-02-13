@@ -125,9 +125,60 @@ async def check_subscribe_admin(call: types.CallbackQuery):
         kb.adjust(1)
         await call.message.answer('<b>✅ Чтобы пользоваться ботом, нужно подписаться на канал.</b>', reply_markup=kb.as_markup())
 
+async def get_paginated_items34(page: int = 0):
+    channels = await db.check_all_channels()
+    start = page * ITEMS_PER_PAGE
+    end = start + ITEMS_PER_PAGE
+    return channels[start:end], len(channels)
+
+async def build_items_kb34(channels, page, total_moments, save_channel=None):
+    categories_kb = InlineKeyboardBuilder()
+
+    for channel in channels:
+        channel_info = await db.check_channel_info_by_id(channel[0])
+        name = channel_info[3]
+        try:
+            await bot.get_chat(channel_info[2])
+            categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
+        except Exception as ex:
+            print(f'Бот был удален из канала {name}')
+            if save_channel:
+                categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
+
+    categories_kb.adjust(1)
+    buttons = [
+        types.InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'),
+        types.InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'),
+        types.InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}')
+    ]
+    categories_kb.row(*buttons)
+    back_button = types.InlineKeyboardButton(text='🔙 Назад', callback_data='cancel_menu_channels')
+    categories_kb.row(back_button)
+
+    return categories_kb
 
 @dp.my_chat_member()
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
+    print(chat_member_update.new_chat_member.status)
+    if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
+        if chat_member_update.new_chat_member.status in ['left', 'kicked', 'administrator']:
+            try:
+                channels, total_moments = await get_paginated_items34(0)
+                if chat_member_update.new_chat_member.status == 'administator':
+                    save_channel = chat_member_update.chat.id
+                else:
+                    save_channel = None
+                items_kb = await build_items_kb34(channels, 0, total_moments, save_channel=save_channel)
+                correct_message_data = await db.get_admin_from_watcher_channels()
+                print(items_kb, channels, total_moments)
+                message = await bot.edit_message_reply_markup(chat_id=correct_message_data[1], message_id=correct_message_data[2],
+                                                    reply_markup=items_kb.as_markup())
+
+                await db.update_info_watcher_channels(message.message_id)
+                print('обновил')
+            except Exception as ex:
+                print('Ошибка!', ex)
+
     try:
         info = await bot.get_chat(chat_member_update.chat.id)
         current_user = await info.get_administrators()
@@ -328,6 +379,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
             try:
                 kb = InlineKeyboardBuilder()
+                await db.add_user_link_post(message.chat.id, new_channel_link)
                 kb.button(text='Ссылка на пост', url=new_channel_link)
                 channel_info = await db.check_channel_info_by_id(battle_info[1])
                 channel_data = await bot.get_chat(channel_info[2])
@@ -420,6 +472,7 @@ async def approve_continue_battle_handler(callback: types.CallbackQuery):
             await db.update_number_post_in_battle_photos_by_id(user[0], index)
             try:
                 kb = InlineKeyboardBuilder()
+                await db.add_user_link_post(message.chat.id, individual_channel_link)
                 kb.button(text='Ссылка на пост', url=individual_channel_link)
                 await bot.send_message(
                     chat_id=user[1], 
@@ -666,6 +719,7 @@ async def PublishPhotoByOneBattle_enter_text(message: types.Message, state: FSMC
 
     post_link = channel_info[6]
     new_channel_link = replace_last_digits(post_link, str(message_send.message_id))
+    await db.add_user_link_post(message.chat.id, new_channel_link)
 
     kb = InlineKeyboardBuilder()
     kb.button(text='Ссылка на пост', url=new_channel_link)
@@ -707,13 +761,14 @@ async def return_step_2_page_battle(call: types.CallbackQuery, state: FSMContext
 async def set_users_in_post(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[-1]
 
-    await call.message.edit_text(
+    delete_message_id = await call.message.edit_text(
         text='<b>⚙️ Введите кол-во участников. в одном посте от 2 до 10.</b> \n\nУказывайте только число.',
         reply_markup=await kb_return_2page_battlecreate(battle_id)
     )
     await state.set_state(AddActiveBattleParticipants.q1)
     await state.update_data(battle_id=battle_id)
     await state.update_data(round=1)
+    await state.update_data(delete_message_id=delete_message_id)
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;end_time_round'))
 async def set_end_time_round(call: types.CallbackQuery, state: FSMContext):
@@ -733,18 +788,19 @@ async def set_min_votes_win(call: types.CallbackQuery, state: FSMContext):
     battle_info = await db.check_battle_info(battle_id)
 
     if battle_info[23] == 2:
-        await call.message.edit_text(
+        delete_message_id = await call.message.edit_text(
             text='<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
             reply_markup=await kb_return_2page_battlecreate(battle_id)
         )
     else:
-        await call.message.edit_text(
+        delete_message_id = await call.message.edit_text(
             text='<b>⚙️ Введите минимальное количество голосов для победы в раунде.</b>\n\nПобеда учитывается, если человек набрал минималку и обогнал соперников.',
             reply_markup=await kb_return_2page_battlecreate(battle_id)
         )
     await state.set_state(AddVoicesToWin.q1)
     await state.update_data(battle_id=battle_id)
     await state.update_data(round=1)
+    await state.update_data(delete_message_id=delete_message_id)
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;returnback'))
 async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContext):

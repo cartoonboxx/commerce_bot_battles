@@ -100,8 +100,10 @@ async def active_battle_settings_kb(battle_id, status):
                 kb.button(text='❌ Закрыть набор фото', callback_data=f'activebattlesettings;photo_send;{battle_id}')
             if battle_info[23] == 2:
                 kb.button(text="✅ Выставить новые фото", callback_data=f'activebattlesettings;update_photo_before;{battle_id}')
-            kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
 
+
+    kb.button(text='📝 Изменить текст выпускаемого поста', callback_data=f'activebattlesettings;change_post_text;{battle_id}')
+    print('there')
 
 
     if status == Status.Error.value:
@@ -228,11 +230,13 @@ async def battle_settings_func(callback: types.CallbackQuery, battle_id, action,
     if action == 'name':
         await state.set_state(AddBattleName.q1)
         await state.update_data(battle_id=battle_id)
-        await message.edit_text('<b>⚙️ Введите название для вашего батла</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        delete_message_id = await message.edit_text('<b>⚙️ Введите название для вашего батла</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await state.update_data(delete_message_id=delete_message_id)
     if action == 'prize':
         await state.set_state(AddBattlePrize.q1)
         await state.update_data(battle_id=battle_id)
-        await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        delete_message_id = await message.edit_text('<b>⚙️ Введите текст для каждого выкладываемого поста:</b>', reply_markup=await back_main_menu_create_battle(battle_id))
+        await state.update_data(delete_message_id=delete_message_id)
     if action == 'battlepost':
         await state.set_state(AddBattlePost.q1)
         await state.update_data(battle_id=battle_id)
@@ -684,6 +688,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
                 try:
                     kb = InlineKeyboardBuilder()
+                    await db.add_user_link_post(call.message.chat.id, new_channel_link)
                     kb.button(text='Ссылка на пост', url=new_channel_link)
                     channel_info = await db.check_channel_info_by_id(battle_info[1])
                     channel_data = await bot.get_chat(channel_info[2])
