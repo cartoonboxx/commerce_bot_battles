@@ -29,7 +29,6 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            print('Секунды', time_difference.total_seconds())
             if int(time_difference.total_seconds()) in range(600, 660) or\
                     int(time_difference.total_seconds()) in range(1200, 1260):
                 tg_id = battle_photo[1]

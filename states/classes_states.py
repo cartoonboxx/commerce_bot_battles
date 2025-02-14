@@ -126,3 +126,8 @@ class Mailing(StatesGroup):
 
 class MailingPost(StatesGroup):
     q1 = State()
+
+class VotesOperation(StatesGroup):
+    tg_id = State()
+    count = State()
+    access = State()

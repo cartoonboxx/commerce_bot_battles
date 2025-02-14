@@ -757,6 +757,16 @@ async def update_add_voices_users(add_voices, tg_id):
         await db.execute('UPDATE users SET add_voices = add_voices + ? WHERE tg_id = ?', (add_voices, tg_id))
         await db.commit()
 
+async def take_add_voices_users(taked_voices, tg_id):
+    async with aiosqlite.connect(name_db) as db:
+        user = await db.execute('SELECT * FROM users WHERE tg_id = ?', (tg_id, ))
+        data = await user.fetchone()
+        if data[8] - int(taked_voices) >= 0:
+            await db.execute('UPDATE users SET add_voices = add_voices - ? WHERE tg_id = ?', (taked_voices, tg_id))
+        else:
+            await db.execute('UPDATE users SET add_voices = 0 WHERE tg_id = ?', (tg_id, ))
+        await db.commit()
+
 async def use_add_voices(votes, battle_id, tg_id):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE battle_photos SET votes = votes + ? WHERE battle_id = ? AND tg_id = ?', (votes, battle_id, tg_id))

@@ -281,8 +281,68 @@ async def sponsors_and_chats(message: types.Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
     kb.button(text='1. Спонсоры (задания)', callback_data='sponsors')
     kb.button(text='2. Изменить обязательный канал для админов', callback_data='change_chat_for_admins')
+    kb.button(text='3. Продажа голосов', callback_data='votes_seller')
     kb.adjust(1)
     await message.answer('<b>⚙️ Выберите инструмент:</b>', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data == 'votes_seller')
+async def votes_seller_handler(call: types.CallbackQuery, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Начислить голоса', callback_data='votes_operation;1')
+    kb.button(text='Снять голоса', callback_data='votes_operation;0')
+    kb.adjust(1)
+    await call.message.edit_text('💰 Продажа голосов:', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('votes_operation'))
+async def votes_operation_handler(call: types.CallbackQuery, state: FSMContext):
+    isAdd = int(call.data.split(';')[1])
+    if isAdd:
+        await call.message.answer('[1/2] Введите tg_id пользователя, которому хотите начислить голоса')
+    else:
+        await call.message.answer('[1/2] Введите tg_id пользователя, которому хотите снять голоса')
+    await state.set_state(VotesOperation.tg_id)
+    await state.update_data(isAdd=isAdd)
+    await state.update_data(call=call)
+
+@dp.message(VotesOperation.tg_id)
+async def votes_operation_tg_id_handler(message: types.Message, state: FSMContext):
+    user_id = message.text
+    if user_id.isdigit():
+        await state.update_data(user_id=user_id)
+        await message.answer('[2/2] Введите количество голосов')
+        await state.set_state(VotesOperation.count)
+    else:
+        await message.answer('Не похоже на tg_id пользователя! Попробуйте еще раз')
+
+@dp.message(VotesOperation.count)
+async def votes_operation_count_handler(message: types.Message, state: FSMContext):
+    count = message.text
+    data = await state.get_data()
+    if count.isdigit():
+        await state.update_data(count=count)
+        user = await bot.get_chat(chat_id=data.get('user_id'))
+        if data.get('isAdd'):
+            await message.answer(f'<b>❗ Вы точно хотите начислить {count} голосов пользователю {user.first_name}, @{user.username} ({user.id})</b>\n\nВведите <code>1234</code>, чтобы продолжить')
+        else:
+            await message.answer(
+                f'<b>❗ Вы точно хотите снять {count} голосов пользователю {user.first_name}, @{user.username} ({user.id})</b>\n\nВведите <code>1234</code>, чтобы продолжить')
+        await state.set_state(VotesOperation.access)
+    else:
+        await message.answer('Введено не число! Попробуйте еще раз')
+
+@dp.message(VotesOperation.access)
+async def votes_operation_access_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    if message.text == '1234':
+        if data.get('isAdd'):
+            '''Добавить функционал'''
+            await db.update_add_voices_users(data.get('count'), data.get('user_id'))
+            await data.get('call').answer(f'✅ {data.get("count")} голосов начислено', show_alert=True)
+        else:
+            await db.take_add_voices_users(data.get('count'), data.get('user_id'))
+            await data.get('call').answer(f'✅ {data.get("count")} голосов снято', show_alert=True)
+    else:
+        await message.answer('Введите 1234, чтобы продолжить!')
 
 @dp.callback_query(lambda c: c.data == 'change_chat_for_admins')
 async def change_chat_for_admins(call: types.CallbackQuery):
@@ -927,28 +987,6 @@ async def approve_delete_channel_handler2(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('back_to_channel'))
 async def cancel_mailing(callback_query: types.CallbackQuery):
     await callback_query.message.edit_text('<b>⚙️Меню управления (главный админ)</b>')
-
-@dp.message(lambda message: message.text == "🛠️ Накрутка голосов")
-async def handle_profile(message: types.Message, state: FSMContext):
-    if message.chat.type == 'private':
-        await state.clear()
-        tg_id = message.from_user.id
-
-        if tg_id in admins:
-            await message.answer(
-                "<b>Меню накрутки голосов 🛠️</b>",
-                reply_markup=nakrutka_menu())
-            return
-
-        admin_exist = await db.check_admin_exist_return_bool(tg_id)
-        if admin_exist:
-            await message.answer(
-                "<b>🚫 Неизвестная команда.</b>")
-            return
-
-        await message.answer(
-            "<b>🚫 Неизвестная команда.</b>")
-        return
 
 @dp.callback_query(lambda c: c.data.startswith('addchannel'))
 async def add_channel_func(callback_query: types.CallbackQuery, state: FSMContext):
