@@ -1393,6 +1393,11 @@ async def payment_method_state(message: types.Message, state: FSMContext):
     kb.button(text='Банковская карта РФ (ручная оплата)', callback_data='RF_CARD_TRANSACTION')
     kb.adjust(1)
 
+    if message.text is None:
+        '''Оплата проведена'''
+        await success_payment_handler(message, state)
+        return
+
     if message.text.isdigit():
         if int(message.text) > 0:
             await state.update_data(count=int(message.text))
@@ -1401,7 +1406,6 @@ async def payment_method_state(message: types.Message, state: FSMContext):
             await message.answer('🚫 Вы ввели число в неправильном формате!\nОтправьте количество голосов больше 0.')
     else:
         await message.answer('🚫 Вы ввели число в неправильном формате!\nОтправьте количество голосов.')
-
 @dp.callback_query(lambda c: c.data.startswith('crypto_bot_payment'))
 async def crypto_bot_payment_handler(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -1491,7 +1495,8 @@ async def success_payment_handler(message: Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
     kb.button(text='🎁 Купить голоса', callback_data=f'support_payment;{user_id};{battle_id}')
     kb.adjust(1)
-    user = await bot.get_chat(user_id)
+    print('ПОЛЬЗОВАТЕЛЬСКИЙ АЙДИ:', user_id)
+    user = await bot.get_chat(chat_id=user_id)
     if from_user_id != user_id:
         await bot.send_message(chat_id=user_id,
                            text=f'🎁 Поздравляем! Вам только что подарили {count} голосов!\n\n✅ Голоса уже начислены на ваше фото ',
