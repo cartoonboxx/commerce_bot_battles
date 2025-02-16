@@ -131,3 +131,6 @@ class VotesOperation(StatesGroup):
     tg_id = State()
     count = State()
     access = State()
+
+class PaymentCountState(StatesGroup):
+    count = State()

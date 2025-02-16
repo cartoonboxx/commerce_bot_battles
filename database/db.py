@@ -292,6 +292,15 @@ async def add_battle_photos_votes_where_tg_id(tg_id, votes):
         await db.execute('UPDATE battle_photos SET votes = votes + ? WHERE tg_id = ?', (votes, tg_id, ))
         await db.commit()
 
+async def add_battle_photos_votes_where_tg_id_and_battle_id(tg_id, votes, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battle_photos SET votes = votes + ? WHERE tg_id = ? AND battle_id = ?',
+                         (votes,
+                          tg_id,
+                          battle_id)
+                         )
+        await db.commit()
+
 async def add_admins_count(tg, count):
     async with aiosqlite.connect(name_db) as db:
         await db.execute('UPDATE admins SET count = ? WHERE tg_id = ?', (count, tg,))

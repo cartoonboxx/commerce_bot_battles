@@ -22,6 +22,8 @@ import aiosqlite
 from database.db import name_db
 from keyboards import dev
 from constants.constants import *
+from aiogram import F
+from utils.payment import *
 
 dp = Router()
 bot = loader.start_bot(config.Token)
@@ -212,8 +214,14 @@ async def cmd_start(message: types.Message, state: FSMContext):
                 battle_photos_info = await db.check_battle_photos_where_id1(account_id)
                 battle_id = battle_photos_info[2]
                 is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
+
+                support_kb = InlineKeyboardBuilder()
+                support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{account_id};{battle_id}')
+                support_kb.adjust(1)
+
                 if is_exist:
-                    await message.answer('<b>🚫 Вы уже проголосовали в этом раунде</b>')
+                    await message.answer('<b>🚫 Вы уже проголосовали в этом раунде</b>',
+                                         reply_markup=support_kb.as_markup())
                     return
 
                 battle_info = await db.check_battle_info(battle_id)
@@ -254,8 +262,13 @@ async def vote_in_battle(callback: types.CallbackQuery):
     battle_photos_info = await db.check_battle_photos_where_id1(account_id)
     battle_id = battle_photos_info[2]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
+
+    support_kb = InlineKeyboardBuilder()
+    support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{account_id};{battle_id}')
+    support_kb.adjust(1)
+
     if is_exist:
-        await callback.message.answer('<b>🚫 Вы уже проголосовали в этом раунде</b>')
+        await callback.message.answer('<b>🚫 Вы уже проголосовали в этом раунде</b>', reply_markup=support_kb.as_markup())
         return
 
     battle_info = await db.check_battle_info(battle_id)
@@ -1283,8 +1296,13 @@ async def subcribed_handler(callback: types.CallbackQuery):
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = [channel_info[2]]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
+
+    support_kb = InlineKeyboardBuilder()
+    support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{account_id};{battle_id}')
+    support_kb.adjust(1)
+
     if is_exist:
-        await callback.answer('🚫 Вы уже проголосовали в этом раунде', show_alert=True)
+        await callback.message.answer('🚫 Вы уже проголосовали в этом раунде', reply_markup=support_kb.as_markup())
         return
     if await check_sub_cahnnels(channel_tg_id, callback.from_user.id):
         await callback.message.delete()
@@ -1307,13 +1325,18 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = [channel_info[2]]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
+
+    support_kb = InlineKeyboardBuilder()
+    support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{account_id};{battle_id}')
+    support_kb.adjust(1)
+
     if is_exist:
-        await callback.answer('🚫 Вы уже проголосовали в этом раунде', show_alert=True)
+        await callback.message.answer('🚫 Вы уже проголосовали в этом раунде', reply_markup=support_kb.as_markup())
         return
     await db.add_one_voice_to_battle_photos_by_id(account_id)
     await db.update_users_today_voices_and_all_voices(battle_photos_info[1])
     await db.add_new_battle_voices(battle_id, callback.from_user.id)
-    await callback.answer('✅ Вы успешно проголосовали', show_alert=True)
+    await callback.message.answer('✅ Вы успешно проголосовали', reply_markup=support_kb.as_markup())
 
     user_info = await db.check_user_photo_by_id(account_id, battle_id)
     print(account_id, battle_id)
@@ -1338,3 +1361,143 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     await db.update_last_like(tg_id, time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
     min_votes = battle_info[11]
     user_votes = battle_photos_info[4]
+
+@dp.callback_query(lambda c: c.data.startswith('support_user_votes'))
+async def support_user_votes_handler(call: types.CallbackQuery):
+    user_id = call.data.split(';')[1]
+    battle_id = call.data.split(';')[2]
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🎁 Поддержать', callback_data=f'support_payment;{user_id};{battle_id}')
+    kb.adjust(1)
+
+    await call.message.edit_text('✅ <b>Поддержите участника, купив платные голоса!</b>\nВы можете купить любое количество голосов по одной цене, но это не влияет на размер приза.\n\nℹ️ <b>Почему так?</b>\nЭто сделано, чтобы все участники имели равные шансы на победу.',
+                                 reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('support_payment'))
+async def support_payment_handler(call: types.CallbackQuery, state: FSMContext):
+    user_id = call.data.split(';')[1]
+    battle_id = call.data.split(';')[2]
+    user_from_id = call.message.from_user.id
+    await state.update_data(user_id=user_id)
+    await state.update_data(user_from_id=user_from_id)
+    await state.update_data(battle_id=battle_id)
+
+    await state.set_state(PaymentCountState.count)
+    await call.message.edit_text('<b>🎁 Введите нужное кол-во голосов</b>\n\n1 голос = 6₽')
+
+@dp.message(PaymentCountState.count)
+async def payment_method_state(message: types.Message, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='CryptoBot', callback_data='crypto_bot_payment')
+    kb.button(text='Telegram Stars 🌟', callback_data='payment_telegram_stars')
+    kb.button(text='Банковская карта РФ (ручная оплата)', callback_data='RF_CARD_TRANSACTION')
+    kb.adjust(1)
+
+    if message.text.isdigit():
+        if int(message.text) > 0:
+            await state.update_data(count=int(message.text))
+            await message.answer('🏦 Выберите метод оплаты:', reply_markup=kb.as_markup())
+        else:
+            await message.answer('🚫 Вы ввели число в неправильном формате!\nОтправьте количество голосов больше 0.')
+    else:
+        await message.answer('🚫 Вы ввели число в неправильном формате!\nОтправьте количество голосов.')
+
+@dp.callback_query(lambda c: c.data.startswith('crypto_bot_payment'))
+async def crypto_bot_payment_handler(call: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    count = data.get('count')
+    chat_id = call.message.chat.id
+    pay_link, invoice_id = get_pay_link(0.07 * count) # 0.07
+    if pay_link and invoice_id:
+        invoices[chat_id] = invoice_id  # Store the invoice id associated with the chat_id
+        kb = InlineKeyboardBuilder()
+        kb.button(text="Оплатить", url=pay_link)
+        kb.button(text="Проверить оплату", callback_data=f'check_payment_{invoice_id}')
+        kb.adjust(1)
+        await bot.send_message(chat_id, "Перейдите по этой ссылке для оплаты и нажмите 'Проверить оплату'",
+                               reply_markup=kb.as_markup())
+    else:
+        await bot.answer_callback_query(call.id, 'Ошибка: Не удалось создать счет на оплату.')
+
+@dp.callback_query(lambda call: call.data.startswith('check_payment_'))
+async def check_payment(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(payment_type="CryptoBot")
+    chat_id = call.message.chat.id
+    invoice_id = call.data.split('check_payment_')[1]
+    payment_status = check_payment_status(invoice_id)
+    if payment_status and payment_status.get('ok'):
+        if 'items' in payment_status['result']:
+            invoice = next((inv for inv in payment_status['result']['items'] if str(inv['invoice_id']) == invoice_id), None)
+            if invoice:
+                status = invoice['status']
+                if status == 'paid':
+                    await success_payment_handler(call.message, state)
+
+                    del invoices[chat_id]
+
+                else:
+                    await call.answer('Оплата не найдена❌', show_alert=True)
+            else:
+                await call.answer('Счет не найден.', show_alert=True)
+        else:
+            print(f"Ответ от API не содержит ключа 'items': {payment_status}")
+            await call.answer('Ошибка при получении статуса оплаты.', show_alert=True)
+    else:
+        print(f"Ошибка при запросе статуса оплаты: {payment_status}")
+        await call.answer('Ошибка при получении статуса оплаты.', show_alert=True)
+
+@dp.callback_query(lambda c: c.data.startswith('RF_CARD_TRANSACTION'))
+async def rf_card_transaction_handler(call: types.CallbackQuery, state:FSMContext):
+    await call.message.edit_text('🚫 Чтобы оплатить переводом на карту, напишите - @')
+    await state.clear()
+
+@dp.callback_query(lambda c: c.data.startswith('payment_telegram_stars'))
+async def send_invoice_handler(call: types.CallbackQuery, state: FSMContext):
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Telegram Stars 🌟', pay=True)
+    kb.adjust(1)
+
+    data = await state.get_data()
+
+    count = data.get('count')
+    prices = [types.LabeledPrice(label="XTR", amount=count*5)]
+    await call.message.answer_invoice(
+        title="🏦 Выберите метод оплаты:",
+        description=f'Поддержка участника',
+        provider_token="",
+        prices=prices,
+        payload="user_support",
+        currency="XTR",
+        reply_markup=kb.as_markup(),
+    )
+
+async def pre_checkout_handler(pre_checkout_query: types.PreCheckoutQuery, state: FSMContext):
+    await pre_checkout_query.answer(ok=True)
+    await state.update_data(payment_type="Telegram Stars")
+
+async def success_payment_handler(message: Message, state: FSMContext):
+    data = await state.get_data()
+    count = data.get('count')
+    user_id = data.get('user_id')
+    battle_id = data.get('battle_id')
+    payment_type = data.get('payment_type')
+    await state.clear()
+    battle_info = await db.check_battle_info(battle_id)
+    channel_id = battle_info[1]
+    channel_info = await db.check_channel_info_by_id(channel_id)
+    from_user_id = data.get('from_user_id')
+    await message.answer(text=f"{count} голосов зачислено!")
+    await db.add_battle_photos_votes_where_tg_id_and_battle_id(user_id, count, battle_id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🎁 Купить голоса', callback_data=f'support_payment;{user_id};{battle_id}')
+    kb.adjust(1)
+    user = await bot.get_chat(user_id)
+    if from_user_id != user_id:
+        await bot.send_message(chat_id=user_id,
+                           text=f'🎁 Поздравляем! Вам только что подарили {count} голосов!\n\n✅ Голоса уже начислены на ваше фото ',
+                           reply_markup=kb.as_markup())
+
+    await bot.send_message(chat_id=admins[0], text=f'🏦 Продано {count} голосов пользователю {user.first_name} (@{user.username}) - {user_id}\n\nКанал (в котором купили) - {channel_info[5]}\n\nСпособ оплаты: {payment_type}')
+
+dp.pre_checkout_query.register(pre_checkout_handler)
+dp.message.register(success_payment_handler, F.successful_payment)
