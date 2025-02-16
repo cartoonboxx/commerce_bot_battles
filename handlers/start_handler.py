@@ -1498,7 +1498,6 @@ async def success_payment_handler(message: Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
     kb.button(text='🎁 Купить голоса', callback_data=f'support_payment;{user_id};{battle_id}')
     kb.adjust(1)
-    print('ПОЛЬЗОВАТЕЛЬСКИЙ АЙДИ:', user_id)
     user = await bot.get_chat(chat_id=user_id)
     if from_user_id != user_id:
         await bot.send_message(chat_id=user_id,
@@ -1506,6 +1505,17 @@ async def success_payment_handler(message: Message, state: FSMContext):
                            reply_markup=kb.as_markup())
 
     await bot.send_message(chat_id=admins[0], text=f'🏦 Продано {count} голосов пользователю {user.first_name} (@{user.username}) - {user_id}\n\nКанал (в котором купили) - {channel_info[5]}\n\nСпособ оплаты: {payment_type}')
+    user_photo = await db.check_user_photo_by_tg_id(user_id, battle_id)
+    photos = await db.check_all_battle_photos_where_status_1_and_battle_id_and_number_post(battle_id, user_photo[6])
+    for photo in photos:
+        kb = InlineKeyboardBuilder()
+        kb.button(text='🎁 Купить голоса', callback_data=f'support_payment;{photo[1]};{battle_id}')
+        kb.adjust(1)
+        await bot.send_message(
+            chat_id=photo[1],
+            text='Кто-то из ваших противников в посте приобрел голоса',
+            reply_markup=kb.as_markup()
+        )
 
 dp.pre_checkout_query.register(pre_checkout_handler)
 dp.message.register(success_payment_handler, F.successful_payment)

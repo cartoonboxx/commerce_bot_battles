@@ -233,7 +233,7 @@ async def SetTextToPublish_handler(message: types.Message, state: FSMContext):
         <b>⚔️ Батл: {battle_info[3]}</b>\n\n- Раунд: {battle_info[7]}\n- Минимум для прохождения: {battle_info[11]}\n\n- Участников в одном посте: {battle_info[13]}\n- Текущее количество участников: {count_users_in_battle}\n\n- Набор фото: {photo_send}
         '''
     await message.answer(battle_info_text, disable_web_page_preview=True,
-                                 reply_markup=await active_battle_settings_kb(battle_id, 3))
+                                 reply_markup=await active_battle_settings_kb(battle_id, battle_info[14]))
 
 @dp.message(AddBattlePost.q1)
 async def add_battle_post(message: types.Message, state: FSMContext):

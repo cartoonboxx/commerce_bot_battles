@@ -625,7 +625,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                     resultation2 += 1
 
             if (resultation1 + resultation2) % members_in_post == 0 and resultation1 != 0:
-             await call.message.answer(f'✅ Идёт публикация новых фото: {resultation1} шт.')
+             await call.answer(f'✅ Идёт публикация новых фото: {resultation1} шт.')
 
         count = 0
 
