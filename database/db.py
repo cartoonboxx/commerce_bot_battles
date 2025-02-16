@@ -386,6 +386,11 @@ async def check_info_users_by_tg_id(tg_id):
         cursor = await db.execute('SELECT * FROM users WHERE tg_id = ?', (tg_id,))
         return await cursor.fetchone()
 
+async def check_info_users_by_basic_id(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        cursor = await db.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        return await cursor.fetchone()
+
 async def update_mailing_user_by_tg_id(tg_id):
     async with aiosqlite.connect(name_db) as db:
         user_info = await check_info_users_by_tg_id(tg_id)
