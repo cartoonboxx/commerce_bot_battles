@@ -215,7 +215,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                 battle_id = battle_photos_info[2]
                 is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
 
-                user_info = await db.check_info_users_by_basic_id(account_id)
+                user_info = await db.check_user_photo_by_id(account_id, battle_id)
                 support_kb = InlineKeyboardBuilder()
                 support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{user_info[1]};{battle_id}')
                 support_kb.adjust(1)
@@ -258,13 +258,12 @@ async def vote_in_battle(callback: types.CallbackQuery):
     tg_id = callback.message.from_user.id
 
     data = callback.data.split(';')
-    battle_id = data[1]
     account_id = data[2]
     battle_photos_info = await db.check_battle_photos_where_id1(account_id)
     battle_id = battle_photos_info[2]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
 
-    user_info = await db.check_info_users_by_basic_id(account_id)
+    user_info = await db.check_user_photo_by_id(account_id, battle_id)
     support_kb = InlineKeyboardBuilder()
     support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{user_info[1]};{battle_id}')
     support_kb.adjust(1)
@@ -1299,7 +1298,7 @@ async def subcribed_handler(callback: types.CallbackQuery):
     channel_tg_id = [channel_info[2]]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
 
-    user_info = await db.check_info_users_by_basic_id(account_id)
+    user_info = await db.check_user_photo_by_id(account_id, battle_id)
     support_kb = InlineKeyboardBuilder()
     support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{user_info[1]};{battle_id}')
     support_kb.adjust(1)
@@ -1329,7 +1328,7 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
     channel_tg_id = [channel_info[2]]
     is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
 
-    user_info = await db.check_info_users_by_basic_id(account_id)
+    user_info = await db.check_user_photo_by_id(account_id, battle_id)
     support_kb = InlineKeyboardBuilder()
     support_kb.button(text='Поддержать участника 🆙', callback_data=f'support_user_votes;{user_info[1]};{battle_id}')
     support_kb.adjust(1)
