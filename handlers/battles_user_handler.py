@@ -446,6 +446,7 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
 
 
     battle_info = await db.check_battle_info(battle_id)
+    channel_info = await db.check_channel_info_by_id(battle_info[1])
     if action == 'approve':
         try:
             channel_info = await db.check_channel_info_by_id(battle_info[1])
@@ -476,7 +477,6 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
         await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=correct_message_ID, reply_markup=kb.as_markup())
 
         if battle_info[23] == 1:
-            channel_info = await db.check_channel_info_by_id(battle_info[1])
             channel_id = channel_info[2]
             channel_tg_id = channel_id
             channel_id = channel_info[0]
@@ -495,15 +495,12 @@ async def search_battle_handler(call: types.CallbackQuery, state: FSMContext):
                                                 reply_markup=kb.as_markup())
             await call.message.answer('✅ Фото отправлено в канал!')
 
-            channel_info = await db.check_channel_info_by_id(channel_id)
             post_link = channel_info[6]
             new_channel_link = replace_last_digits(post_link, str(message_send.message_id))
             print('trouble 1')
-            await db.add_user_link_post(call.message.chat.id, new_channel_link)
-
+            await db.add_user_link_post(user_id, new_channel_link)
             kb = InlineKeyboardBuilder()
             kb.button(text='Ссылка на пост', url=new_channel_link)
-            channel_info = await db.check_channel_info_by_id(battle_info[1])
             channel_data = await bot.get_chat(channel_info[2])
             if not channel_data.username:
                 kb.button(text="Ссылка на канал", url=battle_info[5])
