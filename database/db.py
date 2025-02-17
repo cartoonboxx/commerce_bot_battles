@@ -998,4 +998,5 @@ async def get_user_link_post(user_id):
             result = await db.execute('SELECT * FROM posts_links_users WHERE user_id = ?', (user_id, ))
             return await result.fetchone()
         except Exception as ex:
+            print('Из таблицы posts_links_users ничего не вернулось')
             return None

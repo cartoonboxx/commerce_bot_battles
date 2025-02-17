@@ -70,8 +70,10 @@ async def scheduled_task():
                         new_postlink = await db.get_user_link_post(tg_id)
                         print(new_postlink)
                         kb.button(text='Ссылка на пост', url=new_postlink[2])
+                        print('Установлена ссылка на пост')
                         if not channel_data.username:
                             kb.button(text="Ссылка на канал", url=battle_info[5])
+                        print('Проверена ссылка на канал')
                         if await check_users_tasks(battle_id, tg_id):
                             kb.button(text="🔥 Хочу больше голосов", callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]}')
                         kb.adjust(1)
