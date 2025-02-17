@@ -379,8 +379,8 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
             try:
                 kb = InlineKeyboardBuilder()
-                print('trouble 2', message.chat.id)
-                await db.add_user_link_post(message.chat.id, new_channel_link)
+                print('trouble 2', callback.message.chat.id)
+                await db.add_user_link_post(callback.message.chat.id, new_channel_link)
                 kb.button(text='Ссылка на пост', url=new_channel_link)
                 channel_info = await db.check_channel_info_by_id(battle_info[1])
                 channel_data = await bot.get_chat(channel_info[2])
