@@ -1,9 +1,11 @@
 from datetime import datetime
 from data.config import admins
 import aiosqlite
+from data import loader, config
 
 name_db = 'photobattle.db'
-
+# 679
+bot = loader.start_bot(config.Token)
 
 async def db_start():
     async with aiosqlite.connect(name_db) as db:
@@ -675,6 +677,12 @@ async def check_all_channels():
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM channels')
         rows = await cursor.fetchall()
+        rows = list(rows)
+        for index, row in enumerate(rows):
+            try:
+                await bot.get_chat(chat_id=row[2])
+            except Exception as ex:
+                rows.pop(index)
         return rows
     
 async def check_all_battles():
