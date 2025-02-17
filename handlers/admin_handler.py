@@ -361,6 +361,12 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             message_id = message.message_id
             await db.update_id_post(message_id, battle_id)
 
+            for user in post:
+                post_link = channel_info[6]  # Основной шаблон ссылки
+                new_channel_link = replace_last_digits(post_link, str(message_id))
+                print('trouble 2', user[1])
+                await db.add_user_link_post(user[1], new_channel_link)
+
             
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
