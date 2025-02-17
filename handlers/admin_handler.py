@@ -366,6 +366,8 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
                 new_channel_link = replace_last_digits(post_link, str(message_id))
                 print('trouble 2', user[1])
                 await db.add_user_link_post(user[1], new_channel_link)
+                time_now = datetime.datetime.now()
+                await db.update_last_like(user[1], time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
 
             
         except Exception:
