@@ -670,11 +670,11 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 message_id = message.message_id
                 await db.update_id_post(message_id, battle_id)
 
-                post_link = channel_info[6]  # Основной шаблон ссылки
-                new_channel_link = replace_last_digits(post_link, str(message_id))
-                for user in post:
-                    print('trouble 2', user[1])
-                    await db.add_user_link_post(user[1], new_channel_link)
+                # post_link = channel_info[6]  # Основной шаблон ссылки
+                # new_channel_link = replace_last_digits(post_link, str(message_id))
+                # for user in post:
+                #     print('trouble 2', user[1])
+                #     await db.add_user_link_post(user[1], new_channel_link)
 
 
             except Exception:
