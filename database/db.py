@@ -677,12 +677,6 @@ async def check_all_channels():
     async with aiosqlite.connect(name_db) as db:
         cursor = await db.execute('SELECT * FROM channels')
         rows = await cursor.fetchall()
-        rows = list(rows)
-        for index, row in enumerate(rows):
-            try:
-                await bot.get_chat(chat_id=row[2])
-            except Exception as ex:
-                rows.pop(index)
         return rows
     
 async def check_all_battles():
@@ -1012,3 +1006,12 @@ async def get_user_link_post(user_id):
         except Exception as ex:
             print('Из таблицы posts_links_users ничего не вернулось')
             return None
+
+async def update_channels_in_table():
+    async with aiosqlite.connect(name_db) as db:
+        channels = await check_all_channels()
+        for channel in channels:
+            try:
+                await bot.get_chat(channel[2])
+            except Exception as ex:
+                await delete_channel_by_id(channel[0])

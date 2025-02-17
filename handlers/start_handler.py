@@ -802,6 +802,8 @@ async def handle_profile(message: types.Message, state: FSMContext):
         await state.clear()
         tg_id = message.from_user.id
         if tg_id in admins:
+            await db.update_channels_in_table()
+
             channels, total_moments = await get_paginated_items34(0)
             items_kb = await build_items_kb34(channels, 0, total_moments)
             message = await message.answer(
