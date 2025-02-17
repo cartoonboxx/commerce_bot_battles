@@ -47,7 +47,11 @@ async def db_start():
                 add_voices INTEGER DEFAULT 0
             )
         ''')
-        await db.execute('''
+        now = datetime.now()
+
+
+        formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        await db.execute(f'''
             CREATE TABLE IF NOT EXISTS battle_photos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tg_id INTEGER,
@@ -58,7 +62,7 @@ async def db_start():
                 number_post INTEGER DEFAULT 0,
                 notification INTEGER DEFAULT 0,
                 post_id INTEGER DEFAULT 0,
-                last_like TEXT DEFAULT '2024-10-20 01:18:32',
+                last_like TEXT DEFAULT '{formatted_time}',
                 sponsor INTEGER DEFAULT 0,
                 invited_friend INTEGER DEFAULT 0,
                 give_votes INTEGER DEFAULT 0

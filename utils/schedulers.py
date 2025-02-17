@@ -29,8 +29,9 @@ async def scheduled_task():
                     continue
 
             time_difference = time_now - photo_time
-            if int(time_difference.total_seconds()) in range(600, 660) or\
-                    int(time_difference.total_seconds()) in range(1200, 1260):
+            print(time_difference)
+            if int(time_difference.total_seconds()) // 60 == 10 or\
+                    int(time_difference.total_seconds()) // 60 == 20:
                 tg_id = battle_photo[1]
                 try:
                     current_voices = 0

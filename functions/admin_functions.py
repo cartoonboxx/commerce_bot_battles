@@ -688,6 +688,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
                 try:
                     kb = InlineKeyboardBuilder()
+                    print('trouble 3', call.message.chat.id)
                     await db.add_user_link_post(call.message.chat.id, new_channel_link)
                     kb.button(text='Ссылка на пост', url=new_channel_link)
                     channel_info = await db.check_channel_info_by_id(battle_info[1])
