@@ -8,7 +8,6 @@ def start_menu_for_dev():
     kb.button(text='🧑‍💼 Каналы')
     kb.button(text='📱 Мой кабинет')
     kb.button(text='📊 Статистика бота')
-    kb.button(text='🆘 Тех. поддержка')
     kb.button(text='⚔️ Наборы на фото-батлы')
     kb.button(text='🥇 Рекламные инструменты')
     kb.adjust(2)

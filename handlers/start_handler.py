@@ -109,7 +109,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
                     battle_info = await db.check_battle_info(battle_id)
                     if battle_info[21] == 0:
-                        await message.answer('❌ Набор фото пока что прекращен, попробуйте позже')
+                        await message.answer('<b>❌ Набор фото закрыт, попробуйте позже.</b>')
                         return
 
                     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(
@@ -305,7 +305,7 @@ async def votes_seller_handler(call: types.CallbackQuery, state: FSMContext):
     kb.button(text='Начислить голоса', callback_data='votes_operation;1')
     kb.button(text='Снять голоса', callback_data='votes_operation;0')
     kb.adjust(1)
-    await call.message.edit_text('💰 Продажа голосов:', reply_markup=kb.as_markup())
+    await call.message.edit_text('<b>💰 Продажа голосов:</b>', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('votes_operation'))
 async def votes_operation_handler(call: types.CallbackQuery, state: FSMContext):
@@ -1375,8 +1375,13 @@ async def support_user_votes_handler(call: types.CallbackQuery):
     kb.button(text='🎁 Поддержать', callback_data=f'support_payment;{user_id};{battle_id}')
     kb.adjust(1)
 
-    await call.message.edit_text('✅ <b>Поддержите участника, купив платные голоса!</b>\nВы можете купить любое количество голосов по одной цене, но это не влияет на размер приза.\n\nℹ️ <b>Почему так?</b>\nЭто сделано, чтобы все участники имели равные шансы на победу.',
-                                 reply_markup=kb.as_markup())
+    await call.message.edit_text(
+    '✅ <b>Поддержите участника, купив платные голоса!</b>\n'
+    'Вы можете купить любое количество голосов по одной цене, но это не влияет на размер приза.\n\n'
+    'ℹ️ <b>Почему так?</b>\n'
+    'Это сделано, чтобы все участники имели равные шансы на победу.\n\n'
+    '💰 <b>Зачем покупать голоса?</b>\n'
+    'Покупка голосов помогает формировать призовой фонд и поддерживать участников!')
 
 @dp.callback_query(lambda c: c.data.startswith('support_payment'))
 async def support_payment_handler(call: types.CallbackQuery, state: FSMContext):
@@ -1515,9 +1520,7 @@ async def success_payment_handler(message: Message, state: FSMContext):
         kb.adjust(1)
         await bot.send_message(
             chat_id=photo[1],
-            text='Кто-то из ваших противников в посте приобрел голоса',
-            reply_markup=kb.as_markup()
-        )
+            text='<b>❌ Кто-то из ваших противников в посте приобрел голоса.\n\nВам нужно действовать быстрее, чтобы не проиграть!</b>',reply_markup=kb.as_markup())
 
 dp.pre_checkout_query.register(pre_checkout_handler)
 dp.message.register(success_payment_handler, F.successful_payment)

@@ -387,7 +387,7 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
             return
 
         if channel_info[4] == 0:
-            await call.answer('Заполните все поля', show_alert=True)
+            await call.answer('Заполнит', show_alert=True)
             return
         else:
             kb = InlineKeyboardBuilder()
