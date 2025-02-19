@@ -779,7 +779,6 @@ async def set_users_in_post(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(AddActiveBattleParticipants.q1)
     await state.update_data(battle_id=battle_id)
     await state.update_data(round=1)
-    await state.update_data(delete_message_id=delete_message_id)
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;end_time_round'))
 async def set_end_time_round(call: types.CallbackQuery, state: FSMContext):

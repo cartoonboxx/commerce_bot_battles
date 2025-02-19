@@ -171,9 +171,6 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
     data = await state.get_data()
     battle_id = data['battle_id']
     round = data.get('round')
-    delete_message_id = data.get('delete_message_id')
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-    await bot.delete_message(chat_id=message.chat.id, message_id=delete_message_id.message_id)
     if participants.isdigit():
         if int(participants) < 2 or int(participants) > 10:
             await message.answer("Минимальное кол-во участников должно быть от 2х до 10", reply_markup=await back_battle__active_setting_kb(battle_id))
