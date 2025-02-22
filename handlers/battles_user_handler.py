@@ -48,17 +48,20 @@ def build_items_kb33(categories, page, total_moments):
     categories_kb.row(back_button)
     return categories_kb
 
-def build_items_kb33_channels(categories, page, total_moments):
+async def build_items_kb33_channels(categories, page, total_moments):
     categories_kb = InlineKeyboardBuilder()
 
+    all_channels = await db.check_all_channels()
     for category in categories:
         categories_kb.button(text=f"{category[3]}", callback_data=f'channelcheckitem;{category[0]};{page}')
     categories_kb.adjust(1)
 
     buttons = []
+    buttons.append(InlineKeyboardButton(text='⏭️', callback_data=f'channelspageitems;{0}'))
     buttons.append(InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'))
     buttons.append(InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'))
     buttons.append(InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}'))
+    buttons.append(InlineKeyboardButton(text='⏭️', callback_data=f'channelspageitems;{len(all_channels) // 10 if len(all_channels) % 10 != 0 else len(all_channels) // 10 - 1}'))
     categories_kb.row(*buttons)
 
     back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='backstartmenu')
@@ -102,10 +105,10 @@ async def channels_page_items_handler(call: types.CallbackQuery):
     categories, total_items = await get_paginated_items33_channels(page)
 
     if page < 0 or page > total_items // ITEMS_PER_PAGE:
-        await call.answer()
+        await call.answer('Ошибка')
         return
 
-    items_kb = build_items_kb33_channels(categories, page, total_items)
+    items_kb = await build_items_kb33_channels(categories, page, total_items)
     await call.message.edit_reply_markup(reply_markup=items_kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('battlecheckitem'))

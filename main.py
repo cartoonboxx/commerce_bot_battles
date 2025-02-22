@@ -5,7 +5,7 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from data import loader
 from aiogram.types import BotCommand
-from handlers import start_handler, admin_handler, admin_message_handler, battles_user_handler
+from handlers import start_handler, admin_handler, admin_message_handler, battles_user_handler, choice_method_send_photos
 from utils.schedulers import *
 
 async def set_main_menu(bot: Bot):
@@ -20,10 +20,11 @@ async def main_start():
     )
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_routers(
-       start_handler.dp,
-       admin_handler.dp,
-       admin_message_handler.dp,
-       battles_user_handler.dp
+        start_handler.dp,
+        admin_handler.dp,
+        admin_message_handler.dp,
+        battles_user_handler.dp,
+        choice_method_send_photos.dp
     )
 
     dp.startup.register(set_main_menu)

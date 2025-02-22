@@ -802,7 +802,7 @@ async def handle_profile(message: types.Message, state: FSMContext):
         await state.clear()
         tg_id = message.from_user.id
         if tg_id in admins:
-            await db.update_channels_in_table()
+            # await db.update_channels_in_table()
 
             channels, total_moments = await get_paginated_items34(0)
             items_kb = await build_items_kb34(channels, 0, total_moments)
@@ -830,22 +830,25 @@ async def get_paginated_items34(page: int = 0):
 
 async def build_items_kb34(channels, page, total_moments):
     categories_kb = InlineKeyboardBuilder()
-
+    all_channels = await db.check_all_channels()
     for channel in channels:
         channel_info = await db.check_channel_info_by_id(channel[0])
         name = channel_info[3]
         try:
-            await bot.get_chat(channel_info[2])
+            # await bot.get_chat(channel_info[2])
             categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
         except Exception as ex:
             print(f'Бот был удален из канала {name}')
 
     categories_kb.adjust(1)
     buttons = [
+        InlineKeyboardButton(text='⏮️', callback_data=f'channelspageitems;{0}'),
         InlineKeyboardButton(text='◀️', callback_data=f'channelspageitems;{page-1}'),
         InlineKeyboardButton(text=f'{page+1}/{(total_moments // ITEMS_PER_PAGE) + 1}', callback_data='current'),
-        InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}')
-          ]
+        InlineKeyboardButton(text='▶️', callback_data=f'channelspageitems;{page+1}'),
+        InlineKeyboardButton(text='⏭️', callback_data=f'channelspageitems;{len(all_channels) // 10 if len(all_channels) % 10 != 0 else len(all_channels) // 10 - 1}')
+    ]
+
     categories_kb.row(*buttons)
     back_button = InlineKeyboardButton(text='🔙 Назад', callback_data='cancel_menu_channels')
     categories_kb.row(back_button)

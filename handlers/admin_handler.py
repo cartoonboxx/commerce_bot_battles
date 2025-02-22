@@ -138,7 +138,7 @@ async def build_items_kb34(channels, page, total_moments, save_channel=None):
         channel_info = await db.check_channel_info_by_id(channel[0])
         name = channel_info[3]
         try:
-            await bot.get_chat(channel_info[2])
+            # await bot.get_chat(channel_info[2])
             categories_kb.button(text=f"{name}", callback_data=f'channelcheckitem;{channel[0]};{page}')
         except Exception as ex:
             print(f'Бот был удален из канала {name}')
@@ -160,24 +160,24 @@ async def build_items_kb34(channels, page, total_moments, save_channel=None):
 @dp.my_chat_member()
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
     print(chat_member_update.new_chat_member.status)
-    if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
-        if chat_member_update.new_chat_member.status in ['left', 'kicked', 'administrator']:
-            try:
-                channels, total_moments = await get_paginated_items34(0)
-                if chat_member_update.new_chat_member.status == 'administator':
-                    save_channel = chat_member_update.chat.id
-                else:
-                    save_channel = None
-                items_kb = await build_items_kb34(channels, 0, total_moments, save_channel=save_channel)
-                correct_message_data = await db.get_admin_from_watcher_channels()
-                print(items_kb, channels, total_moments)
-                message = await bot.edit_message_reply_markup(chat_id=correct_message_data[1], message_id=correct_message_data[2],
-                                                    reply_markup=items_kb.as_markup())
-
-                await db.update_info_watcher_channels(message.message_id)
-                print('обновил')
-            except Exception as ex:
-                print('Ошибка!', ex)
+    # if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
+    #     if chat_member_update.new_chat_member.status in ['left', 'kicked', 'administrator']:
+    #         try:
+    #             channels, total_moments = await get_paginated_items34(0)
+    #             if chat_member_update.new_chat_member.status == 'administator':
+    #                 save_channel = chat_member_update.chat.id
+    #             else:
+    #                 save_channel = None
+    #             items_kb = await build_items_kb34(channels, 0, total_moments, save_channel=save_channel)
+    #             correct_message_data = await db.get_admin_from_watcher_channels()
+    #             print(items_kb, channels, total_moments)
+    #             message = await bot.edit_message_reply_markup(chat_id=correct_message_data[1], message_id=correct_message_data[2],
+    #                                                 reply_markup=items_kb.as_markup())
+    #
+    #             await db.update_info_watcher_channels(message.message_id)
+    #             print('обновил')
+    #         except Exception as ex:
+    #             print('Ошибка!', ex)
 
     try:
         info = await bot.get_chat(chat_member_update.chat.id)

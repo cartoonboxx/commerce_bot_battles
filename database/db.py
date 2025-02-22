@@ -9,6 +9,7 @@ bot = loader.start_bot(config.Token)
 
 async def db_start():
     async with aiosqlite.connect(name_db) as db:
+
         
         await db.execute('''
             CREATE TABLE IF NOT EXISTS channels (
@@ -19,7 +20,8 @@ async def db_start():
                 admin_chat INTEGER DEFAULT 0,
                 channel_link TEXT DEFAULT '-',
                 post_link TEXT DEFAULT '-',
-                status INTEGER DEFAULT 0
+                status INTEGER DEFAULT 0,
+                type_send TEXT DEFAULT '-'
             )''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS battles_statistic (
@@ -165,6 +167,12 @@ async def db_start():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER DEFAULT 0,
                 link TEXT)''')
+
+        # channels = await check_all_channels()
+        # for channel in channels:
+        #     if channel[8] == '-':
+
+
         await db.commit()
 
 
@@ -1015,3 +1023,13 @@ async def update_channels_in_table():
                 await bot.get_chat(channel[2])
             except Exception as ex:
                 await delete_channel_by_id(channel[0])
+
+# async def set_type_send_photos(channel_id, type_send):
+#     '''channel_id это первый параметр таблицы'''
+#     async with aiosqlite.connect(name_db) as db:
+#         channel = await check_channel_info_by_id(channel_id)
+#
+#         await db.execute('INSERT INTO channels (type_send) VALUES (?)',
+#                          (type_send, channel_id))
+#
+#         await db.commit()

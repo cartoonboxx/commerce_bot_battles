@@ -59,9 +59,11 @@ async def back_main_menu_add_channel_opt(channel_id):
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Создать фото-батл', callback_data=f'channelsetting;choise_type;{channel_id}')
     if channel_info[4] == 0:
-        kb.button(text='Установить админ чат для принятия фото', callback_data=f'channelsetting;adminchat;{channel_id}')
+        kb.button(text='Не выбран способ получения фото и вопросов', callback_data=f'change_method_send;{channel_id}')
+        # kb.button(text='Установить админ-чат для принятия фото', callback_data=f'channelsetting;adminchat;{channel_id}')
     else:
-        kb.button(text='Изменить админ-чат', callback_data=f'channelsetting;correct_chat;{channel_id}')
+        kb.button(text='Выбран способ получения фото и вопросов', callback_data=f'choice_method_send_photos;{channel_id}')
+        # kb.button(text='Изменить админ-чат', callback_data=f'channelsetting;correct_chat;{channel_id}')
     kb.button(text='Удалить канал', callback_data=f'channelsetting;delete;{channel_id}')
     kb.button(text='🔙 Назад', callback_data='backtochannels')
     kb.adjust(1)
