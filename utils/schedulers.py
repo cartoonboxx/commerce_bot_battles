@@ -84,3 +84,30 @@ async def scheduled_task():
                             disable_web_page_preview=True)
                 except Exception as e:
                     print(e)
+
+async def delete_every_24_hours_scheduler():
+    all_battles = await db.check_all_battles()
+    for battle in all_battles:
+        battle_id = battle[0]
+        current_day_votes_sum = await calc_all_votes_in_battle(battle_id)
+        if current_day_votes_sum == battle[24]:
+            await db.delete_battle_by_id(battle_id)
+        else:
+            await db.update_yesterday_votes(battle_id)
+
+    '''Удалить каналы, батлы, батлофотки, если бота нет в админах'''
+
+    all_channels = await db.check_all_channels()
+    for channel in all_channels:
+        try:
+            await bot.get_chat(channel[2])
+        except Exception as ex:
+            await db.delete_all_info_where_channel_id(channel[0])
+
+    '''Удаление админов, у которых нет каналов'''
+    all_admins = await db.check_all_admins()
+    for admin in all_admins:
+        admin_channels = await db.checkk_all_channels_where_tg_id(admin[1])
+        if not admin_channels:
+            await db.delete_admin(admin[1])
+

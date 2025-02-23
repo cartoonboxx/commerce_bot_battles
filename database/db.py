@@ -122,7 +122,8 @@ async def db_start():
                 post_text TEXT DEFAULT '-',
                 photo_send INTEGER DEFAULT 1,
                 current_round INTEGER DEFAULT 0,
-                type_battle INTEGER DEFAULT 2)''')
+                type_battle INTEGER DEFAULT 2,
+                yesterday_votes INTEGER DEFAULT 0)''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS posts_correcting (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1054,5 +1055,42 @@ async def check_all_battles_where_user_id_and_posted(user_id):
         selected_battles = [await check_battle_info(battle[2]) for battle in user_selected]
         while None in selected_battles:
             selected_battles.remove(None)
-        print(selected_battles)
+
         return selected_battles
+
+async def check_all_battles_where_creator_user_id(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM battles WHERE tg_id = ?',
+                         (user_id, ))
+        return await result.fetchall()
+
+async def calc_all_votes_in_battle(battle_id):
+    users = await check_all_battle_photos_where_battle_id(battle_id)
+    calc_sum = sum([int(user_votes[4]) for user_votes in users])
+
+    return calc_sum
+
+async def update_yesterday_votes(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        current_votes = await calc_all_votes_in_battle(battle_id)
+        await db.execute('UPDATE battles SET yesterday_votes = ? WHERE id = ?',
+                         (current_votes, battle_id))
+
+        await db.commit()
+
+async def delete_all_info_where_channel_id(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM battles WHERE channel_id = ?',
+                                  (channel_id, ))
+        battles = await result.fetchall()
+        for battle in battles:
+            await db.execute('DELETE FROM battle_photos WHERE battle_id = ?',
+                             (battle[0], ))
+
+        await db.execute('DELETE FROM battles WHERE channel_id = ?',
+                            (channel_id, ))
+
+        await db.execute('DELETE FROM channels WHERE id = ?',
+                         (channel_id, ))
+
+        await db.commit()

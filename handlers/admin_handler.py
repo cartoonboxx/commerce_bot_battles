@@ -161,24 +161,38 @@ async def build_items_kb34(channels, page, total_moments, save_channel=None):
 @dp.my_chat_member()
 async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated):
     print(chat_member_update.new_chat_member.status)
-    # if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
-    #     if chat_member_update.new_chat_member.status in ['left', 'kicked', 'administrator']:
-    #         try:
-    #             channels, total_moments = await get_paginated_items34(0)
-    #             if chat_member_update.new_chat_member.status == 'administator':
-    #                 save_channel = chat_member_update.chat.id
-    #             else:
-    #                 save_channel = None
-    #             items_kb = await build_items_kb34(channels, 0, total_moments, save_channel=save_channel)
-    #             correct_message_data = await db.get_admin_from_watcher_channels()
-    #             print(items_kb, channels, total_moments)
-    #             message = await bot.edit_message_reply_markup(chat_id=correct_message_data[1], message_id=correct_message_data[2],
-    #                                                 reply_markup=items_kb.as_markup())
-    #
-    #             await db.update_info_watcher_channels(message.message_id)
-    #             print('обновил')
-    #         except Exception as ex:
-    #             print('Ошибка!', ex)
+    if chat_member_update.chat.type == chat_type.ChatType.CHANNEL:
+        if chat_member_update.new_chat_member.status in ['left', 'kicked']:
+            # try:
+            #     channels, total_moments = await get_paginated_items34(0)
+            #     if chat_member_update.new_chat_member.status == 'administator':
+            #         save_channel = chat_member_update.chat.id
+            #     else:
+            #         save_channel = None
+            #     items_kb = await build_items_kb34(channels, 0, total_moments, save_channel=save_channel)
+            #     correct_message_data = await db.get_admin_from_watcher_channels()
+            #     print(items_kb, channels, total_moments)
+            #     message = await bot.edit_message_reply_markup(chat_id=correct_message_data[1], message_id=correct_message_data[2],
+            #                                         reply_markup=items_kb.as_markup())
+            #
+            #     await db.update_info_watcher_channels(message.message_id)
+            #     print('обновил')
+            # except Exception as ex:
+            #     print('Ошибка!', ex)
+            channel_id = chat_member_update.chat.id
+            channel_info = await db.check_channel_where_channel_id(channel_id)
+            await bot.send_message(
+                text='<b>☹️ Вы потеряли доступ к созданию фото-батлов и управлению ими</b>\n\nДобавьте бота  в админы канала в течение 24 часов, иначе все данные будут удалены безвозвратно',
+                chat_id=channel_info[1]
+            )
+
+        elif chat_member_update.new_chat_member.status == 'administrator':
+            channel_info = await db.check_channel_where_channel_id(chat_member_update.chat.id)
+            if channel_info:
+                await bot.send_message(
+                    text='✅ Доступ восстановлен.',
+                    chat_id=channel_info[1]
+                )
 
     try:
         info = await bot.get_chat(chat_member_update.chat.id)
@@ -676,7 +690,7 @@ async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSM
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Запомнил(а)", callback_data=f"firstround;publish;{battle_id}")
     kb.adjust(1)
-    await call.message.edit_text('''<b>ℹ️ Информация о публикации постов</b>\n\nФото участников публикуются постами, количество участников в каждом посте зависит от значения, указанного в поле «Участников в 1 посте».\n\nПосле публикации можно открыть новый набор фото, собрать дополнительные снимки и выставить их в следующих постах.''', reply_markup=kb.as_markup())
+    await call.message.edit_text('''<b>⚠️ Если ваш фото-батл не наберет ни одного голоса за 24 часа, то он будет автоматически удалён</b>.''', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('firstround;publish'))
 async def firstround_createbattle_publish(callback: types.CallbackQuery, state=None):

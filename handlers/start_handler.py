@@ -260,6 +260,8 @@ async def cmd_update_database_info(message: types.Message, state: FSMContext):
         if channel[8] == '-':
             await db.set_type_send_photos(channel[0], 'admin-chat')
 
+    '''Установка параметра 0 вчерашним счетчиков (таблица battles)'''
+
 @dp.callback_query(lambda c: c.data.startswith('voteby'))
 async def vote_in_battle(callback: types.CallbackQuery):
     tg_id = callback.message.from_user.id
@@ -1309,6 +1311,22 @@ async def handle_profile(message: types.Message):
 
     profile_message = f"""<b>👨‍💻 Ваш кабинет:</b>\n\n<b>🔑 Ваш TG ID:</b> <code>{tg_id}</code>\n\n<b>📊 Статистика:</b>\n\t<b>- Количество выигранных батлов:</b> {count_wins[0]}\n\t<b>- Всего голосов:</b> {profile_info[6]}"""
     await message.answer(profile_message, parse_mode="HTML", reply_markup=cabinet_back())
+
+@dp.message(lambda message: message.text == '⚔️ Принять участие в батле')
+async def join_to_the_battle_main_admin_handler(message: Message):
+    all_admin_battles = await db.check_all_battles_where_creator_user_id(admins[0])
+    kb = InlineKeyboardBuilder()
+    isEmpty = True
+    for battle in all_admin_battles:
+        if battle[21]:
+            isEmpty = False
+            kb.button(text=battle[3], url=f'https://t.me/{bot_name}?start=b{battle[0]}')
+
+    kb.adjust(1)
+    if not isEmpty:
+        await message.answer('Выберите батл для участия', reply_markup=kb.as_markup())
+    else:
+        await message.answer('В данный момент нет активных батлов')
 
 @dp.message(lambda message: message.text == '📊 Статистика бота')
 async def statics(message: types.Message, state: FSMContext):
