@@ -109,6 +109,7 @@ async def send_welcome(message: types.Message):
                 print('Бот уже покинул чат')
             await db.uopdate_admin_chat_by_chat_id(chat_id=channel_id, admin_chat=message.chat.id)
             await db.clear_info_user_temp_admin_chats(user[2])
+            await db.set_type_send_photos(channel_id, 'admin-chat')
 
 @dp.callback_query(lambda c: c.data == 'check_subscribe_admin')
 async def check_subscribe_admin(call: types.CallbackQuery):
@@ -509,6 +510,15 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
     await callback.answer('Батл успешно завершился', show_alert=True)
     await db.update_status_battle(battle_id, Status.NEXTROUND.value)
     battle_info = await db.check_battle_info(battle_id)
+
+    '''
+        Удаление пользователей, которых одобрили но не выпустили, 
+        либо отправили, но пока не одобрили
+    '''
+    all_users_in_battle = await db.check_users_from_battle(battle_id)
+    for user in all_users_in_battle:
+        if user[6] == 0 or user[5] == 0:
+            await db.delete_user_from_battle_photos(user[0])
 
     all_posts_photo = await db.all_photo_by_battle(battle_id)
 

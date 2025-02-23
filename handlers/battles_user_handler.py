@@ -256,18 +256,21 @@ async def process_question(message: types.Message, state: FSMContext):
         f"🆔 ID: `{user_id}`\n\n"
         f"❓ Вопрос:\n\n{question_text}")
     channel_info = await db.check_channel_info_by_id(channel_id)
-    admin_chat_id = channel_info[4]
+    if channel_info[8] == 'admin-chat':
+        send_chat_id = channel_info[4]
+    else:
+        send_chat_id = channel_info[1]
     try:
         if photo:
             await bot.send_photo(
-                admin_chat_id,
+                send_chat_id,
                 photo=photo.file_id,
                 caption=question_message,
                 parse_mode="Markdown",
                 reply_markup=question_chat(user_id=user_id, has_photo=True))
         else:
             await bot.send_message(
-                admin_chat_id,
+                send_chat_id,
                 question_message,
                 parse_mode="Markdown",
                 reply_markup=question_chat(user_id=user_id, has_photo=False))
@@ -396,19 +399,22 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
     battle_info = await db.check_battle_info(battle_id)
     channel_id = battle_info[1]
     channel_info = await db.check_channel_info_by_id(channel_id)
-    admin_chat_id = channel_info[4]
+    if channel_info[8] == 'admin-chat':
+        send_photo_chat = channel_info[4]
+    else:
+        send_photo_chat = channel_info[1]
     kbs = InlineKeyboardBuilder()
 
     try:
-        message_id_from = await bot.send_photo(chat_id=admin_chat_id, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
+        message_id_from = await bot.send_photo(chat_id=send_photo_chat, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
         message_id_from = message_id_from.message_id
 
-        kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{message_id_from};{admin_chat_id}')
-        kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id};{message_id_from};{admin_chat_id}')
-        kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id};{message_id_from};{admin_chat_id}')
+        kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{message_id_from};{send_photo_chat}')
+        kbs.button(text='❌ Отклонить', callback_data=f'searchbattle;decline;{photo_battle_id};{message_id_from};{send_photo_chat}')
+        kbs.button(text='🛡️ Заблокировать', callback_data=f'searchbattle;block;{photo_battle_id};{message_id_from};{send_photo_chat}')
         kbs.adjust(2, 1)
 
-        await bot.edit_message_reply_markup(chat_id=admin_chat_id, message_id=message_id_from, reply_markup=kbs.as_markup())
+        await bot.edit_message_reply_markup(chat_id=send_photo_chat, message_id=message_id_from, reply_markup=kbs.as_markup())
 
     except Exception as e:
         await call.answer('<b>❌ При отправке фото произошла ошибка</b>')

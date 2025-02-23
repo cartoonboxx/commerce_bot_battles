@@ -386,8 +386,8 @@ async def chennelsetting_func(call: types.CallbackQuery, channel_id, action, sta
                 'Бот был удален из администраторов в этом канале, верните его в канал и повторите операцию еще раз')
             return
 
-        if channel_info[4] == 0:
-            await call.answer('Заполнит', show_alert=True)
+        if channel_info[4] == 0 and channel_info[8] == '-':
+            await call.answer('Метод получения не установлен', show_alert=True)
             return
         else:
             kb = InlineKeyboardBuilder()

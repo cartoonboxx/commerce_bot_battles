@@ -4,11 +4,13 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 def start_menu_for_users():
     kb = ReplyKeyboardBuilder()
+    kb.button(text='⚔️ Принять участие в батле')
     kb.button(text='📱 Мой кабинет')
     kb.button(text='🆘 Тех. поддержка')
     kb.button(text='🤝 Сотрудничество')
     kb.button(text='📊 Статистика бота')
-    kb.adjust(2)
+    kb.button(text='🔥 Хочу больше голосов')
+    kb.adjust(1, 2, 2, 1)
     return kb.as_markup(resize_keyboard=True)
 
 def gocooperation():

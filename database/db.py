@@ -168,11 +168,6 @@ async def db_start():
                 user_id INTEGER DEFAULT 0,
                 link TEXT)''')
 
-        # channels = await check_all_channels()
-        # for channel in channels:
-        #     if channel[8] == '-':
-
-
         await db.commit()
 
 
@@ -313,6 +308,24 @@ async def add_battle_photos_votes_where_tg_id_and_battle_id(tg_id, votes, battle
                           tg_id,
                           battle_id)
                          )
+        await db.commit()
+
+async def take_battle_photos_votes_where_tg_id_and_battle_id(tg_id, votes, battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND battle_id = ?',
+                            (tg_id, battle_id))
+        user = await result.fetchone()
+        if user[4] - int(votes) >= 0:
+            await db.execute('UPDATE battle_photos SET votes = votes - ? WHERE tg_id = ? AND battle_id = ?',
+                             (votes,
+                              tg_id,
+                              battle_id)
+                             )
+        else:
+            await db.execute('UPDATE battle_photos SET votes = 0 WHERE tg_id = ? AND battle_id = ?',
+                             (tg_id,
+                              battle_id)
+                             )
         await db.commit()
 
 async def add_admins_count(tg, count):
@@ -1024,12 +1037,22 @@ async def update_channels_in_table():
             except Exception as ex:
                 await delete_channel_by_id(channel[0])
 
-# async def set_type_send_photos(channel_id, type_send):
-#     '''channel_id это первый параметр таблицы'''
-#     async with aiosqlite.connect(name_db) as db:
-#         channel = await check_channel_info_by_id(channel_id)
-#
-#         await db.execute('INSERT INTO channels (type_send) VALUES (?)',
-#                          (type_send, channel_id))
-#
-#         await db.commit()
+async def set_type_send_photos(channel_id, type_send):
+    '''channel_id это первый параметр таблицы'''
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE channels SET type_send = ? WHERE id = ?',
+                         (type_send, channel_id))
+
+        await db.commit()
+
+async def check_all_battles_where_user_id_and_posted(user_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM battle_photos WHERE tg_id = ? AND number_post <> 0 AND status = 1',
+                         (user_id, ))
+        user_selected = await result.fetchall()
+
+        selected_battles = [await check_battle_info(battle[2]) for battle in user_selected]
+        while None in selected_battles:
+            selected_battles.remove(None)
+        print(selected_battles)
+        return selected_battles
