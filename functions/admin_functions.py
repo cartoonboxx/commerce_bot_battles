@@ -555,6 +555,13 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
 
         await active_battle_func(call, battle_id)
 
+        post_status = await db.get_post_status_battle(battle_id)
+        if not post_status[0]:
+            await db.update_post_status_battle(battle_id)
+        else:
+            await call.answer('Дождитесь завершения предыдущей публикации', show_alert=True)
+            return
+
         from handlers.admin_handler import replace_last_digits, check_battle_info
         battle_info = await db.check_battle_info(battle_id)
 
@@ -703,6 +710,7 @@ async def active_battle_options_func(call: types.CallbackQuery, battle_id, actio
                 except Exception as e:
                     print(e)
             await db.update_count_in_posts(battle_id, count)
+            await db.update_post_status_battle(battle_id)
 
 
     if action == 'update_photo_before':

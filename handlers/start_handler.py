@@ -24,6 +24,7 @@ from keyboards import dev
 from constants.constants import *
 from aiogram import F
 from utils.payment import *
+from functions.money_converter import *
 
 dp = Router()
 bot = loader.start_bot(config.Token)
@@ -1504,7 +1505,7 @@ async def support_payment_handler(call: types.CallbackQuery, state: FSMContext):
     await state.update_data(battle_id=battle_id)
 
     await state.set_state(PaymentCountState.count)
-    await call.message.edit_text('<b>🎁 Введите нужное кол-во голосов</b>\n\n1 голос = 6₽')
+    await call.message.edit_text('<b>🎁 Введите нужное кол-во голосов</b>')
 
 @dp.message(PaymentCountState.count)
 async def payment_method_state(message: types.Message, state: FSMContext):
@@ -1522,7 +1523,8 @@ async def payment_method_state(message: types.Message, state: FSMContext):
     if message.text.isdigit():
         if int(message.text) > 0:
             await state.update_data(count=int(message.text))
-            await message.answer('🏦 Выберите метод оплаты:', reply_markup=kb.as_markup())
+            message_delete = await message.answer('🏦 Выберите метод оплаты:', reply_markup=kb.as_markup())
+            await state.update_data(message_delete_id=message_delete.message_id)
         else:
             await message.answer('🚫 Вы ввели число в неправильном формате!\nОтправьте количество голосов больше 0.')
     else:
@@ -1532,7 +1534,8 @@ async def crypto_bot_payment_handler(call: types.CallbackQuery, state: FSMContex
     data = await state.get_data()
     count = data.get('count')
     chat_id = call.message.chat.id
-    pay_link, invoice_id = get_pay_link(0.07 * count) # 0.07
+    amount = await money_calc(chat_id, data.get('battle_id'), count, 'crypto')
+    pay_link, invoice_id = get_pay_link(amount)
     if pay_link and invoice_id:
         invoices[chat_id] = invoice_id  # Store the invoice id associated with the chat_id
         kb = InlineKeyboardBuilder()
@@ -1573,7 +1576,16 @@ async def check_payment(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data.startswith('RF_CARD_TRANSACTION'))
 async def rf_card_transaction_handler(call: types.CallbackQuery, state:FSMContext):
-    await call.message.edit_text('🚫 Чтобы оплатить переводом на карту, напишите - @')
+    data = await state.get_data()
+    from_user_id = call.from_user.id
+    from_user_info = await bot.get_chat(from_user_id)
+    amount = await money_calc(from_user_id, data.get('battle_id'), data.get('count'), "ruble")
+
+    battle_id = data.get('battle_id')
+    count = data.get('count')
+    await db.update_donations(from_user_id, battle_id, count)
+
+    await call.message.edit_text(f'<b>✅  Вы покупаете {data.get("count")} голосов пользователю @{from_user_info.username}.</b>\n\nИтоговая сумма - {amount} рублей\n<b>🚫 Чтобы оплатить переводом на карту, напишите - @</b>')
     await state.clear()
 
 @dp.callback_query(lambda c: c.data.startswith('payment_telegram_stars'))
@@ -1585,7 +1597,8 @@ async def send_invoice_handler(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
 
     count = data.get('count')
-    prices = [types.LabeledPrice(label="XTR", amount=count*5)]
+    amount = await money_calc(call.from_user.id, data.get('battle_id'), count, "stars")
+    prices = [types.LabeledPrice(label="XTR", amount=amount)]
     await call.message.answer_invoice(
         title="🏦 Выберите метод оплаты:",
         description=f'Поддержка участника',
@@ -1606,11 +1619,14 @@ async def success_payment_handler(message: Message, state: FSMContext):
     user_id = data.get('user_id')
     battle_id = data.get('battle_id')
     payment_type = data.get('payment_type')
+    message_delete_id = data.get('message_delete_id')
+    from_user_id = data.get('from_user_id')
+    await bot.delete_message(message.chat.id, message_id=message_delete_id)
+    await db.update_donations(from_user_id, battle_id, count)
     await state.clear()
     battle_info = await db.check_battle_info(battle_id)
     channel_id = battle_info[1]
     channel_info = await db.check_channel_info_by_id(channel_id)
-    from_user_id = data.get('from_user_id')
     await message.answer(text=f"{count} голосов зачислено!")
     await db.add_battle_photos_votes_where_tg_id_and_battle_id(user_id, count, battle_id)
     kb = InlineKeyboardBuilder()

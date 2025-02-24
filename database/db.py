@@ -170,6 +170,13 @@ async def db_start():
                 user_id INTEGER DEFAULT 0,
                 link TEXT)''')
 
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS donations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                battle_id INTEGER DEFAULT 0,
+                count INTEGER DEFAULT 0)''')
+
         await db.commit()
 
 
@@ -1093,5 +1100,47 @@ async def delete_all_info_where_channel_id(channel_id):
 
         await db.execute('DELETE FROM channels WHERE id = ?',
                          (channel_id, ))
+
+        await db.commit()
+
+async def update_post_status_battle(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('UPDATE battles SET post_status = ABS(post_status - 1) WHERE id = ?',
+                         (battle_id, ))
+
+        await db.commit()
+
+async def get_post_status_battle(battle_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT post_status FROM battles WHERE id = ?',
+                         (battle_id, ))
+
+        return await result.fetchone()
+
+async def get_user_from_donations(user_id, battle_id):
+    ''' (id, user_Id, battle_id, votes) '''
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM donations WHERE user_id = ? AND battle_id = ?',
+                         (user_id, battle_id))
+
+        data = await result.fetchone()
+        print(data)
+        if not data:
+            await update_donations(user_id, battle_id)
+            return (None, user_id, battle_id, 1)
+        return data
+
+async def update_donations(user_id, battle_id, votes=0):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM donations WHERE user_id = ? AND battle_id = ?',
+                                  (user_id, battle_id))
+        data = await result.fetchone()
+        print(data)
+        if data:
+            await db.execute('UPDATE donations SET count = count + ? WHERE user_id = ? AND battle_id = ?',
+                         (votes, user_id, battle_id))
+        else:
+            await db.execute('INSERT INTO donations (user_id, battle_id) VALUES (?, ?)',
+                             (user_id, battle_id))
 
         await db.commit()
