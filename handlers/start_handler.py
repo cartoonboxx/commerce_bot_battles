@@ -120,10 +120,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
                     if len(account_id) == 2:
                         from_user = account_id[1][4:]
-                        '''Сохраняем отправленного пользователя'''
-                        await db.save_invited_user(message.chat.id, from_user, battle_id)
-
-                        print(from_user)
+                        if from_user:
+                            '''Сохраняем отправленного пользователя'''
+                            await db.save_invited_user(message.chat.id, from_user, battle_id)
 
                     print(account_id, len(account_id), account_id[1][4:])
 
@@ -666,7 +665,7 @@ async def invite_friend_handler(call: types.CallbackQuery):
     full_url = f"{base_url}?url={encoded_url}&text={encoded_text}"
 
     kb.button(text='Пригласить друга', url=full_url)
-    kb.button(text='✅ Проверить', callback_data=f'check_invites;{battle_id};{link_channel}')
+    # kb.button(text='✅ Проверить', callback_data=f'check_invites;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
     await call.message.edit_text('<b>📝 Задание - Пригласить друга на фото-батл:</b>\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 3 голоса', reply_markup=kb.as_markup())

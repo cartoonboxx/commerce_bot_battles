@@ -123,7 +123,8 @@ async def db_start():
                 photo_send INTEGER DEFAULT 1,
                 current_round INTEGER DEFAULT 0,
                 type_battle INTEGER DEFAULT 2,
-                yesterday_votes INTEGER DEFAULT 0)''')
+                yesterday_votes INTEGER DEFAULT 0,
+                post_status INTEGER DEFAULT 0)''')
         await db.execute('''
             CREATE TABLE IF NOT EXISTS posts_correcting (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
