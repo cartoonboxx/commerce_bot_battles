@@ -32,12 +32,16 @@ def back_main_menu_add_channel3(channed_id):
     kb.adjust(1)
     return kb.as_markup()
 
-def back_main_menu_channels(channels):
+async def back_main_menu_channels(channels):
     kb = InlineKeyboardBuilder()
     for chan in channels:
-        name = chan[3]
-        id = chan[0]
-        kb.button(text=name, callback_data=f'optionchannel;{id}')
+        try:
+            await bot.get_chat(chan[2])
+            name = chan[3]
+            id = chan[0]
+            kb.button(text=name, callback_data=f'optionchannel;{id}')
+        except Exception as ex:
+            continue
     else:
         kb.button(text='Добавить канал', callback_data='addchannel')
         kb.button(text='🔙 Назад', callback_data='backmainmenu')
@@ -257,7 +261,7 @@ async def delete_channel_func2(call: types.CallbackQuery, channel_id):
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
     message = call.message
-    await message.edit_text('<b>✅ Канал удален </b>', reply_markup= back_main_menu_channels(channels))
+    await message.edit_text('<b>✅ Канал удален </b>', reply_markup=await back_main_menu_channels(channels))
 
 def generate_support_link(channel_id):
     base_url = f"https://t.me/{config.bot_name}?start=support_{channel_id}"

@@ -103,7 +103,8 @@ async def money_calc(user_id, battle_id, votes: int, currency: str):
 
     calced_sum = 0
 
-    for i in range(votes_bought, votes_bought + votes):
+
+    for i in range(votes_bought, votes_bought + votes + 1):
         calced_sum += calc(i, currency)
 
     return calced_sum

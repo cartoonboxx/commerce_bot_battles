@@ -260,6 +260,8 @@ async def process_question(message: types.Message, state: FSMContext):
         send_chat_id = channel_info[4]
     else:
         send_chat_id = channel_info[1]
+
+    print(send_chat_id)
     try:
         if photo:
             await bot.send_photo(
@@ -278,6 +280,7 @@ async def process_question(message: types.Message, state: FSMContext):
             "<b>✅ Ваш вопрос успешно отправлен!</b>\n"
             "Мы свяжемся с вами в ближайшее время. Спасибо за обращение! 🙌", parse_mode="HTML")
     except Exception as e:
+        print(e)
         await message.answer(
             "<b>⚠️ Произошла ошибка при отправке вопроса.</b>\n"
             "Пожалуйста, попробуйте ещё раз немного позже.",
@@ -376,11 +379,7 @@ async def send_photo_for_battle_handler(message: types.Message, state: FSMContex
         photo = message.photo[-1].file_id
         await state.update_data(photo=photo)
         await state.set_state(SendPhotoForBattle.q2)
-        kb = InlineKeyboardBuilder()
-        kb.button(text='✅ Подтверждаю', callback_data=f'confirmbattlejoin')
-        kb.button(text='🔙 Другое фото', callback_data=f'usermenu;battles')
-        kb.adjust(1)
-        await message.answer('Подтверждаете свой выбор?', reply_markup=kb.as_markup())
+        await confirm_battle_join_handler(message, state)
     else:
         await message.reply('Пожалуйста, отправьте одно фото')
 
@@ -389,12 +388,11 @@ async def option_channel_handler(callback_query: types.CallbackQuery, state: FSM
     await battle_join_handler(callback_query, state)
     await callback_query.answer()
 
-@dp.callback_query(lambda c: c.data=='confirmbattlejoin', SendPhotoForBattle.q2)
-async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMContext):
+async def confirm_battle_join_handler(message: types.Message, state: FSMContext):
     data = await state.get_data()
     battle_id = data['battle_id']
     photo_file_id = data['photo']
-    tg_id = call.from_user.id
+    tg_id = message.chat.id
     photo_battle_id = await db.add_battle_photo(tg_id, battle_id, photo_file_id)
     battle_info = await db.check_battle_info(battle_id)
     channel_id = battle_info[1]
@@ -406,7 +404,7 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
     kbs = InlineKeyboardBuilder()
 
     try:
-        message_id_from = await bot.send_photo(chat_id=send_photo_chat, photo=photo_file_id, caption=f'Фото от {call.from_user.first_name} (@{call.from_user.username})\nID <code>{call.from_user.id}</code>', reply_markup=kbs.as_markup())
+        message_id_from = await bot.send_photo(chat_id=send_photo_chat, photo=photo_file_id, caption=f'Фото от {message.from_user.first_name} (@{message.from_user.username})\nID <code>{message.from_user.id}</code>', reply_markup=kbs.as_markup())
         message_id_from = message_id_from.message_id
 
         kbs.button(text='✅ Принять', callback_data=f'searchbattle;approve;{photo_battle_id};{message_id_from};{send_photo_chat}')
@@ -417,8 +415,8 @@ async def confirm_battle_join_handler(call: types.CallbackQuery, state: FSMConte
         await bot.edit_message_reply_markup(chat_id=send_photo_chat, message_id=message_id_from, reply_markup=kbs.as_markup())
 
     except Exception as e:
-        await call.answer('<b>❌ При отправке фото произошла ошибка</b>')
-    await call.message.edit_text('<b>⏳ Фото отправлено на проверку\n\n🚫 Не блокируйте бота, иначе можете всё пропустить </b>')
+        await message.answer('<b>❌ При отправке фото произошла ошибка</b>')
+    await message.answer('<b>⏳ Фото отправлено на проверку\n\n🚫 Не блокируйте бота, иначе можете всё пропустить </b>')
     await state.clear()
 
 def replace_last_digits(url, new_digits):

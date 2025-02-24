@@ -5,9 +5,8 @@ def start_menu_for_admins():
     kb.button(text='🧱 Создать фото-батл')
     kb.button(text='📱 Мой кабинет')
     kb.button(text='📊 Статистика бота')
-    kb.button(text='🆘 Тех. поддержка')
     kb.button(text='⚔️ Наборы на фото-батлы')
-    kb.adjust(2)
+    kb.adjust(2, 1, 1)
     return kb.as_markup(resize_keyboard=True)
 
 def kabinet_back_admin():

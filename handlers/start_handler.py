@@ -88,6 +88,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     channel_info = await db.check_channel_info_by_id(channel_id)
                     name = channel_info[3]
                     await state.update_data(channel_id=channel_id)
+                    await state.update_data(channel_info=channel_info)
                     await message.answer(f"💬 <b>Здравствуйте, @{username}!</b>\n\n"
                         f"Вы обращаетесь в службу поддержки канала <b>{name}.</b>\n\n"
                         "Пожалуйста, напишите свой вопрос, можно отправить фото.",
@@ -410,6 +411,11 @@ async def votesOperationAccess(call: types.CallbackQuery, state: FSMContext):
                         reply_markup=kb.as_markup())
         await db.add_battle_photos_votes_where_tg_id_and_battle_id(data.get('user_id'), data.get('count'), data.get('battle_id'))
         await call.answer(f'✅ {data.get("count")} голосов начислено', show_alert=True)
+
+        battle_id = data.get('battle_id')
+        count = data.get('count')
+        await db.update_donations(data.get('user_id'), battle_id, count)
+
     else:
         await db.take_battle_photos_votes_where_tg_id_and_battle_id(data.get('user_id'), data.get('count'), data.get('battle_id'))
         await call.answer(f'✅ {data.get("count")} голосов снято', show_alert=True)
@@ -830,7 +836,7 @@ async def add_voices_use(call: types.CallbackQuery):
 async def go_create_battle(call: types.CallbackQuery):
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
-    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла:</b>', reply_markup=back_main_menu_channels(channels))
+    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла:</b>', reply_markup=await back_main_menu_channels(channels))
 
 @dp.callback_query(lambda c: c.data.startswith('backmainmenu'))
 async def back_from_create_battle(call: types.CallbackQuery):
@@ -840,13 +846,13 @@ async def back_from_create_battle(call: types.CallbackQuery):
 async def back_from_create_battle(call: types.CallbackQuery):
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
-    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла:</b>', reply_markup=back_main_menu_channels(channels))
+    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла:</b>', reply_markup=await back_main_menu_channels(channels))
 
 @dp.callback_query(lambda c: c.data.startswith('back_from_addchannel'))
 async def go_create_battle(call: types.CallbackQuery):
     tg_id = call.from_user.id
     channels = await db.checkk_all_channels_where_tg_id(tg_id)
-    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла: </b>', reply_markup=back_main_menu_channels(channels))
+    await call.message.edit_text('<b> ⚙️ Выберите канал для создания фото-батла: </b>', reply_markup=await back_main_menu_channels(channels))
 
 @dp.message(lambda message: message.text == "🤝 Сотрудничество")
 async def handle_profile(message: types.Message, state: FSMContext):
@@ -1330,7 +1336,7 @@ async def join_to_the_battle_main_admin_handler(message: Message):
     if not isEmpty:
         await message.answer('Выберите батл для участия', reply_markup=kb.as_markup())
     else:
-        await message.answer('В данный момент нет активных батлов')
+        await message.answer('<b>❌ Набор фото закрыт, попробуйте позже.</b>')
 
 @dp.message(lambda message: message.text == '📊 Статистика бота')
 async def statics(message: types.Message, state: FSMContext):
@@ -1581,9 +1587,9 @@ async def rf_card_transaction_handler(call: types.CallbackQuery, state:FSMContex
     from_user_info = await bot.get_chat(from_user_id)
     amount = await money_calc(from_user_id, data.get('battle_id'), data.get('count'), "ruble")
 
-    battle_id = data.get('battle_id')
-    count = data.get('count')
-    await db.update_donations(from_user_id, battle_id, count)
+    # battle_id = data.get('battle_id')
+    # count = data.get('count')
+    # await db.update_donations(from_user_id, battle_id, count)
 
     await call.message.edit_text(f'<b>✅  Вы покупаете {data.get("count")} голосов пользователю @{from_user_info.username}.</b>\n\nИтоговая сумма - {amount} рублей\n<b>🚫 Чтобы оплатить переводом на карту, напишите - @</b>')
     await state.clear()
@@ -1598,6 +1604,7 @@ async def send_invoice_handler(call: types.CallbackQuery, state: FSMContext):
 
     count = data.get('count')
     amount = await money_calc(call.from_user.id, data.get('battle_id'), count, "stars")
+    print('цена', count, amount)
     prices = [types.LabeledPrice(label="XTR", amount=amount)]
     await call.message.answer_invoice(
         title="🏦 Выберите метод оплаты:",
