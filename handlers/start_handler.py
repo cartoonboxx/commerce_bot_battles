@@ -796,6 +796,10 @@ async def check_boost_channel(call: types.CallbackQuery):
                           callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
             kb.adjust(1)
             await call.message.edit_text(text=f'✅ Начислено 3 голосов\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
+            # who_invited = await db.find_invited_from_friend(call.message.chat.id, battle_id)
+            # if who_invited[2]:
+            #     '''Отправить сообщение и увеличить голоса'''
+            #     await db.update_add_voices_users(1, who_invited[2])
             return
         else:
             await call.answer('❌ Не выполнено')
