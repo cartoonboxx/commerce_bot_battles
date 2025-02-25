@@ -101,14 +101,12 @@ async def money_calc(user_id, battle_id, votes: int, currency: str):
     await db.update_donations(user_id, battle_id)
     user_info = await db.get_user_from_donations(user_id, battle_id)
     votes_bought = user_info[3]
-    print(votes_bought)
 
     calced_sum = 0
 
 
     for i in range(votes_bought, votes_bought + votes + 1):
         calced_sum += calc(i, currency)
-        print(i, calc(i, currency), calced_sum)
 
     return calced_sum
 
