@@ -1328,7 +1328,7 @@ async def join_to_the_battle_main_admin_handler(message: Message):
     kb = InlineKeyboardBuilder()
     isEmpty = True
     for battle in all_admin_battles:
-        if battle[21]:
+        if battle[21] and battle[14]:
             isEmpty = False
             kb.button(text=battle[3], url=f'https://t.me/{bot_name}?start=b{battle[0]}')
 

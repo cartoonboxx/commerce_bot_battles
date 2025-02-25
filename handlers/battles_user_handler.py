@@ -123,11 +123,12 @@ async def battle_check_item_handler(call: types.CallbackQuery):
     await call.message.edit_text(f'''<b>{battle_info[3]}</b>\n\nСсылка на канал - {battle_info[5]}\nПриз: {battle_info[6]}\n\n<b>Начало батла: {battle_info[9]} МСК</b>''',disable_web_page_preview=True, reply_markup=kb.as_markup())
 
 @dp.message(lambda message: message.text == "🙋 Задать вопрос")
-async def battle_question_handler(message: types.Message, state: FSMContext):
+async def battle_question_handler(message: types.Message, state: FSMContext, channel_id):
     await message.answer(
         "<b>💬 Задайте свой вопрос!</b>\n\n"
         "Вы также можете отправить фото 📸, но видео, к сожалению, не принимаются.", reply_markup=question(),
         parse_mode="HTML")
+    await state.update_data(channel_id=channel_id)
     await state.set_state(waiting_for_answers.q2)
 
 @dp.message(waiting_for_answers.q2)
@@ -179,20 +180,30 @@ async def process_question(message: types.Message, state: FSMContext):
         f"🆔 ID: `{user_id}`\n\n"
         f"❓ Вопрос:\n\n{question_text}")
     await state.update_data(user_id=user_id)
+    data = await state.get_data()
+    print(data)
+    channel_id = data.get('channel_id')
+    channel_info = await db.check_channel_where_channel_id(channel_id)
+    if channel_info[8] == 'chat-bot':
+        send_message_id = channel_info[1]
+    else:
+        send_message_id = channel_info[4]
+
+    print(channel_info[2])
     try:
         if photo:
             await bot.send_photo(
-                ADMIN_CHAT_ID,
+                send_message_id,
                 photo=photo.file_id,
                 caption=question_message,
                 parse_mode="Markdown",
-                reply_markup=question_chat(user_id=user_id, has_photo=True))
+                reply_markup=question_chat(user_id=user_id, has_photo=True, channel_id=channel_info[2]))
         else:
             await bot.send_message(
-                ADMIN_CHAT_ID,
+                send_message_id,
                 question_message,
                 parse_mode="Markdown",
-                reply_markup=question_chat(user_id=user_id, has_photo=False))
+                reply_markup=question_chat(user_id=user_id, has_photo=False, channel_id=channel_info[2]))
         await message.answer(
             "<b>✅ Ваш вопрос успешно отправлен!</b>\n"
             "Мы свяжемся с вами в ближайшее время. Спасибо за обращение! 🙌", parse_mode="HTML")
@@ -207,7 +218,8 @@ async def process_question(message: types.Message, state: FSMContext):
 @dp.message(waiting_for_answers.q3)
 async def process_question(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
-    channel_id = user_data.get('channel_id')
+    channel_info = user_data.get('channel_info')
+    await state.update_data(channel_id=channel_info[2])
     if message.content_type not in [ContentType.TEXT, ContentType.PHOTO]:
         await message.answer(
             text="Вы также можете отправить фото 📸, но видео и другие форматы, к сожалению, не принимаются.", reply_markup=question(),
@@ -255,13 +267,12 @@ async def process_question(message: types.Message, state: FSMContext):
         f"👤 Имя: {username}\n"
         f"🆔 ID: `{user_id}`\n\n"
         f"❓ Вопрос:\n\n{question_text}")
-    channel_info = await db.check_channel_info_by_id(channel_id)
     if channel_info[8] == 'admin-chat':
         send_chat_id = channel_info[4]
     else:
         send_chat_id = channel_info[1]
 
-    print(send_chat_id)
+    print('send_chat', send_chat_id)
     try:
         if photo:
             await bot.send_photo(
@@ -269,13 +280,13 @@ async def process_question(message: types.Message, state: FSMContext):
                 photo=photo.file_id,
                 caption=question_message,
                 parse_mode="Markdown",
-                reply_markup=question_chat(user_id=user_id, has_photo=True))
+                reply_markup=question_chat(user_id=user_id, has_photo=True, channel_id=channel_info[2]))
         else:
             await bot.send_message(
                 send_chat_id,
                 question_message,
                 parse_mode="Markdown",
-                reply_markup=question_chat(user_id=user_id, has_photo=False))
+                reply_markup=question_chat(user_id=user_id, has_photo=False, channel_id=channel_info[2]))
         await message.answer(
             "<b>✅ Ваш вопрос успешно отправлен!</b>\n"
             "Мы свяжемся с вами в ближайшее время. Спасибо за обращение! 🙌", parse_mode="HTML")
@@ -291,9 +302,14 @@ async def process_question(message: types.Message, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('admin_reply'))
 async def admin_reply(call: types.CallbackQuery, state: FSMContext):
     user_id = call.data.split(';')[1]
+    print(call.data.split(';'))
+    channel_id = call.data.split(';')[3]
+    channel_info = await db.check_channel_where_channel_id(channel_id)
     await call.message.answer("<b>✍️ Введите ваш ответ:</b>\n", parse_mode="HTML")
     await state.set_state(waiting_for_answers.q1)
     await state.update_data(user_id=user_id)
+    await state.update_data(channel_id=channel_id)
+    await state.update_data(channel_info=channel_info)
 
 @dp.message(waiting_for_answers.q1)
 async def process_answers(message: types.Message, state: FSMContext):
@@ -333,11 +349,12 @@ async def process_answers(message: types.Message, state: FSMContext):
         await state.set_state(waiting_for_answers.q1)
         return
     answer_text_message = f"<b>📩 Новый ответ от администратора:</b>\n\n {answer_text}"
+    channel_id = data.get('channel_id')
     try:
         if photo:
-            await bot.send_photo(user_id, photo=photo.file_id, caption=answer_text_message, reply_markup=answers_support(user_id, has_photo=False))
+            await bot.send_photo(user_id, photo=photo.file_id, caption=answer_text_message, reply_markup=answers_support(user_id, has_photo=False, channel_id=channel_id))
         else:
-            await bot.send_message(user_id, text=answer_text_message, reply_markup=answers_support(user_id, has_photo=False))
+            await bot.send_message(user_id, text=answer_text_message, reply_markup=answers_support(user_id, has_photo=False, channel_id=channel_id))
         await message.answer("<b>✅ Ответ пользователю успешно отправлен!</b>", parse_mode="HTML")
     except Exception as e:
         await message.answer("<b>⚠️ Ошибка при отправке ответа.</b>", parse_mode="HTML")
@@ -346,7 +363,9 @@ async def process_answers(message: types.Message, state: FSMContext):
 
 @dp.callback_query(lambda c: c.data.startswith('replying'))
 async def option_channel_handler(callback_query: types.CallbackQuery, state: FSMContext):
-    await battle_question_handler(callback_query.message, state)
+    channel_id = callback_query.data.split(';')[3]
+    print('chan' , channel_id)
+    await battle_question_handler(callback_query.message, state, channel_id)
     await callback_query.answer()
     
 @dp.callback_query(lambda c: c.data.startswith('answers_done'))

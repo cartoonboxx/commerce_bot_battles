@@ -13,9 +13,9 @@ def start_menu_for_dev():
     kb.adjust(2)
     return kb.as_markup(resize_keyboard=True)
 
-def question_chat(user_id, has_photo=False):
+def question_chat(user_id, has_photo=False, channel_id=None):
     kb = InlineKeyboardBuilder()
-    kb.button(text='💬 Ответить', callback_data=f"admin_reply;{user_id};{'photo' if has_photo else 'no_photo'}")
+    kb.button(text='💬 Ответить', callback_data=f"admin_reply;{user_id};{'photo' if has_photo else 'no_photo'};{channel_id}")
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
@@ -46,9 +46,9 @@ def channel_is_deletes(channel_id):
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
-def answers_support(user_id, has_photo=False):
+def answers_support(user_id, has_photo=False, channel_id=None):
     kb = InlineKeyboardBuilder()
-    kb.button(text='💬 Ответить', callback_data=f"replying;{user_id};{'photo' if has_photo else 'no_photo'}")
+    kb.button(text='💬 Ответить', callback_data=f"replying;{user_id};{'photo' if has_photo else 'no_photo'};{channel_id}")
     kb.button(text='✅ Вопрос решён', callback_data=f"answers_done;{user_id};{'photo' if has_photo else 'no_photo'}")
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
