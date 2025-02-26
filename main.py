@@ -7,6 +7,7 @@ from data import loader
 from aiogram.types import BotCommand
 from handlers import start_handler, admin_handler, admin_message_handler, battles_user_handler, choice_method_send_photos
 from utils.schedulers import *
+import os
 
 async def set_main_menu(bot: Bot):
     main_menu_commands = [
@@ -34,6 +35,7 @@ async def main_start():
     scheduler.start()
     await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+
 
 if __name__ == "__main__":
     logging.basicConfig(

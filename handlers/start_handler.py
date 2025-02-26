@@ -6,6 +6,7 @@ from aiogram import types, Router
 from aiogram.types import Message, InputMediaPhoto
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.types import WebAppInfo
 from data import loader, config
 from database import db
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup
@@ -25,6 +26,8 @@ from constants.constants import *
 from aiogram import F
 from utils.payment import *
 from functions.money_converter import *
+from data.constants import *
+
 
 dp = Router()
 bot = loader.start_bot(config.Token)
@@ -58,6 +61,14 @@ def get_my_voice_kb(id):
 
     keyboard_main = InlineKeyboardMarkup(inline_keyboard=first_time_kb)
     return keyboard_main
+
+@dp.message(Command("test"))
+async def test(message: types.Message):
+    kb = InlineKeyboardBuilder()
+    webapp = WebAppInfo(url=f"{WEB_APP_URL}/prizes/")
+    kb.button(text='Веб-апп', web_app=webapp)
+    kb.adjust(1)
+    await message.answer('Веб-апп', reply_markup=kb.as_markup())
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):

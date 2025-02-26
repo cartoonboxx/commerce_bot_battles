@@ -19,3 +19,5 @@ typing_extensions==4.12.2
 tzlocal==5.2
 yarl==1.18.3
 requests==2.32.3
+django==5.1.6
+pillow==11.1.0
