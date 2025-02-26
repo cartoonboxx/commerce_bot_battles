@@ -173,7 +173,7 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
     round = data.get('round')
     if participants.isdigit():
         if int(participants) < 2 or int(participants) > 10:
-            await message.answer("Минимальное кол-во участников должно быть от 2х до 10", reply_markup=await back_battle__active_setting_kb(battle_id))
+            await message.answer("<b>❌ Минимальное кол-во участников должно быть от 2х до 10.</b>", reply_markup=await back_battle__active_setting_kb(battle_id))
             return
         
         await db.update_round_users_battle(battle_id, participants)
@@ -183,7 +183,7 @@ async def add_active_battle_participants(message: types.Message, state: FSMConte
             await battle_answer_func_message(message, battle_id, state)
         await state.clear()
     else:
-        await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
+        await message.answer("<b>❌ Не похоже на число... Попробуйте ещё раз.</b>", reply_markup=await back_battle__active_setting_kb(battle_id))
 
 @dp.message(AddVoicesToWin.q1)
 async def add_voices_to_win(message: types.Message, state: FSMContext):
@@ -195,7 +195,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
     delete_message_id = data.get('delete_message_id')
     if voices.isdigit():
         if int(voices) < 1:
-            await message.answer("Минимальное кол-во голосов должно быть больше 1", reply_markup=await back_battle__active_setting_kb(battle_id))
+            await message.answer("<b>❌ Минимальное кол-во голосов должно быть больше 1.</b>", reply_markup=await back_battle__active_setting_kb(battle_id))
             return
         await db.update_min_golos_battle(battle_id, voices)
         if round is None:
@@ -207,7 +207,7 @@ async def add_voices_to_win(message: types.Message, state: FSMContext):
                 await battle_one_message(message, battle_id)
         await state.clear()
     else:
-        await message.answer("Не похоже на число... Попробуйте ещё раз.", reply_markup=await back_battle__active_setting_kb(battle_id))
+        await message.answer("<b>❌ Не похоже на число... Попробуйте ещё раз.</b>", reply_markup=await back_battle__active_setting_kb(battle_id))
     await bot.delete_message(message.chat.id, message.message_id)
     await bot.delete_message(message.chat.id, delete_message_id.message_id)
 
@@ -251,15 +251,14 @@ async def add_battle_post(message: types.Message, state: FSMContext):
 async def deleteBattleFromDB(message: types.Message, state: FSMContext):
     await message.delete()
     if message.text != '1234':
-        await message.answer('Введено некорректное значение, попробуйте еще раз')
+        await message.answer('<b>❌ Введено некорректное значение, попробуйте еще раз.</b>')
         await state.set_state(DeleteBattleFromDB.password)
         return
-
     data = await state.get_data()
     battle_id = data.get('battle_id')
     await state.clear()
     await db.delete_battle_by_id(battle_id)
-    await bot.edit_message_text(text='Батл был успешно удален!', chat_id=message.chat.id, message_id=message.message_id - 1)
+    await bot.edit_message_text(text='<b>✅ Батл был успешно удален!</b>', chat_id=message.chat.id, message_id=message.message_id - 1)
 
 @dp.callback_query(lambda c: c.data.startswith('admitPostData'))
 async def admitPostData(call: types.CallbackQuery, state: FSMContext):
@@ -285,9 +284,8 @@ async def declineCreatePostVote(call: types.CallbackQuery, state: FSMContext):
     post_id = data.get('post_id')
     battle_id = data.get('battle_id')
     battle_info = await db.check_battle_info(battle_id)
-    await call.message.edit_text(f'Ваша ссылка для принятия участников на батл: https://t.me/{bot_name}?start=b{battle_id}\n\n'
-                            f'ℹ️<b>Разместите эту ссылку в посте для приема фото, иначе бот не будет работать без фото</b>')
     await db.update_post_id(post_id, battle_id)
+    await bot.delete_message(call.message.chat.id, call.message.message_id)
     if battle_info[23] == 2:
         await battle_answer_func_message(call.message, battle_id, state)
     else:
@@ -306,4 +304,4 @@ async def add_fake_photo(message: types.Message, state: FSMContext):
         await message.answer('фото добавлено')
         await active_battle_answer_func(message, battle_id)
     else:
-        await message.reply('Пожалуйста, отправьте фото', reply_markup=await back_battle__active_setting_kb(battle_id))
+        await message.reply('<b>❌ Пожалуйста, отправьте только фото.</b>', reply_markup=await back_battle__active_setting_kb(battle_id))

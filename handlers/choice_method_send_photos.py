@@ -18,6 +18,7 @@ async def choice_method_send_photos(call: types.CallbackQuery):
     kb.button(text='Изменить метод', callback_data=f'change_method_send;{channel_id}')
     if channel_info[8] == 'admin-chat':
         kb.button(text='Изменить админ-чат', callback_data=f'channelsetting;adminchat;{channel_id}')
+    kb.button(text='🔙 Назад', callback_data=f'optionchannel;{channel_id}')
     kb.adjust(1)
     if channel_info[8] == 'admin-chat':
         await call.message.edit_text('Текущий способ получения фото и вопросов: админ-чат',

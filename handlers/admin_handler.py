@@ -45,8 +45,8 @@ async def create_battle(call: types.CallbackQuery, battle_id):
             post_start_battle = 'Не нужен'
     else:
             post_start_battle = f'Нужен'
-    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>                                                  
-''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
+    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>\n
+Ваша ссылка для принятия участников на батл: https://t.me/{bot_name}?start=b{battle_id}''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
     
 @dp.callback_query(lambda c: c.data.startswith('spisokadminov'))
 async def admin_menu_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -211,7 +211,7 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
                 if admin.status == 'creator' and await db.check_temp_channels_by_user(admin.user.id):
                     current_user_id_error = admin.user.id
                     break
-            await bot.send_message(chat_id=current_user_id_error, text='Произошла ошибка добавления бота в канал, попробуйте добавить бота чуть позже.')
+            await bot.send_message(chat_id=current_user_id_error, text='<b>❌ Произошла ошибка добавления бота в канал, попробуйте добавить бота чуть позже.</b>')
             await bot.leave_chat(chat_id=chat_member_update.chat.id)
         return
 
@@ -258,10 +258,7 @@ async def adding_bot_to_chat_handler(chat_member_update: types.ChatMemberUpdated
 
             else:
                 await bot.send_message(user_id,
-                    "<b>Этот канал уже добавлен! 🔄</b>\n\n"
-                    "Вы можете продолжить пользоваться нашим ботом для автоматизации фото-батлов в этом канале.",
-                                       reply_markup=keyboards.admin_kb.start_menu_for_admins()
-                    )
+                    "<b>Этот канал уже добавлен! 🔄</b>\n\n", reply_markup=keyboards.admin_kb.start_menu_for_admins())
                 await db.clear_info_user_temp_channels(user_id)
                 return
             return
@@ -296,7 +293,7 @@ async def create_one_battle_continue(call: types.CallbackQuery) -> None:
     if battle_info[3] != '-' and battle_info[17] != 0 and battle_info[11] != 0:
         await firstround_createbattle_publish(call)
     else:
-        await call.answer('❌ Не все поля заполнены!')
+        await call.answer('❌ Не все поля заполнены!', show_alert=True)
 
 
 @dp.callback_query(lambda c: c.data.startswith('optionactivebattle'))
@@ -326,7 +323,7 @@ async def saveRoundParam(callback: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('approveactivebattlesettings'))
 async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
     battle_id = callback.data.split(';')[1]
-    await callback.answer('Батл успешно начался', show_alert=True)
+    await callback.answer('✅ Батл успешно начался', show_alert=True)
     await db.update_status_battle(battle_id, Status.ENDROUND.value)
     await active_battle_func(callback, battle_id)
     battle_info = await db.check_battle_info(battle_id)
@@ -346,7 +343,6 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         for user in post:
             media_photo = InputMediaPhoto(media=user[3])
             media_group.append(media_photo)
-              # Обновление для каждого пользователя
         kb = InlineKeyboardBuilder()
 
         if battle_info[20] == '-':
@@ -360,7 +356,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
             await active_battle_func(callback, battle_id)
-            await callback.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+            await callback.message.answer('<b>❌ Произошла ошибка при отправке фото в канал, нажмите продолжить.</b>')
             
             last_user_id = post[-1][0]
             await db.update_error_number(last_user_id-1, battle_id)
@@ -377,9 +373,8 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
             await db.update_id_post(message_id, battle_id)
 
             for user in post:
-                post_link = channel_info[6]  # Основной шаблон ссылки
+                post_link = channel_info[6]
                 new_channel_link = replace_last_digits(post_link, str(message_id))
-                print('trouble 2', user[1])
                 await db.add_user_link_post(user[1], new_channel_link)
                 time_now = datetime.datetime.now()
                 await db.update_last_like(user[1], time_now.strftime('%Y-%m-%d %H:%M:%S'), battle_id)
@@ -388,21 +383,20 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
             await active_battle_func(callback, battle_id)
-            await callback.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+            await callback.message.answer('<b>❌ Произошла ошибка при отправке фото в канал, нажмите продолжить.</b>')
             
             last_user_id = post[-1][0]
             await db.update_error_number(last_user_id-1, battle_id)
             last_number_post = index + 1
             await db.update_error_post(last_number_post, battle_id)
             return
-        post_link = channel_info[6]  # Основной шаблон ссылки
+        post_link = channel_info[6]
         new_channel_link = replace_last_digits(post_link, str(message_id)) 
         for i, user in enumerate(post, start=1):
             
             await db.update_number_post_in_battle_photos_by_id(user[0], index + 1)
             try:
                 kb = InlineKeyboardBuilder()
-                print('trouble 2', callback.message.chat.id)
                 await db.add_user_link_post(callback.message.chat.id, new_channel_link)
                 kb.button(text='Ссылка на пост', url=new_channel_link)
                 channel_info = await db.check_channel_info_by_id(battle_info[1])
@@ -416,9 +410,9 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
                 if current_battle[22] == 0:
                     await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВАШЕ ФОТО ОПУБЛИКОВАНО</b>''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 elif current_battle[22] != 0 and current_battle[7] != 'Финал':
-                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nНабирайте голоса и увидимся в ФИНАЛЕ''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                    await bot.send_message(chat_id=user[1], text=f'''✅ <b>ВЫ ПРОШЛИ В СЛЕДУЮЩИЙ РАУНД</b>\n\nНабирайте голоса и увидимся в ФИНАЛЕ, где вы уже сможете забрать приз''', disable_web_page_preview=True, reply_markup=kb.as_markup())
                 if current_battle[7] == "Финал":
-                    await bot.send_message(chat_id=user[1], text=f'''✅💪 <b>ВЫ В ФИНАЛЕ</b>\n\nПоздравляем, вы победили всех на своем пути и остались с наисельнейшими участниками. Набирайте голоса и заберете приз.''', disable_web_page_preview=True, reply_markup=kb.as_markup())
+                    await bot.send_message(chat_id=user[1], text=f'''✅💪 <b>ВЫ В ФИНАЛЕ</b>\n\nНабирайте голоса и заберете приз.''', disable_web_page_preview=True, reply_markup=kb.as_markup())
 
             except Exception as e:
                 print(e)
@@ -427,7 +421,7 @@ async def approve_active_battle_settings_handler(callback: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data.startswith('aprovecontinuebattleesettings'))
 async def approve_continue_battle_handler(callback: types.CallbackQuery):
     battle_id = callback.data.split(';')[1]
-    await callback.answer('Батл успешно продолжается', show_alert=True)
+    await callback.answer('✅ Батл успешно продолжается.', show_alert=True)
     await db.update_status_battle(battle_id, Status.ENDROUND.value)
 
     await active_battle_func(callback, battle_id)
@@ -465,7 +459,7 @@ async def approve_continue_battle_handler(callback: types.CallbackQuery):
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
             await active_battle_func(callback, battle_id)
-            await callback.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+            await callback.message.answer('<b> ❌ Произошла ошибка при отправке фото в канал, нажмите продолжить.</b>')
             last_user_id = post[-1][0]
             await db.update_error_number(last_user_id-1, battle_id)
             last_number_post = index
@@ -481,14 +475,14 @@ async def approve_continue_battle_handler(callback: types.CallbackQuery):
         except Exception:
             await db.update_status_battle(battle_id, Status.Error.value)
             await active_battle_func(callback, battle_id)
-            await callback.message.answer('Произошла ошибка при отправке фото в канал, нажмите продолжить')
+            await callback.message.answer('<b>❌ Произошла ошибка при отправке фото в канал, нажмите продолжить.</b>')
             
             last_user_id = post[-1][0]
             await db.update_error_number(last_user_id-1, battle_id)
             last_number_post = index
             await db.update_error_post(last_number_post, battle_id)
             return
-        post_link = channel_info[6]  # Основной шаблон ссылки
+        post_link = channel_info[6] 
 
         for i, user in enumerate(post, start=1):
             individual_channel_link = replace_last_digits(post_link, str(message_id))
@@ -515,7 +509,6 @@ async def send_database_file(message: types.Message):
 
     if message.from_user.id in config.admins:
         await message.answer_document(FSInputFile('photobattle.db'))
-    
 
 
 @dp.callback_query(lambda c: c.data.startswith('endapproveactivebattle'))
@@ -524,11 +517,6 @@ async def end_approve_active_battle_handler(callback: types.CallbackQuery):
     await callback.answer('Батл успешно завершился', show_alert=True)
     await db.update_status_battle(battle_id, Status.NEXTROUND.value)
     battle_info = await db.check_battle_info(battle_id)
-
-    '''
-        Удаление пользователей, которых одобрили но не выпустили, 
-        либо отправили, но пока не одобрили
-    '''
     all_users_in_battle = await db.check_users_from_battle(battle_id)
     for user in all_users_in_battle:
         if user[6] == 0 or user[5] == 0:
@@ -685,7 +673,7 @@ async def firstround_createbattle_continue(call: types.CallbackQuery, state: FSM
         return
     if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
         print(battle_info[13], battle_info[11], battle_info[15])
-        await call.answer('Заполните все поля', show_alert=True)
+        await call.answer('❌ Заполните все данные, нажмав на кнопки.', show_alert=True)
         return
     kb = InlineKeyboardBuilder()
     kb.button(text="✅ Запомнил(а)", callback_data=f"firstround;publish;{battle_id}")
@@ -709,7 +697,7 @@ async def firstround_createbattle_publish(callback: types.CallbackQuery, state=N
     channel_info = await db.check_channel_info_by_id(channel_id)
     channel_tg_id = channel_info[2]
     kb = InlineKeyboardBuilder()
-    kb.button(text='Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
+    kb.button(text='🚀 Участвовать', url=f'https://t.me/{config.bot_name}?start=b{battle_id}')
     try:
         post_id = battle_info[17]
         if post_id is not None:
@@ -772,7 +760,7 @@ async def start_first_round(call: types.CallbackQuery, state: FSMContext):
     battle_info = await db.check_battle_info(battle_id)
 
     if battle_info[13] == 0 or battle_info[11] == 0 or battle_info[15] == '-':
-        await call.answer('Заполните все поля', show_alert=True)
+        await call.answer('❌ Заполните все поля.', show_alert=True)
         return
 
     post_id = battle_info[17]
@@ -853,5 +841,5 @@ async def firstround_menu_returnback(call: types.CallbackQuery, state: FSMContex
     else:
         post_start_battle = f'Нужен'
 
-    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>                                                   
-    ''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)
+    await call.message.edit_text(f'''<b>🛠️ Настройки фото-батла</b>\n
+Ваша ссылка для принятия участников на батл: https://t.me/{bot_name}?start=b{battle_id}''', reply_markup=await create_battle_kb(battle_id, channel_id), disable_web_page_preview=True)

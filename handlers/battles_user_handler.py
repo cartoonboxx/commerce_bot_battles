@@ -357,7 +357,7 @@ async def process_answers(message: types.Message, state: FSMContext):
             await bot.send_message(user_id, text=answer_text_message, reply_markup=answers_support(user_id, has_photo=False, channel_id=channel_id))
         await message.answer("<b>✅ Ответ пользователю успешно отправлен!</b>", parse_mode="HTML")
     except Exception as e:
-        await message.answer("<b>⚠️ Ошибка при отправке ответа.</b>", parse_mode="HTML")
+        await message.answer("<b>⚠️ Ошибка при отправке ответа. Возможно пользователь заблокировал бота.</b>", parse_mode="HTML")
     finally:
         await state.clear()
 
@@ -377,16 +377,16 @@ async def battle_join_handler(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[1]
     is_user_blocked = await db.check_battle_block_battle_id_tg_id_exist_return_bool(battle_id, call.from_user.id)
     if is_user_blocked:
-        await call.answer('<b>🚫 Вы заблокированы в этом батле.</b>', show_alert=True)
+        await call.answer('🚫 Вы заблокированы в этом батле.', show_alert=True)
         return
     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(battle_id, call.from_user.id)
 
     is_user_exist_battle = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_0_return_bool(battle_id, call.from_user.id)
     if is_user_exist_battle:
-        await call.answer('<b>🕖 Вы уже отправили фото на проверку, ожидайте...</b>', show_alert=True)
+        await call.answer('🕖 Вы уже отправили фото на проверку, ожидайте...', show_alert=True)
         return
     if is_user_exist:
-        await call.answer('<b>❌ Вы уже участвуете в этом батле</b>', show_alert=True)
+        await call.answer('❌ Вы уже участвуете в этом батле', show_alert=True)
         return
     await state.set_state(SendPhotoForBattle.q1)
     await state.update_data(battle_id=battle_id)
@@ -400,7 +400,7 @@ async def send_photo_for_battle_handler(message: types.Message, state: FSMContex
         await state.set_state(SendPhotoForBattle.q2)
         await confirm_battle_join_handler(message, state)
     else:
-        await message.reply('Пожалуйста, отправьте одно фото')
+        await message.reply('<b>❌ Пожалуйста, отправьте одно фото.</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('usermenu;battles'))
 async def option_channel_handler(callback_query: types.CallbackQuery, state: FSMContext):
@@ -604,7 +604,7 @@ async def send_again_photo(call: types.CallbackQuery, state: FSMContext):
     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(
         battle_id, call.message.from_user.id)
     if is_user_exist:
-        await call.message.answer('Вы уже участвуете в этом батле')
+        await call.message.answer('<b>❌ Вы уже участвуете в этом батле.</b>')
         return
 
     await state.set_state(SendPhotoForBattle.q1)
@@ -634,9 +634,8 @@ async def process_answers(message: types.Message, state: FSMContext):
             await message.answer(
                 "<b>💬 Пожалуйста, отправьте фото с ответом.</b>",
                 parse_mode="HTML")
-            # Сохраняем состояние ожидания
             await state.set_state(waiting_for_because.q1)
-            return  # Остановка выполнения
+            return
         else:
             answer_text = message.caption.strip()
 

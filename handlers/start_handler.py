@@ -117,13 +117,12 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     is_user_exist = await db.check_battle_where_battle_id_and_tg_id_exist_and_status_1_return_bool(
                         battle_id, message.from_user.id)
                     if is_user_exist:
-                        await message.answer('Вы уже участвуете в этом батле')
+                        await message.answer('<b>❌ Вы уже участвуете в этом батле.</b>')
                         return
 
                     if len(account_id) == 2:
                         from_user = account_id[1][4:]
                         if from_user:
-                            '''Сохраняем отправленного пользователя'''
                             await db.save_invited_user(message.chat.id, from_user, battle_id)
 
                     print(account_id, len(account_id), account_id[1][4:])
@@ -139,7 +138,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
                         if account_id[i] == 'p':
                             current_page = account_id[i::]
                             break
-                    current_page = int(current_page.replace('page', '', 1)) # определенная страница с фотографиями
+                    current_page = int(current_page.replace('page', '', 1))
 
                     battle_id = account_id.replace('vote', '', 1)
                     for i in range(len(battle_id)):
@@ -261,8 +260,6 @@ async def cmd_update_database_info(message: types.Message, state: FSMContext):
         if channel[8] == '-':
             await db.set_type_send_photos(channel[0], 'admin-chat')
 
-    '''Установка параметра 0 вчерашним счетчиков (таблица battles)'''
-
 @dp.callback_query(lambda c: c.data.startswith('voteby'))
 async def vote_in_battle(callback: types.CallbackQuery):
     tg_id = callback.message.from_user.id
@@ -296,7 +293,7 @@ async def vote_in_battle(callback: types.CallbackQuery):
         kb = InlineKeyboardBuilder()
         kb.button(text='Ссылка на канал', url=channel_link)
         kb.adjust(1)
-        await callback.message.answer("Чтобы проголосовать, необходимо подписаться на канал",
+        await callback.message.answer("<b>❌ Чтобы проголосовать, необходимо подписаться на канал.</b>",
                              reply_markup=kb.as_markup())
     return
 
@@ -321,9 +318,9 @@ async def votes_seller_handler(call: types.CallbackQuery, state: FSMContext):
 async def votes_operation_handler(call: types.CallbackQuery, state: FSMContext):
     isAdd = int(call.data.split(';')[1])
     if isAdd:
-        await call.message.answer('[1/2] Введите tg_id пользователя, которому хотите начислить голоса')
+        await call.message.answer('<b>[1/2] Введите tg_id пользователя, которому хотите начислить голоса</b>')
     else:
-        await call.message.answer('[1/2] Введите tg_id пользователя, которому хотите снять голоса')
+        await call.message.answer('<b>[1/2] Введите tg_id пользователя, которому хотите снять голоса.</b>')
     await state.set_state(VotesOperation.tg_id)
     await state.update_data(isAdd=isAdd)
 
@@ -340,19 +337,19 @@ async def votes_operation_tg_id_handler(message: types.Message, state: FSMContex
                 kb.button(text=f'{battle[3]}', callback_data=f'add_user_donated_votes;{battle[0]}')
 
             kb.adjust(1)
-            await message.answer('Выберите батл, в который хотите добавить пользователю голосов',
+            await message.answer('<b>🗺️ Выберите батл, в который хотите добавить пользователю голосов.</b>',
                                  reply_markup=kb.as_markup())
         else:
-            await message.answer('Пользователь нигде не участвует')
+            await message.answer('<b>❌ Пользователь нигде не участвует.</b>')
             await state.clear()
     else:
-        await message.answer('Не похоже на tg_id пользователя! Попробуйте еще раз')
+        await message.answer('<b>❌ Не похоже на tg_id пользователя! Попробуйте еще раз.</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('add_user_donated_votes'))
 async def add_user_donated_votes(call: types.CallbackQuery, state: FSMContext):
     battle_id = call.data.split(';')[1]
     await state.update_data(battle_id=battle_id)
-    await call.message.edit_text('[2/2] Введите количество голосов')
+    await call.message.edit_text('<b>[2/2] Введите количество голосов.</b>')
     await state.set_state(VotesOperation.count)
 
 @dp.message(VotesOperation.count)
@@ -369,7 +366,7 @@ async def votes_operation_count_handler(message: types.Message, state: FSMContex
                 f'<b>❗ Вы точно хотите снять {count} голосов пользователю {user.first_name}, @{user.username} ({user.id})</b>\n\nВведите <code>1234</code>, чтобы продолжить')
         await state.set_state(VotesOperation.access)
     else:
-        await message.answer('Введено не число! Попробуйте еще раз')
+        await message.answer('<b>❌ Введено не число! Попробуйте еще раз.</b>')
 
 @dp.message(VotesOperation.access)
 async def votes_operation_access_handler(message: types.Message, state: FSMContext):
@@ -385,18 +382,17 @@ async def votes_operation_access_handler(message: types.Message, state: FSMConte
             kb = InlineKeyboardBuilder()
             kb.button(text='Продолжить', callback_data='votesOperationAccess;0')
             kb.adjust(1)
-            await message.answer('Для продолжения нажмите кнопку ниже', reply_markup=kb.as_markup())
+            await message.answer('<b> ✅ Для продолжения нажмите кнопку ниже.</b>', reply_markup=kb.as_markup())
     else:
-        await message.answer('Введите 1234, чтобы продолжить!')
+        await message.answer('<b> ✅ Введите 1234, чтобы продолжить!</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('votesOperationAccess'))
 async def votesOperationAccess(call: types.CallbackQuery, state: FSMContext):
     isNotificate = int(call.data.split(';')[1])
     data = await state.get_data()
     battle_id = data.get('battle_id')
-    await call.message.edit_text('Операция выполнена!')
+    await call.message.edit_text('<b>✅ Операция выполнена!</b>')
     if data.get('isAdd'):
-        '''Добавить функционал'''
         if isNotificate:
             user_photo = await db.check_user_photo_by_tg_id(data.get('user_id'), battle_id)
             photos = await db.check_all_battle_photos_where_status_1_and_battle_id_and_number_post(battle_id, user_photo[6])
@@ -517,7 +513,7 @@ async def check_sponsor(call: types.CallbackQuery):
 async def delete_sponsor(call: types.CallbackQuery):
     spon_id = call.data.split(';')[1]
     await db.delete_sponsor_from_table(spon_id)
-    await call.answer('<b>✅ Спонсор удален!</b>', show_alert=True)
+    await call.answer('✅ Спонсор удален!', show_alert=True)
     await watch_sponsors(call)
 
 @dp.message(lambda message: message.text == "🧱 Создать фото-батл")
@@ -672,7 +668,6 @@ async def invite_friend_handler(call: types.CallbackQuery):
     full_url = f"{base_url}?url={encoded_url}&text={encoded_text}"
 
     kb.button(text='Пригласить друга', url=full_url)
-    # kb.button(text='✅ Проверить', callback_data=f'check_invites;{battle_id};{link_channel}')
     kb.button(text='🔙 Назад', callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
     kb.adjust(1)
     await call.message.edit_text('<b>📝 Задание - Пригласить друга на фото-батл:</b>\n\n✅ За каждого друга, который отправит фото и наберет 3 голоса будет начислено 3 голоса', reply_markup=kb.as_markup())
@@ -802,13 +797,9 @@ async def check_boost_channel(call: types.CallbackQuery):
                           callback_data=f'wanted_more_voices;{battle_id};{link_channel}')
             kb.adjust(1)
             await call.message.edit_text(text=f'✅ Начислено 3 голосов\n\n💰 Ваш баланс голосов: {user_info[8]} шт', reply_markup=kb.as_markup())
-            # who_invited = await db.find_invited_from_friend(call.message.chat.id, battle_id)
-            # if who_invited[2]:
-            #     '''Отправить сообщение и увеличить голоса'''
-            #     await db.update_add_voices_users(1, who_invited[2])
             return
         else:
-            await call.answer('❌ Не выполнено')
+            await call.answer('❌ Не выполнено', show_alert=True)
     except Exception as ex:
         print('Ошибка:', ex)
 
@@ -819,9 +810,9 @@ async def add_voices_use(call: types.CallbackQuery):
     votes = user_info[8]
     tg_id = user_info[1]
     if not votes:
-        await call.answer('У вас больше нет голосов!', show_alert=True)
+        await call.answer('❌ У вас больше нет голосов.', show_alert=True)
     await db.use_add_voices(votes, battle_id, tg_id)
-    await call.answer('Вы использовали доп.голоса', show_alert=True)
+    await call.answer('✅ Вы использовали доп.голоса.', show_alert=True)
     text_edit = call.message.html_text
     print(text_edit)
     text_edit = text_edit.replace(f'{votes}', '0')
@@ -876,8 +867,6 @@ async def handle_profile(message: types.Message, state: FSMContext):
         await state.clear()
         tg_id = message.from_user.id
         if tg_id in admins:
-            # await db.update_channels_in_table()
-
             channels, total_moments = await get_paginated_items34(0)
             items_kb = await build_items_kb34(channels, 0, total_moments)
             message = await message.answer(
@@ -1036,7 +1025,6 @@ async def go_home(call: types.CallbackQuery):
 async def update_status(battle_id, status, typeDo):
     async with aiosqlite.connect(name_db) as db:
         if typeDo == "2":
-            '''Удаление из таблицы'''
             await db.execute('DELETE FROM battles WHERE id = ?', (battle_id,))
         else:
             await db.execute('UPDATE battles SET status = ? WHERE id = ?', (status, battle_id))
@@ -1103,8 +1091,6 @@ async def cooperation(message: types.Message, state: FSMContext):
             await state.set_state(stats_bot.admin2)
             await message.answer("<b>🚫 Неизвестная команда.</b>",)
             return
-    # await state.set_state(AddChannel.q1)
-
     if not await db.check_temp_channels_by_user(message.chat.id):
         await db.add_new_user_temp_channels(message.chat.id)
 
@@ -1211,7 +1197,6 @@ async def create_mailing_text(callback_query: types.CallbackQuery, state: FSMCon
 
 @dp.message(MailingPost.q1)
 async def mailing_post(message: types.Message, state: FSMContext):
-    '''Пересылка поста всем'''
     print('Попал сюда')
     mess_id = message.message_id
     await state.clear()
@@ -1334,7 +1319,7 @@ async def join_to_the_battle_main_admin_handler(message: Message):
 
     kb.adjust(1)
     if not isEmpty:
-        await message.answer('Выберите батл для участия', reply_markup=kb.as_markup())
+        await message.answer('<b>🗺️ Выберите батл для участия:</b>', reply_markup=kb.as_markup())
     else:
         await message.answer('<b>❌ Набор фото закрыт, попробуйте позже.</b>')
 
@@ -1389,9 +1374,9 @@ async def wated_more_votes_message(message: Message, state: FSMContext):
         kb.button(text=f'{battle[3]}', callback_data=f'donate_to_battle;{battle[0]}')
     kb.adjust(1)
     if len(battles):
-        await message.answer('Выберите батл, в который хотите добавить новые голоса', reply_markup=kb.as_markup())
+        await message.answer('<b>🗺️ Выберите батл, в который хотите добавить новые голоса:</b>', reply_markup=kb.as_markup())
     else:
-        await message.answer('Вы не участвуете в батлах!')
+        await message.answer('<b>❌ Вы не участвуете в батлах!</b>')
 
 @dp.callback_query(lambda c: c.data.startswith('donate_to_battle'))
 async def donate_to_battle(call: types.CallbackQuery):
@@ -1403,7 +1388,7 @@ async def donate_to_battle(call: types.CallbackQuery):
     kb.button(text='Выполнить задания', callback_data=f'wanted_more_voices;{battle_id};{battle_info[5]};0')
     kb.adjust(1)
 
-    await call.message.edit_text('Вы можете получить больше голосов, купив их или выполнив задания:', reply_markup=kb.as_markup())
+    await call.message.edit_text('<b>🗒️ Вы можете получить больше голосов, купив их или выполнив задания:</b>', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('subcribed'))
 async def subcribed_handler(callback: types.CallbackQuery):
@@ -1424,7 +1409,7 @@ async def subcribed_handler(callback: types.CallbackQuery):
     support_kb.adjust(1)
 
     if is_exist:
-        await callback.message.answer('🚫 Вы уже проголосовали в этом раунде', reply_markup=support_kb.as_markup())
+        await callback.message.answer('<b>❌ Вы уже проголосовали в этом раунде.</b>', reply_markup=support_kb.as_markup())
         return
     if await check_sub_cahnnels(channel_tg_id, callback.from_user.id):
         await callback.message.delete()
@@ -1433,7 +1418,7 @@ async def subcribed_handler(callback: types.CallbackQuery):
         kb = InlineKeyboardBuilder()
         kb.button(text='Ссылка на канал', url=channel_link)
         kb.adjust(1)
-        await callback.message.answer("Чтобы проголосовать, необходимо подписаться на канал", reply_markup=kb.as_markup())
+        await callback.message.answer("<b>❌ Чтобы проголосовать, необходимо подписаться на канал:</b>", reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('getmyvoice'))
 async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext):
@@ -1463,7 +1448,6 @@ async def get_my_voice_handler(callback: types.CallbackQuery, state: FSMContext)
 
     user_info = await db.check_user_photo_by_id(account_id, battle_id)
     print(account_id, battle_id)
-    '''Отправка приглашенных друзей'''
     account_id = user_info[1]
     print(await db.is_invited_friend(account_id, battle_id), user_info)
     if await db.is_invited_friend(account_id, battle_id) and user_info[4] == 3:
@@ -1495,11 +1479,12 @@ async def support_user_votes_handler(call: types.CallbackQuery):
 
     await call.message.edit_text(
     '✅ <b>Поддержите участника, купив платные голоса!</b>\n'
-    'Вы можете купить любое количество голосов по одной цене, но это не влияет на размер приза.\n\n'
+    'Вы можете купить любое количество голосов, но каждые 10 голосов их стоимость немного увеличивается.\n\n'
     'ℹ️ <b>Почему так?</b>\n'
-    'Это сделано, чтобы все участники имели равные шансы на победу.\n\n'
+    'Это сделано для баланса, чтобы избежать дисбаланса и сохранить честную конкуренцию.\n\n'
     '💰 <b>Зачем покупать голоса?</b>\n'
-    'Покупка голосов помогает формировать призовой фонд и поддерживать участников!', reply_markup=kb.as_markup())
+    'Покупка голосов помогает формировать призовой фонд и поддерживать участников!', 
+    reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('support_payment'))
 async def support_payment_handler(call: types.CallbackQuery, state: FSMContext):
@@ -1522,7 +1507,6 @@ async def payment_method_state(message: types.Message, state: FSMContext):
     kb.adjust(1)
 
     if message.text is None:
-        '''Оплата проведена'''
         await success_payment_handler(message, state)
         return
 
@@ -1543,7 +1527,7 @@ async def crypto_bot_payment_handler(call: types.CallbackQuery, state: FSMContex
     amount = await money_calc(chat_id, data.get('battle_id'), count, 'crypto')
     pay_link, invoice_id = get_pay_link(amount)
     if pay_link and invoice_id:
-        invoices[chat_id] = invoice_id  # Store the invoice id associated with the chat_id
+        invoices[chat_id] = invoice_id
         kb = InlineKeyboardBuilder()
         kb.button(text="Оплатить", url=pay_link)
         kb.button(text="Проверить оплату", callback_data=f'check_payment_{invoice_id}')
@@ -1570,15 +1554,15 @@ async def check_payment(call: types.CallbackQuery, state: FSMContext):
                     del invoices[chat_id]
 
                 else:
-                    await call.answer('Оплата не найдена❌', show_alert=True)
+                    await call.answer('❌ Оплата не найдена', show_alert=True)
             else:
-                await call.answer('Счет не найден.', show_alert=True)
+                await call.answer('❌ Счет не найден.', show_alert=True)
         else:
             print(f"Ответ от API не содержит ключа 'items': {payment_status}")
-            await call.answer('Ошибка при получении статуса оплаты.', show_alert=True)
+            await call.answer('❌ Ошибка при получении статуса оплаты.', show_alert=True)
     else:
         print(f"Ошибка при запросе статуса оплаты: {payment_status}")
-        await call.answer('Ошибка при получении статуса оплаты.', show_alert=True)
+        await call.answer('❌ Ошибка при получении статуса оплаты.', show_alert=True)
 
 @dp.callback_query(lambda c: c.data.startswith('RF_CARD_TRANSACTION'))
 async def rf_card_transaction_handler(call: types.CallbackQuery, state:FSMContext):
@@ -1586,11 +1570,6 @@ async def rf_card_transaction_handler(call: types.CallbackQuery, state:FSMContex
     from_user_id = call.from_user.id
     from_user_info = await bot.get_chat(from_user_id)
     amount = await money_calc(from_user_id, data.get('battle_id'), data.get('count'), "ruble")
-
-    # battle_id = data.get('battle_id')
-    # count = data.get('count')
-    # await db.update_donations(from_user_id, battle_id, count)
-
     await call.message.edit_text(f'<b>✅  Вы покупаете {data.get("count")} голосов пользователю @{from_user_info.username}.</b>\n\nИтоговая сумма - {amount} рублей\n<b>🚫 Чтобы оплатить переводом на карту, напишите - @</b>')
     await state.clear()
 
