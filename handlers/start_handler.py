@@ -314,8 +314,182 @@ async def sponsors_and_chats(message: types.Message, state: FSMContext):
     kb.button(text='1. Спонсоры (задания)', callback_data='sponsors')
     kb.button(text='2. Изменить обязательный канал для админов', callback_data='change_chat_for_admins')
     kb.button(text='3. Продажа голосов', callback_data='votes_seller')
+    kb.button(text='4. Розыгрыш TG STARS', callback_data='tg_stars_prize')
     kb.adjust(1)
     await message.answer('<b>⚙️ Выберите инструмент:</b>', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('tg_stars_prize'))
+async def tg_stars_prize(call: types.CallbackQuery):
+    kb = InlineKeyboardBuilder()
+    '''Показывает какие розыгрыши сейчас есть'''
+    prizes_all = await db.check_all_prizes()
+    for prize in prizes_all:
+        winners = await db.check_all_winners_prizes(prize[0])
+        kb.button(text=f'{prize[1]} - {len(winners)}', callback_data=f'check_prize;{prize[0]}')
+    kb.button(text='Создать розыгрыш', callback_data='create_prize')
+    kb.button(text='🔙 Назад', callback_data='back_additional_instruments')
+    kb.adjust(1)
+
+    await call.message.edit_text('Текущие роызгрыши:', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('create_prize'))
+async def create_prize_handler(call: types.CallbackQuery, state: FSMContext):
+    await state.set_state(CreatingPrizeApp.channel_id)
+    try:
+        print(call.data.split(';'))
+        prize_id = call.data.split(';')[1]
+        await db.delete_prize_app_by_id(prize_id)
+    except Exception as ex:
+        pass
+
+    await call.message.answer('<b>Пришлите любое сообщение из канала, в котором нужно создать розыгрыш</b>\n\nБот должен быть администратором')
+
+@dp.message(CreatingPrizeApp.channel_id)
+async def CreatingPrizeApp_channel_id(message: Message, state: FSMContext):
+    try:
+        channel_id = message.forward_origin.chat.id
+        channel_info = await bot.get_chat(chat_id=channel_id)
+        print(message.forward_origin.chat.id)
+        if not (channel_id < 0):
+            raise Exception
+
+        '''создание конкурса'''
+        await db.add_prize_app(channel_id)
+        prize_app = await db.check_prize_app_channel_id(channel_id)
+
+        kb = InlineKeyboardBuilder()
+        kb.button(text='✅ Продолжить', callback_data=f'add_channels_prizes_handler;{prize_app[0]}')
+        kb.button(text='🔄 Изменить канал', callback_data=f'create_prize;{prize_app[0]}')
+        kb.adjust(1)
+        url = (f'<a href="https://t.me/{channel_info.username}">Ссылка</a>') if channel_info.username is not None else ""
+        await message.answer(f'<b>✅ Канал успешно выбран {url}</b>'
+                             f'\n\nЕсли все верно, жмите <b>✅ Продолжить</b>', reply_markup=kb.as_markup())
+        await state.clear()
+    except Exception as ex:
+        print(ex)
+        await message.answer('<b>❌ Бот не в админах. Попробуйте еще раз</b>')
+
+@dp.callback_query(lambda c: c.data.startswith('back_to_add_main_channel'))
+async def back_to_add_main_channel_handler(call: types.CallbackQuery, state: FSMContext):
+    prize_id = call.data.split(';')[1]
+    prize_app = await db.check_prize_app_by_id(prize_id)
+    channel_id = prize_app[2]
+    channel_info = await bot.get_chat(chat_id=channel_id)
+
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Продолжить', callback_data=f'add_channels_prizes_handler;{prize_app[0]}')
+    kb.button(text='🔄 Изменить канал', callback_data=f'create_prize;{prize_app[0]}')
+    kb.adjust(1)
+    url = (f'<a href="https://t.me/{channel_info.username}">Ссылка</a>') if channel_info.username is not None else ""
+    await call.message.edit_text(f'<b>✅ Канал успешно выбран {url}</b>'
+                         f'\n\nЕсли все верно, жмите <b>✅ Продолжить</b>', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('add_channels_prizes_handler'))
+async def add_channels_prizes_handler(call: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    prize_id = call.data.split(';')[1]
+    kb = InlineKeyboardBuilder()
+    '''Каналы для участия'''
+    channels = await db.check_all_channels_to_invite_prizes(prize_id)
+    for channel in channels:
+        channel_info = await bot.get_chat(channel[2])
+        kb.button(text=f'{channel_info.title}', callback_data=f'channel_prize_check;{channel[2]}')
+
+    kb.button(text='Добавить канал', callback_data=f'add_channel_prize;{prize_id}')
+    kb.button(text='✅ Продолжить', callback_data='gdfgdf')
+    kb.button(text='🔙 Назад', callback_data=f'back_to_add_main_channel;{prize_id}')
+    kb.adjust(1)
+    await call.message.edit_text('[1/4] Добавить обязательные каналы для участия?:', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('channel_prize_check'))
+async def channel_prize_check_handler(call: types.CallbackQuery, state: FSMContext):
+    channel_id = call.data.split(';')[1]
+    channel_info = await bot.get_chat(chat_id=channel_id)
+    channel_from_table_info = await db.check_current_channel_invite_prize(channel_id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Удалить канал', callback_data=f'delete_current_channel_invite_prize;{channel_from_table_info[1]};{channel_from_table_info[2]}')
+    kb.button(text='🔙 Назад', callback_data=f'add_channels_prizes_handler;{channel_from_table_info[1]}')
+    kb.adjust(1)
+    await call.message.edit_text(f'Канал - {channel_info.title}\n\nСсылка - {channel_from_table_info[3]}',
+                                 reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('delete_current_channel_invite_prize'))
+async def delete_current_channel_invite_prize(call: types.CallbackQuery, state: FSMContext):
+    channel_id = call.data.split(';')[2]
+    prize_id = call.data.split(';')[1]
+    await db.delete_current_channel_invite_prize(prize_id, channel_id)
+    await add_channels_prizes_handler(call, state)
+
+@dp.callback_query(lambda c: c.data.startswith('add_channel_prize'))
+async def add_channel_prize_handler(call: types.CallbackQuery, state: FSMContext):
+    prize_id = call.data.split(';')[1]
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f'add_channels_prizes_handler;{prize_id}')
+    kb.adjust(1)
+
+    await state.set_state(AddChannelPrizes.channel_id)
+    await state.update_data(prize_id=prize_id)
+    await call.message.edit_text('Пришлите сообщение с канала', reply_markup=kb.as_markup())
+
+@dp.message(AddChannelPrizes.channel_id)
+async def AddChannelPrizes_channel_id(message: Message, state: FSMContext):
+    data = await state.get_data()
+    prize_id = data.get('prize_id')
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f'add_channel_prize;{prize_id}')
+    kb.adjust(1)
+    try:
+        channel_id = message.forward_origin.chat.id
+        if channel_id > 0:
+            raise Exception
+
+        await state.update_data(channel_id=channel_id)
+        await message.answer('Пришлите ссылку на канал', reply_markup=kb.as_markup())
+        await state.set_state(AddChannelPrizes.channel_link)
+
+    except Exception as ex:
+        await message.answer('Это не сообщение из канала')
+
+@dp.message(AddChannelPrizes.channel_link)
+async def AddChannelPrizes_channel_link(message: Message, state: FSMContext):
+    if 'https://' not in message.text:
+        await message.answer('Не похоже на ссылку')
+    else:
+        await state.update_data(channel_link=message.text)
+        data = await state.get_data()
+        kb = InlineKeyboardBuilder()
+        kb.button(text='🔙 Назад', callback_data=f'add_channels_prizes_handler;{data.get("prize_id")}')
+        kb.adjust(1)
+        await message.answer('✅ Канал добавлен', reply_markup=kb.as_markup())
+
+
+        await db.add_prizes_channels_required(**data)
+        await state.clear()
+
+@dp.callback_query(lambda c: c.data.startswith('check_prize'))
+async def check_prize_handler(call: types.CallbackQuery, state: FSMContext):
+    prize_id = call.data.split(';')[1]
+    kb = InlineKeyboardBuilder()
+    webapp = WebAppInfo(url='https://google.com')
+    kb.button(text='Перейти к розыгрышу', web_app=webapp)
+    kb.button(text='🔄 Обновить', callback_data='gfdgd')
+    kb.button(text='🗑️ Удалить розыгрыш', callback_data=f'delete_prize_app_handler;{prize_id}')
+    kb.button(text='🔙 Назад', callback_data='tg_stars_prize')
+    kb.adjust(1)
+
+    await call.message.edit_text('<b>Розыгрыш TG STATS - *размер приза* - N победителей</b>\n\nЗавершается через N минуты N секунд',
+                                 reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('delete_prize_app_handler'))
+async def delete_prize_app_handler(call: types.CallbackQuery, state: FSMContext):
+    prize_id = call.data.split(';')[1]
+    await db.deep_delete_prize_app(prize_id)
+    await tg_stars_prize(call)
+
+@dp.callback_query(lambda c: c.data == 'back_additional_instruments')
+async def back_additional_instruments(call: types.CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    await sponsors_and_chats(call.message, state)
 
 @dp.callback_query(lambda c: c.data == 'votes_seller')
 async def votes_seller_handler(call: types.CallbackQuery, state: FSMContext):

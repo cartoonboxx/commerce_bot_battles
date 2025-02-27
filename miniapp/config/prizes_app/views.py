@@ -4,6 +4,7 @@ from aiogram import Bot
 from aiogram.client.bot import DefaultBotProperties
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from data.config import Token
+# import asyncio
 
 def start_bot(token: str):
     bot = Bot(
@@ -17,6 +18,10 @@ bot = start_bot(Token)
 
 TEMPLATES_PATH = 'prizes_app/'
 
-async def index(request):
-    await bot.send_message(794764771, text="hello from webapp")
+def index(request):
+    # asyncio.run(send_bot())
     return render(request, TEMPLATES_PATH + 'index.html')
+
+# async def send_bot():
+#     await bot.send_message(794764771, text="hello from webapp")
+

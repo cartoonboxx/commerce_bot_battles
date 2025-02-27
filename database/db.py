@@ -177,6 +177,28 @@ async def db_start():
                 battle_id INTEGER DEFAULT 0,
                 count INTEGER DEFAULT 0)''')
 
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS prizes_app (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tg_stars INTEGER DEFAULT 0,
+                channel_id INTEGER DEFAULT 0,
+                count_winner INTEGER DEFAULT 0,
+                time INTEGER DEFAULT 0)''')
+
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS prizes_channels_required (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prize_app_id INTEGER DEFAULT 0,
+                channel_id INTEGER DEFAULT 0,
+                channel_link TEXT DEFAULT '-')''')
+
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS prizes_app_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prize_app_id INTEGER DEFAULT 0,
+                user_id INTEGER DEFAULT 0,
+                isWinner INTEGER DEFAULT 0)''')
+
         await db.commit()
 
 
@@ -1142,5 +1164,80 @@ async def update_donations(user_id, battle_id, votes=0):
         else:
             await db.execute('INSERT INTO donations (user_id, battle_id) VALUES (?, ?)',
                              (user_id, battle_id))
+
+        await db.commit()
+
+async def check_all_prizes():
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_app')
+        return await result.fetchall()
+
+async def check_all_winners_prizes(prize_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_app_users WHERE prize_app_id = ? AND isWinner = 1',
+                                  (prize_id, ))
+        return await result.fetchall()
+
+async def add_prize_app(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO prizes_app (channel_id) VALUES (?)',
+                         (channel_id, ))
+
+        await db.commit()
+
+async def check_prize_app_channel_id(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_app WHERE channel_id = ?',
+                         (channel_id, ))
+
+        return await result.fetchone()
+
+async def check_prize_app_by_id(prize_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_app WHERE id = ?',
+                         (prize_id, ))
+
+        return await result.fetchone()
+
+async def delete_prize_app_by_id(prize_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM prizes_app WHERE id = ?', (prize_id,))
+        await db.commit()
+
+async def add_prizes_channels_required(prize_id, channel_id, channel_link):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('INSERT INTO prizes_channels_required (prize_app_id, channel_id, channel_link) VALUES (?, ?, ?)',
+                         (prize_id, channel_id, channel_link))
+
+        await db.commit()
+
+async def check_all_channels_to_invite_prizes(prize_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_channels_required WHERE prize_app_id = ?',
+                                  (prize_id, ))
+
+        return await result.fetchall()
+
+async def check_current_channel_invite_prize(channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_channels_required WHERE channel_id = ?',
+                                  (channel_id, ))
+
+        return await result.fetchone()
+
+async def delete_current_channel_invite_prize(prize_id, channel_id):
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM prizes_channels_required WHERE channel_id = ? AND prize_app_id = ?',
+                         (channel_id, prize_id))
+        await db.commit()
+
+async def deep_delete_prize_app(prize_id):
+    await delete_prize_app_by_id(prize_id)
+    async with aiosqlite.connect(name_db) as db:
+        await db.execute('DELETE FROM prizes_channels_required WHERE prize_app_id = ?',
+                         (prize_id, ))
+
+        await db.execute('DELETE FROM prizes_app_users WHERE prize_app_id = ?',
+                         (prize_id, ))
 
         await db.commit()

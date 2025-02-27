@@ -134,3 +134,10 @@ class VotesOperation(StatesGroup):
 
 class PaymentCountState(StatesGroup):
     count = State()
+
+class CreatingPrizeApp(StatesGroup):
+    channel_id = State()
+
+class AddChannelPrizes(StatesGroup):
+    channel_id = State()
+    channel_link = State()
