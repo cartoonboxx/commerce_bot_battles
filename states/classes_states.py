@@ -141,3 +141,8 @@ class CreatingPrizeApp(StatesGroup):
 class AddChannelPrizes(StatesGroup):
     channel_id = State()
     channel_link = State()
+
+class ContinueCreatePrizeApp(StatesGroup):
+    tgstars = State()
+    winners = State()
+    time = State()

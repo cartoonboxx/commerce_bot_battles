@@ -325,12 +325,12 @@ async def tg_stars_prize(call: types.CallbackQuery):
     prizes_all = await db.check_all_prizes()
     for prize in prizes_all:
         winners = await db.check_all_winners_prizes(prize[0])
-        kb.button(text=f'{prize[1]} - {len(winners)}', callback_data=f'check_prize;{prize[0]}')
+        kb.button(text=f'{prize[1]} - {prize[3]}', callback_data=f'check_prize;{prize[0]}')
     kb.button(text='Создать розыгрыш', callback_data='create_prize')
     kb.button(text='🔙 Назад', callback_data='back_additional_instruments')
     kb.adjust(1)
 
-    await call.message.edit_text('Текущие роызгрыши:', reply_markup=kb.as_markup())
+    await call.message.edit_text('Текущие розыгрыши:', reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('create_prize'))
 async def create_prize_handler(call: types.CallbackQuery, state: FSMContext):
@@ -396,10 +396,95 @@ async def add_channels_prizes_handler(call: types.CallbackQuery, state: FSMConte
         kb.button(text=f'{channel_info.title}', callback_data=f'channel_prize_check;{channel[2]}')
 
     kb.button(text='Добавить канал', callback_data=f'add_channel_prize;{prize_id}')
-    kb.button(text='✅ Продолжить', callback_data='gdfgdf')
+    kb.button(text='✅ Продолжить', callback_data=f'continue_create_prize;{prize_id}')
     kb.button(text='🔙 Назад', callback_data=f'back_to_add_main_channel;{prize_id}')
     kb.adjust(1)
     await call.message.edit_text('[1/4] Добавить обязательные каналы для участия?:', reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('continue_create_prize'))
+async def continue_create_prize_handler(call: types.CallbackQuery, state: FSMContext):
+    await state.set_state(ContinueCreatePrizeApp.tgstars)
+
+    prize_id = call.data.split(';')[1]
+
+    await state.update_data(prize_id=prize_id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f'add_channels_prizes_handler;{prize_id}')
+    kb.adjust(1)
+    await call.message.edit_text('<b>[2/4] Введите размер приза в TG STARS:</b>',
+                                 reply_markup=kb.as_markup())
+
+@dp.message(ContinueCreatePrizeApp.tgstars)
+async def ContinueCreatePrizeApp_tgstars(message: Message, state: FSMContext):
+    if not message.text.isdigit() and message.text != '[4/4] Введите время проведения розыгрыша до 180 минут':
+        await message.answer('Не похоже на число, требуется ввести количество звезд.')
+        return
+
+    data = await state.get_data()
+    prize_id = data.get('prize_id')
+    tg_stars = int(message.text)
+    if message.text != '[4/4] Введите время проведения розыгрыша до 180 минут':
+        await state.update_data(tgstars=tg_stars)
+    await state.set_state(ContinueCreatePrizeApp.winners)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f'continue_create_prize;{prize_id}')
+    kb.adjust(1)
+    await message.answer(f'<b>[3/4] Введите кол-во победителей</b>\n\nМаксимум можно {tg_stars // 50} победителей',
+                         reply_markup=kb.as_markup())
+
+@dp.message(ContinueCreatePrizeApp.winners)
+async def ContinueCreatePrizeApp_winners(message: Message, state: FSMContext):
+    if not message.text.isdigit():
+        await message.answer('Не похоже на число, требуется ввести количество победителей.')
+        return
+
+    data = await state.get_data()
+    tg_stars = data.get('tgstars')
+    if int(message.text) > tg_stars // 50:
+        await message.answer('Количество победителей превышает указанное количество.')
+        return
+
+    await state.update_data(winners=int(message.text))
+    await state.set_state(ContinueCreatePrizeApp.time)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data='back_to_winners_prize_app')
+    kb.adjust(1)
+    await message.answer('<b>[4/4] Введите время проведения розыгрыша до 180 минут</b>',
+                         reply_markup=kb.as_markup())
+
+@dp.message(ContinueCreatePrizeApp.time)
+async def ContinueCreatePrizeApp_time(message: Message, state: FSMContext):
+    if not message.text.isdigit():
+        await message.answer('Не похоже на число, требуется длительность розыгрыша в минутах.')
+        return
+
+    await state.update_data(time=int(message.text))
+    await message.answer('✅ Розыгрыш создан')
+    data = await state.get_data()
+
+    await state.clear()
+    prize_id = data.get('prize_id')
+    tg_stars = data.get('tgstars')
+    winners = data.get('winners')
+    time = data.get('time')
+
+    await db.update_prize_app_info(prize_id, tg_stars, winners, time)
+
+    converted_time = datetime.datetime.now() + datetime.timedelta(minutes=time)
+    prize_info = await db.check_prize_app_by_id(prize_id)
+    await bot.send_message(chat_id=prize_info[2], text=f'🎁 Раздача {tg_stars} TG STARS 🌟 для {winners} победителей. '
+    f'Каждому победителю по {tg_stars // winners} TG STARS 🌟 '
+    f'\n\nНажмите кнопку «Принять участие» и ожидайте объявления победителя в {converted_time.strftime("%H:%M")} '
+                                                       f'по МСК (через {time} минут).')
+
+
+@dp.callback_query(lambda c: c.data == 'back_to_winners_prize_app')
+async def back_to_winners_prize_app(call: types.CallbackQuery, state: FSMContext):
+    await ContinueCreatePrizeApp_tgstars(call.message, state)
+
+@dp.callback_query(lambda c: c.data == 'back_to_tg_stars_prize_app')
+async def back_to_tg_stars_prize_app(call: types.CallbackQuery, state: FSMContext):
+    await continue_create_prize_handler(call, state)
 
 @dp.callback_query(lambda c: c.data.startswith('channel_prize_check'))
 async def channel_prize_check_handler(call: types.CallbackQuery, state: FSMContext):
@@ -469,15 +554,20 @@ async def AddChannelPrizes_channel_link(message: Message, state: FSMContext):
 @dp.callback_query(lambda c: c.data.startswith('check_prize'))
 async def check_prize_handler(call: types.CallbackQuery, state: FSMContext):
     prize_id = call.data.split(';')[1]
+
+    prize_data = await db.check_prize_app_by_id(prize_id)
     kb = InlineKeyboardBuilder()
     webapp = WebAppInfo(url='https://google.com')
     kb.button(text='Перейти к розыгрышу', web_app=webapp)
-    kb.button(text='🔄 Обновить', callback_data='gfdgd')
+    kb.button(text='🔄 Обновить', callback_data=f'check_prize;{prize_id}')
     kb.button(text='🗑️ Удалить розыгрыш', callback_data=f'delete_prize_app_handler;{prize_id}')
     kb.button(text='🔙 Назад', callback_data='tg_stars_prize')
     kb.adjust(1)
 
-    await call.message.edit_text('<b>Розыгрыш TG STATS - *размер приза* - N победителей</b>\n\nЗавершается через N минуты N секунд',
+    current_time_now = datetime.datetime.now()
+    current_time_end = datetime.datetime.strptime(prize_data[5], "%H:%M:%S").replace(year=current_time_now.year, month=current_time_now.month, day=current_time_now.day)
+    current_time = current_time_end - current_time_now
+    await call.message.edit_text(f'<b>Розыгрыш TG STATS - {prize_data[1]} - {prize_data[3]} победителей</b>\n\nЗавершается через {current_time.seconds // 60} минуты {current_time.seconds % 60} секунд',
                                  reply_markup=kb.as_markup())
 
 @dp.callback_query(lambda c: c.data.startswith('delete_prize_app_handler'))

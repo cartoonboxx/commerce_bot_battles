@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from data.config import admins
 import aiosqlite
 from data import loader, config
@@ -51,7 +51,7 @@ async def db_start():
                 add_voices INTEGER DEFAULT 0
             )
         ''')
-        now = datetime.now()
+        now = datetime.datetime.now()
 
 
         formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -183,7 +183,8 @@ async def db_start():
                 tg_stars INTEGER DEFAULT 0,
                 channel_id INTEGER DEFAULT 0,
                 count_winner INTEGER DEFAULT 0,
-                time INTEGER DEFAULT 0)''')
+                time INTEGER DEFAULT 0,
+                endtime TEXT DEFAULT '-')''')
 
         await db.execute('''
             CREATE TABLE IF NOT EXISTS prizes_channels_required (
@@ -1239,5 +1240,14 @@ async def deep_delete_prize_app(prize_id):
 
         await db.execute('DELETE FROM prizes_app_users WHERE prize_app_id = ?',
                          (prize_id, ))
+
+        await db.commit()
+
+async def update_prize_app_info(prize_id, tg_stars, winners, time):
+    async with aiosqlite.connect(name_db) as db:
+        endtime = datetime.datetime.now() + datetime.timedelta(minutes=time)
+        endtime = endtime.strftime('%H:%M:%S')
+        await db.execute("UPDATE prizes_app SET tg_stars = ?, count_winner = ?, time = ?, endtime = ? WHERE id = ?",
+                     (tg_stars, winners, time, endtime, prize_id))
 
         await db.commit()
