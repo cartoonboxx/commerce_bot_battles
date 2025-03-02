@@ -1251,3 +1251,10 @@ async def update_prize_app_info(prize_id, tg_stars, winners, time):
                      (tg_stars, winners, time, endtime, prize_id))
 
         await db.commit()
+
+async def check_all_required_channels_prize_id(prize_id):
+    async with aiosqlite.connect(name_db) as db:
+        result = await db.execute('SELECT * FROM prizes_channels_required WHERE prize_app_id = ?',
+                                  (prize_id, ))
+
+        return await result.fetchall()

@@ -27,6 +27,7 @@ from aiogram import F
 from utils.payment import *
 from functions.money_converter import *
 from data.constants import *
+import requests
 
 
 dp = Router()
@@ -222,6 +223,27 @@ async def cmd_start(message: types.Message, state: FSMContext):
                         await bot.send_photo(chat_id=message.chat.id, photo=current_media[-1][3], caption='<b>🙋 Выберите участника, голос за которого хотите отдать:</b>', reply_markup=kbr.as_markup())
                     return
 
+                if account_id.startswith('prizeApp'):
+                    print(account_id, 'prizeApp')
+                    prize_id = account_id.split('_')[1]
+                    channels_required = await db.check_all_required_channels_prize_id(prize_id)
+                    print(len(channels_required))
+                    if len(channels_required) > 0:
+
+                        keyboard = InlineKeyboardBuilder()
+                        for channel in channels_required:
+                            channel_info = await bot.get_chat(channel[2])
+                            keyboard.button(text=f'{channel_info.title}', url=channel[3])
+
+                        keyboard.button(text='✅ Проверить подписки', callback_data=f'check_subscribes_required;{prize_id}')
+                        keyboard.adjust(1)
+                        await message.answer('Перед участием необходимо подписаться на каналы ниже',
+                                             reply_markup=keyboard.as_markup())
+                    else:
+                        '''Высылаем конкурс'''
+                        await send_prize_app(message, prize_id)
+                    return
+
                 battle_photos_info = await db.check_battle_photos_where_id1(account_id)
                 battle_id = battle_photos_info[2]
                 is_exist = await db.check_battle_voices_tg_id_exist_return_bool(tg_id, battle_id)
@@ -263,6 +285,31 @@ async def cmd_start(message: types.Message, state: FSMContext):
             reply_markup=kb.start_menu_for_users(),
             parse_mode='HTML',
             disable_web_page_preview=True)
+
+@dp.callback_query(lambda c: c.data.startswith('check_subscribes_required'))
+async def check_subscribes_required_handler(call: types.CallbackQuery):
+    prize_id = call.data.split(';')[1]
+    channels = await db.check_all_required_channels_prize_id(prize_id)
+    user_id = call.from_user.id
+    for channel in channels:
+        try:
+            await bot.get_chat_member(chat_id=channel[2], user_id=user_id)
+        except Exception as ex:
+            '''Не подписался'''
+            await call.message.answer('❌ Вы не подписаны на все каналы')
+            return
+
+    '''Высылаем конкурс'''
+    await send_prize_app(call.message, prize_id)
+
+async def send_prize_app(message: types.Message, prize_id: [int | str]):
+    kb = InlineKeyboardBuilder()
+    web_app = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}')
+    kb.button(text='✅ Принять участие', web_app=web_app)
+    kb.adjust(1)
+
+    await message.answer('Чтобы принять участие в конкурсе перейдите в мини-приложение и оставайте внутри в течение '
+                         'всего конкурса', reply_markup=kb.as_markup())
 
 @dp.message(Command("update_info_database"))
 async def cmd_update_database_info(message: types.Message, state: FSMContext):
@@ -472,10 +519,17 @@ async def ContinueCreatePrizeApp_time(message: Message, state: FSMContext):
 
     converted_time = datetime.datetime.now() + datetime.timedelta(minutes=time)
     prize_info = await db.check_prize_app_by_id(prize_id)
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Принять участие', url=f'https://t.me/{bot_name}?start=prizeApp_{prize_id}')
+    kb.adjust(1)
     await bot.send_message(chat_id=prize_info[2], text=f'🎁 Раздача {tg_stars} TG STARS 🌟 для {winners} победителей. '
     f'Каждому победителю по {tg_stars // winners} TG STARS 🌟 '
     f'\n\nНажмите кнопку «Принять участие» и ожидайте объявления победителя в {converted_time.strftime("%H:%M")} '
-                                                       f'по МСК (через {time} минут).')
+                                                       f'по МСК (через {time} минут).',
+                           reply_markup=kb.as_markup())
+
+    requests.post(WEB_APP_URL + '/prizes/api/create_new_prize',
+                  data=data)
 
 
 @dp.callback_query(lambda c: c.data == 'back_to_winners_prize_app')
