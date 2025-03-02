@@ -1,4 +1,229 @@
-main {
-  color: var(--tg-color-scheme);
-  background-color: var(--tg-theme-bg-color);
+@import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Manrope:wght@200..800&display=swap");
+:root {
+  --bcolor: #131416;
+  --border-time: 5px;
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span {
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  color: white;
+}
+
+body {
+  background-color: var(--bcolor);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.header {
+  padding: 20px;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  background: url(../images/prize-bg.png);
+  background-size: cover;
+  background-position: center center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.header__upper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.header__upper__stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 5px;
+  background-color: #F59929;
+  width: auto;
+  height: auto;
+  opacity: 1;
+  border-radius: 40px;
+  z-index: 1;
+  gap: 5px;
+}
+.header__upper__stars h1 {
+  margin: 0;
+  padding: 0;
+  margin-right: 10px;
+  font-size: 25px;
+  font-weight: 1000;
+}
+.header__upper__stars img {
+  width: 50px;
+  height: 50px;
+}
+.header__upper__stars .triangle {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background-color: red;
+}
+.header__upper .triangle {
+  position: relative;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  z-index: 0;
+  transform: rotate(45deg);
+  background-color: #F59929;
+}
+.header__picture {
+  width: 100px;
+  height: 100px;
+}
+.header__picture img {
+  width: 100%;
+  height: 100%;
+}
+.header__text {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 500;
+}
+.header__timer {
+  display: flex;
+  gap: 5px;
+}
+.header__timer-time {
+  display: flex;
+  gap: 5px;
+}
+.header__timer-division {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  color: white;
+  font-size: 20px;
+}
+.header__timer-block {
+  background-color: #C5901E;
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  color: white;
+  font-size: 20px;
+  padding: 5px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.header__timer-block:nth-child(n) {
+  border-top-right-radius: var(--border-time);
+  border-bottom-right-radius: var(--border-time);
+}
+.header__timer-block:nth-child(2n+1) {
+  border-radius: 0;
+  border-top-left-radius: var(--border-time);
+  border-bottom-left-radius: var(--border-time);
+}
+.header p {
+  text-align: center;
+}
+
+.main {
+  width: 100%;
+  height: 100%;
+}
+.main h4 {
+  margin: 10px 0;
+  padding: 0 10px;
+  text-transform: uppercase;
+  color: gray;
+  width: auto;
+  font-size: 14px;
+}
+.main p {
+  padding: 0 10px;
+  font-size: 14px;
+}
+.main span {
+  padding: 0 10px;
+  font-size: 14px;
+  color: gray;
+}
+.main .container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+}
+.main .container .user {
+  height: 60px;
+  width: 100%;
+  border-bottom: 1px solid #888889;
+  display: flex;
+}
+.main .container .user__img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  background-color: #D9D9D9;
+}
+.main .container .user__info {
+  width: auto;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.main .container .user__info h3 {
+  margin: 0;
+  padding-left: 10px;
+  font-weight: 500;
+}
+.main .container .user__info p {
+  margin: 0;
+  color: #7d7d7d;
+  display: flex;
+  align-items: center;
+}
+.main .container .user__info p img {
+  width: 15px;
+  height: 15px;
+}
+.main .container .user__invites {
+  width: auto;
+  position: absolute;
+  right: 20px;
+}
+.main .container .user__invites p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #7d7d7d;
+  font-size: 16px;
+}
+.main .container .user__invites p img {
+  width: 15px;
+  height: 15px;
+}
+
+/*# sourceMappingURL=prizes.css.map */
