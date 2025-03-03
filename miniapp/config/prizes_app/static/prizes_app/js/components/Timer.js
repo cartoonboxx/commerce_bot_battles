@@ -57,28 +57,25 @@ class Timer {
         let minutes = parseInt(timeSplit[1], 10);
         let seconds = parseInt(timeSplit[2], 10);
 
-        // Вычитаем одну секунду
         if (seconds > 0) {
             seconds--;
         } else {
-            // Если секунды равны 0, уменьшаем минуты
             if (minutes > 0) {
                 minutes--;
-                seconds = 59; // Устанавливаем секунды на 59
+                seconds = 59;
             } else {
-                // Если минуты тоже равны 0, уменьшаем часы
+
                 if (hours > 0) {
                     hours--;
-                    minutes = 59; // Устанавливаем минуты на 59
-                    seconds = 59; // Устанавливаем секунды на 59
+                    minutes = 59;
+                    seconds = 59;
                 } else {
-                    console.log('Отправляем запрос'); // Если время закончилось
-                    return '00:00:00'; // Возвращаем 00:00:00, если время закончилось
+                    console.log('Отправляем запрос');
+                    return '00:00:00';
                 }
             }
         }
 
-        // Форматируем время с ведущими нулями
         const formattedHours = String(hours).padStart(2, '0');
         const formattedMinutes = String(minutes).padStart(2, '0');
         const formattedSeconds = String(seconds).padStart(2, '0');
@@ -88,4 +85,4 @@ class Timer {
 
 }
 
-new Timer();
+new Timer()
