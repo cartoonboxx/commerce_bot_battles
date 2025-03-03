@@ -5,7 +5,7 @@
         <div class="header__upper">
             <div class="header__upper__stars">
                 <img src="{% static 'prizes_app/images/star.png' %}" alt="star">
-                <h1>1000</h1>
+                <h1>{{ prizeObj.tg_stars }}</h1>
             </div>
             <div class="triangle"></div>
         </div>
@@ -14,21 +14,21 @@
             <source srcset="{% static 'prizes_app/images/gift.webp' %}" type="image/webp" />
             <img src="{% static 'prizes_app/images/gift.png' %}" />
         </picture>
-        <h1 class="header__text">Раздача Telegram Stars<br>10 призов по 1000 Telegram Stars</h1>
+        <h1 class="header__text">Раздача Telegram Stars<br>{{ prizeObj.count_winners }} призов по {{ starsByOne }} Telegram Stars</h1>
         <div class="header__timer">
-            <div class="header__timer-time">
-                <div class="header__timer-block">1</div>
-                <div class="header__timer-block">0</div>
+            <div class="header__timer-time" data-js-hours >
+                <div class="header__timer-block">{{ fh }}</div>
+                <div class="header__timer-block">{{ lh }}</div>
             </div>
             <div class="header__timer-division">:</div>
-            <div class="header__timer-time">
-                <div class="header__timer-block">0</div>
-                <div class="header__timer-block">5</div>
+            <div class="header__timer-time" data-js-minutes >
+                <div class="header__timer-block">{{ fm }}</div>
+                <div class="header__timer-block">{{ lm }}</div>
             </div>
             <div class="header__timer-division">:</div>
-            <div class="header__timer-time">
-                <div class="header__timer-block">5</div>
-                <div class="header__timer-block">9</div>
+            <div class="header__timer-time" data-js-seconds >
+                <div class="header__timer-block">{{ fs }}</div>
+                <div class="header__timer-block">{{ ls }}</div>
             </div>
         </div>
         <p>Будьте онлайн на этой странице в 21:21,<br>чтобы принять участие в раздаче</p>
