@@ -1,7 +1,7 @@
 class UserCollector {
     messages = {
         isNull: "Вы пока не приглашали участников",
-        isCollected: "Вы пригласили N участников"
+        isCollected: `Вы пригласили N участников`
     }
 
     constructor() {
@@ -15,14 +15,16 @@ class UserCollector {
     }
 
     collectAllUsers() {
-        fetch("prizes_app/api/users", {
-            method: "POST",
-
-        })
-            .then(res => res.json())
-        .then(users => {
-            console.log(users)
-        })
+       // fetch("prizes_app/api/users", {
+       //     method: "POST",
+       //     body: {
+       //
+       //     }
+       // })
+       //     .then(res => res.json())
+       // .then(users => {
+       //     console.log(users)
+       // })
     }
 
 }
