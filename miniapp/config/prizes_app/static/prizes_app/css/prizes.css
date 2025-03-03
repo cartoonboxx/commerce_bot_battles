@@ -17,6 +17,7 @@ span {
 }
 
 body {
+  width: 100%;
   background-color: var(--bcolor);
   padding: 0;
   margin: 0;
@@ -30,7 +31,6 @@ body {
 .header {
   padding: 20px;
   width: 100%;
-  max-width: 600px;
   height: auto;
   background: url(../images/prize-bg.png);
   background-size: cover;
@@ -168,7 +168,11 @@ body {
   justify-content: center;
   flex-direction: column;
   padding: 20px;
+  padding-bottom: 90px;
   gap: 10px;
+}
+.main .container .tg-info {
+  color: white;
 }
 .main .container .user {
   height: 60px;
@@ -181,10 +185,11 @@ body {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+}
+.main .container .user__img img {
   width: 50px;
   height: 50px;
   border-radius: 100%;
-  background-color: #D9D9D9;
 }
 .main .container .user__info {
   width: auto;
@@ -224,6 +229,22 @@ body {
 .main .container .user__invites p img {
   width: 15px;
   height: 15px;
+}
+.main .invite_users {
+  position: fixed;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  width: 90vw;
+  height: 70px;
+  background-color: #2AABEE;
+  color: white;
+  border-radius: 15px;
+  border: none;
+  font-size: 20px;
+  font-family: "M PLUS Rounded 1c", sans-serif;
 }
 
 /*# sourceMappingURL=prizes.css.map */

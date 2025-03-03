@@ -1,13 +1,17 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from .models import *
 import datetime
 
 def prize_app_render(request, prize_id: int):
     print(prize_id)
 
-    current_prize_app = PrizeAppModel.objects.get(
-        id=prize_id
-    )
+    try:
+        current_prize_app = PrizeAppModel.objects.get(
+            id=prize_id
+        )
+    except Exception as ex:
+        return HttpResponse("Page Not Found")
 
     current_time = datetime.datetime.now()
     current_time = current_time.strftime("%H:%M:%S")
@@ -21,12 +25,17 @@ def prize_app_render(request, prize_id: int):
     total_seconds = int(time_difference.total_seconds())
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
+    time_arr = [hours, minutes, seconds]
+    for index, timeDiv in enumerate(time_arr):
+        if timeDiv < 10:
+            time_arr[index] = f'0{timeDiv}'
 
-    time = f"{hours:02}:{minutes:02}:{seconds}"
+    time = f"{time_arr[0]}:{time_arr[1]}:{time_arr[2]}"
 
     endtime = current_prize_app.endtime
 
     all_users = UserPrizeModel.objects.all()
+    print(time)
 
     context = {
         'prize_id': prize_id,

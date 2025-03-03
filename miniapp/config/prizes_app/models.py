@@ -16,7 +16,8 @@ class PrizeAppModel(models.Model):
 class UserPrizeModel(models.Model):
     name = models.CharField(verbose_name='Имя пользователя', max_length=100)
     user_id = models.IntegerField(verbose_name='Айди пользователя')
-    invited_from = models.IntegerField(verbose_name='Приглашен от айди')
+    invited_from = models.IntegerField(verbose_name='Приглашен от айди', blank=True)
+    photo = models.CharField(verbose_name='Фото', max_length=150)
 
     def collect_users_invites(self):
         return UserPrizeModel.objects.filter(

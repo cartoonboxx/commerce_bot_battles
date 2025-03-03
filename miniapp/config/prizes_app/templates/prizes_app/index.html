@@ -34,24 +34,13 @@
         <p>Будьте онлайн на этой странице в {{ timeEnd }},<br>чтобы принять участие в раздаче</p>
     </header>
     <main class="main">
-        <h4>Участников онлайн: {{ users|length }}</h4>
+        <h4>Участников онлайн:<span class="online-right-now">{{ users|length }}</span></h4>
         <p>Приглашайте друзей и увеличивайте свои шансы на победу.</p>
-        <span>Вы пока не приглашали участников</span>
+        <span class="invited">Вы пока не приглашали участников</span>
         <div class="container">
-            {% for i in '0123456789' %}
-                <div class="user">
-                <div class="user__img">
 
-                </div>
-                <div class="user__info">
-                    <h3>name</h3>
-                    <p><img src="{% static 'prizes_app/images/chance.png' %}" alt="">9.94% шанс</p>
-                </div>
-                <div class="user__invites">
-                    <p>78 <img src="{% static 'prizes_app/images/user-ico.png' %}"></p>
-                </div>
-            </div>
-            {% endfor %}
         </div>
+        <p class="tg-info"></p>
+        <button class="invite_users">Пригласить друзей</button>
     </main>
 {% endblock content %}
