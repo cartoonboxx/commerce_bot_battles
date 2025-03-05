@@ -1,3 +1,5 @@
+import {updateDataWinners} from "../utils.js";
+
 class Timer {
     selectors = {
         hours: '[data-js-hours]',
@@ -70,7 +72,20 @@ class Timer {
                     minutes = 59;
                     seconds = 59;
                 } else {
-                    console.log('Отправляем запрос');
+                    const url = window.location.href.toString().split('/')
+
+                    const prizeId = url[4]
+                    fetch(`api/finish_prize?prize_id=${prizeId}`)
+                        .then(res => {
+                            return res.json()
+                        })
+                    .then(data => {
+                        console.log(data)
+                        updateDataWinners();
+                    })
+
+
+                    // window.location.reload();
                     return '00:00:00';
                 }
             }

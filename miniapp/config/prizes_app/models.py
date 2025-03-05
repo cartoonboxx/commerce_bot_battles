@@ -6,6 +6,8 @@ class PrizeAppModel(models.Model):
     time = models.IntegerField(verbose_name='Time (mins)')
     endtime = models.TextField(verbose_name='EndTime')
 
+    isFinished = models.BooleanField(verbose_name='Статус окончания', default=False)
+
     def __str__(self):
         return f'{self.tg_stars} - {self.count_winners}'
 
@@ -16,7 +18,7 @@ class PrizeAppModel(models.Model):
 class UserPrizeModel(models.Model):
     name = models.CharField(verbose_name='Имя пользователя', max_length=100)
     user_id = models.IntegerField(verbose_name='Айди пользователя')
-    invited_from = models.IntegerField(verbose_name='Приглашен от айди', blank=True)
+    invited_from = models.IntegerField(verbose_name='Приглашен от айди', blank=True, null=True)
     photo = models.CharField(verbose_name='Фото', max_length=150)
 
     def collect_users_invites(self):

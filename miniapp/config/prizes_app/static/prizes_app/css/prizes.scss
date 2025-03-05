@@ -242,5 +242,7 @@ body {
     border: none;
     font-size: 20px;
     font-family: "M PLUS Rounded 1c", sans-serif;
+    @include mixins.to-center(true, true, true);
+    text-decoration: none;
   }
 }

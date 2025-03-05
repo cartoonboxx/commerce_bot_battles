@@ -1,5 +1,6 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpRequest
 from django.core import serializers
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from ..models import *
 import json
@@ -45,10 +46,35 @@ def add_user_if_not_exists(request):
 
 @csrf_exempt
 def collect_all_users(request):
-    users = UserPrizeModel.objects.all()
+    try:
+        users = UserPrizeModel.objects.all()
+        print('users_collected')
+        serialized_users = serializers.serialize('json', users)
 
-    serialized_users = serializers.serialize('json', users)
+        users_list = json.loads(serialized_users)
 
-    users_list = json.loads(serialized_users)
+        return JsonResponse(users_list, safe=False)
+    except Exception as ex:
+        return JsonResponse({})
 
-    return JsonResponse(users_list, safe=False)
+def remove_user(request):
+    data = request.GET
+    try:
+        UserPrizeModel.objects.filter(user_id=data.get('user_id')).delete()
+    except Exception as ex:
+        return HttpResponse('Пользователя уже удалили')
+
+    return HttpResponse(f"Пользователь {data.get('user_id')} покинул игру")
+
+def finish_prize(request):
+    data = request.GET
+    prize_id = data.get('prize_id')
+    print(request.GET, prize_id)
+    prize_obj = PrizeAppModel.objects.filter(
+        id=prize_id
+    )[0]
+
+    prize_obj.isFinished = True
+    prize_obj.save()
+
+    return HttpResponse('isFinished')

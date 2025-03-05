@@ -245,6 +245,11 @@ body {
   border: none;
   font-size: 20px;
   font-family: "M PLUS Rounded 1c", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-decoration: none;
 }
 
 /*# sourceMappingURL=prizes.css.map */

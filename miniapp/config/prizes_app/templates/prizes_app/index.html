@@ -34,13 +34,15 @@
         <p>Будьте онлайн на этой странице в {{ timeEnd }},<br>чтобы принять участие в раздаче</p>
     </header>
     <main class="main">
-        <h4>Участников онлайн:<span class="online-right-now">{{ users|length }}</span></h4>
-        <p>Приглашайте друзей и увеличивайте свои шансы на победу.</p>
-        <span class="invited">Вы пока не приглашали участников</span>
-        <div class="container">
+        {% if not isFinished %}
+            <h4>Участников онлайн:<span class="online-right-now">{{ users|length }}</span></h4>
+            <p>Приглашайте друзей и увеличивайте свои шансы на победу.</p>
+            <span class="invited">Вы пока не приглашали участников</span>
+            <div class="container">
 
-        </div>
-        <p class="tg-info"></p>
-        <button class="invite_users">Пригласить друзей</button>
+            </div>
+            <p class="tg-info"></p>
+            <a href="{{ url_button }}" class="invite_users">Пригласить друзей</a>
+        {% endif %}
     </main>
 {% endblock content %}

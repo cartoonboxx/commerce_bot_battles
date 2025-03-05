@@ -17,7 +17,7 @@ class UserCollector {
     }
 
     collectAllUsers() {
-       fetch("api/users/", {
+       fetch("api/users", {
            method: "POST",
            body: {
                user_id: 35647463
@@ -25,18 +25,23 @@ class UserCollector {
        })
            .then(res => res.json())
        .then(users => {
-           this.containerElement.innerHTML = ''
-           this.participants = users.map(user => {
-               return {
-                   id: user.fields.user_id,
-                   invites: this.calcInvites(user, users)
-               }
-           })
-           users.forEach(user => {
-               this.updateUserList(user, users)
-               this.updateInviteString(user, users)
+           try {
+               this.containerElement.innerHTML = ''
+               this.participants = users.map(user => {
+                   return {
+                       id: user.fields.user_id,
+                       invites: this.calcInvites(user, users)
+                   }
+               })
+               users.forEach(user => {
+                   this.updateUserList(user, users)
+                   this.updateInviteString(user, users)
 
-           })
+               })
+           }
+           catch (error) {
+               console.log(error)
+           }
        })
     }
 

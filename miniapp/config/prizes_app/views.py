@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .models import *
 import datetime
+import urllib
 
 def prize_app_render(request, prize_id: int):
     print(prize_id)
@@ -37,6 +38,16 @@ def prize_app_render(request, prize_id: int):
     all_users = UserPrizeModel.objects.all()
     print(time)
 
+    base_url = 'https://t.me/share/url'
+    share_url = f'https://t.me/vndfkjnkjdfgbknvds_bot?start=b{1}_from{794764771}'
+    text = f"Привет, можешь по-участвовать в фото-батле, приз выдают за победу в финале"
+    encoded_text = urllib.parse.quote(text, safe='')
+    encoded_url = urllib.parse.quote(share_url, safe='')
+    full_url = f"{base_url}?url={encoded_url}&text={encoded_text}"
+
+    is_finished = current_prize_app.isFinished
+    print(is_finished)
+
     context = {
         'prize_id': prize_id,
         'prizeObj': current_prize_app,
@@ -48,7 +59,9 @@ def prize_app_render(request, prize_id: int):
         'lm': time[4],
         'fs': time[6],
         'ls': time[7],
-        'users': all_users
+        'users': all_users,
+        'url_button': full_url,
+        'isFinished': is_finished
     }
     return render(request, 'prizes_app/index.html', context=context)
 
