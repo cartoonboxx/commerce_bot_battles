@@ -45,6 +45,7 @@ body {
         margin-right: 10px;
         font-size: 25px;
         font-weight: 1000;
+        font-family: "M PLUS Rounded 1c", sans-serif !important;
       }
 
       img {
@@ -85,7 +86,7 @@ body {
   &__text {
     text-align: center;
     font-size: 20px;
-    font-weight: 500;
+    font-weight: 700;
   }
 
   &__timer {
@@ -130,6 +131,9 @@ body {
 
   p {
     text-align: center;
+    opacity: .7;
+    font-weight: 700;
+    font-size: 14px;
   }
 }
 

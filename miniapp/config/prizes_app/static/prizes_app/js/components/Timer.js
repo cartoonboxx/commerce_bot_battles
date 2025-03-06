@@ -13,15 +13,19 @@ class Timer {
         this.hoursElement = document.querySelector(this.selectors.hours);
         this.minutesElement = document.querySelector(this.selectors.minutes);
         this.secondsElement = document.querySelector(this.selectors.seconds);
+        this.timerInterval = null;
         this.bindEvent();
     }
 
     bindEvent() {
-        setInterval(() => {
+        this.timerInterval = setInterval(() => {
             const currentTime = this.collectTimeToString()
             const calcedTime = this.calcTime(currentTime);
             this.setTimeAsElement(calcedTime);
         }, 1000)
+        if (!this.hoursElement) {
+            clearInterval(this.timerInterval)
+        }
     }
 
     collectTimeToString() {
@@ -42,6 +46,14 @@ class Timer {
     setTimeAsElement(time) {
         time = time.replaceAll(':', '')
         time = time.split('')
+        const isEndTimer = time.map(item => Number(item)).reduce((prev, curr) => {
+            return curr > 0 ? curr + prev : prev;
+        }, 0)
+
+        if (!isEndTimer && document.querySelector('.container').classList.contains('winners')) {
+            this.stopInterval()
+            return
+        }
 
         this.hoursElement.firstElementChild.textContent = time[0]
         this.hoursElement.lastElementChild.textContent = time[1]
@@ -84,8 +96,10 @@ class Timer {
                         updateDataWinners();
                     })
 
+                    this.stopInterval()
+                    console.log('Here')
+                    updateDataWinners()
 
-                    // window.location.reload();
                     return '00:00:00';
                 }
             }
@@ -98,6 +112,10 @@ class Timer {
         return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
     }
 
+    stopInterval() {
+        document.querySelector('[data-js-time]').remove()
+        clearInterval(this.timerInterval)
+    }
 }
 
 new Timer()

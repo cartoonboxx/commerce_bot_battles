@@ -7,13 +7,16 @@ class UserCollector {
     onlineElement = document.querySelector('.main').querySelector('.online-right-now')
 
     constructor() {
+        this.collectorInerval = null;
         this.bindEvents();
     }
 
     bindEvents() {
-        setInterval(() => {
+        this.collectorInerval = setInterval(() => {
             this.collectAllUsers()
         }, 1000)
+
+        this.stopInterval()
     }
 
     collectAllUsers() {
@@ -43,6 +46,8 @@ class UserCollector {
                console.log(error)
            }
        })
+
+        this.stopInterval()
     }
 
     updateUserList(user, users) {
@@ -75,6 +80,13 @@ class UserCollector {
         //
         // console.log(winner)
         // console.log('Победитель', this.pickWinner(this.participants))
+    }
+
+    stopInterval() {
+        if (!document.querySelector('[data-js-time]')) {
+            clearInterval(this.collectorInerval)
+            this.containerElement.classList.add('winners');
+        }
     }
 
     pickWinner(participants, baseWeight = 1, coefficient = 1) {
