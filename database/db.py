@@ -1246,7 +1246,6 @@ async def deep_delete_prize_app(prize_id):
 async def update_prize_app_info(prize_id, tg_stars, winners, time):
     async with aiosqlite.connect(name_db) as db:
         endtime = datetime.datetime.now() + datetime.timedelta(minutes=time)
-        endtime = endtime.strftime('%H:%M:%S')
         await db.execute("UPDATE prizes_app SET tg_stars = ?, count_winner = ?, time = ?, endtime = ? WHERE id = ?",
                      (tg_stars, winners, time, endtime, prize_id))
 

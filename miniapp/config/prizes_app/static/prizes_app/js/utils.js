@@ -40,7 +40,10 @@ export const updateDataWinners = () => {
                     </div>
                     <div class="user__invites">
                         <p>+${document.querySelector('.header__upper__stars')
-                                        .querySelector('h1').textContent / winners.length}
+                                        .querySelector('h1').textContent / getAllNumbers(
+                                            document.querySelector('main')
+                                                .querySelector('p').textContent
+            )[0]}
                         <img src="/static/prizes_app/images/ministar.png"></p>
                     </div>
                 </div>
@@ -77,5 +80,14 @@ export const updateDataWinners = () => {
         console.error('Произошла ошибка:', error);
     });
 
+}
+
+function getAllNumbers(str) {
+    const matches = str.matchAll(/-?\d+(\.\d+)?/g); // Регулярное выражение с флагом g (global)
+    const numbers = [];
+    for (const match of matches) {
+        numbers.push(Number(match[0]));
+    }
+    return numbers;
 }
 

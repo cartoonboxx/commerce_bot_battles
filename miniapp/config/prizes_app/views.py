@@ -15,10 +15,10 @@ def prize_app_render(request, prize_id: int):
         return HttpResponse("Page Not Found")
 
     current_time = datetime.datetime.now()
-    current_time = current_time.strftime("%H:%M:%S")
+    current_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    time_format = "%H:%M:%S"
-    time1 = datetime.datetime.strptime(current_prize_app.endtime, time_format)
+    time_format = "%Y-%m-%d %H:%M:%S"
+    time1 = datetime.datetime.strptime(current_prize_app.endtime.split('.')[0], time_format)
     time2 = datetime.datetime.strptime(current_time, time_format)
 
     time_difference = time1 - time2
@@ -41,7 +41,7 @@ def prize_app_render(request, prize_id: int):
     print(time)
 
     base_url = 'https://t.me/share/url'
-    share_url = f'https://t.me/vndfkjnkjdfgbknvds_bot?start=prizeApp_{prize_id}_from_{794764771}'
+    share_url = f'https://t.me/vndfkjnkjdfgbknvds_bot?start=prizeApp_{prize_id}_from_{0}'
     text = f"Привет, "
     encoded_text = urllib.parse.quote(text, safe='')
     encoded_url = urllib.parse.quote(share_url, safe='')
@@ -58,7 +58,7 @@ def prize_app_render(request, prize_id: int):
         'prize_id': prize_id,
         'prizeObj': current_prize_app,
         'starsByOne': current_prize_app.tg_stars // current_prize_app.count_winners,
-        'timeEnd': endtime[:5],
+        'timeEnd': endtime.split('.')[0].split(' ')[1][:5],
         'fh': time[0],
         'lh': time[1],
         'fm': time[3],

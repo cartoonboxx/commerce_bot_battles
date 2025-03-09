@@ -9,5 +9,6 @@ urlpatterns = [
     path('finish_prize', finish_prize),
     path('data', get_data_prize),
     path('collect_winners', collect_winners),
-    path('add_invite', add_invite)
+    path('add_invite', add_invite),
+    path('get_all_winners_tg', get_all_winners)
 ]

@@ -296,10 +296,8 @@ async def check_subscribes_required_handler(call: types.CallbackQuery):
     channels = await db.check_all_required_channels_prize_id(prize_id)
     user_id = call.from_user.id
     for channel in channels:
-        try:
-            await bot.get_chat_member(chat_id=channel[2], user_id=user_id)
-        except Exception as ex:
-            '''Не подписался'''
+        member = await bot.get_chat_member(chat_id=channel[2], user_id=user_id)
+        if member.status in ("left", "kicked", "banned"):
             await call.message.answer('❌ Вы не подписаны на все каналы')
             return
 
@@ -615,18 +613,48 @@ async def check_prize_handler(call: types.CallbackQuery, state: FSMContext):
 
     prize_data = await db.check_prize_app_by_id(prize_id)
     kb = InlineKeyboardBuilder()
-    webapp = WebAppInfo(url='https://google.com')
+    webapp = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}')
     kb.button(text='Перейти к розыгрышу', web_app=webapp)
     kb.button(text='🔄 Обновить', callback_data=f'check_prize;{prize_id}')
     kb.button(text='🗑️ Удалить розыгрыш', callback_data=f'delete_prize_app_handler;{prize_id}')
+    kb.button(text='👤 Получить победителей', callback_data=f'get_winners_prize;{prize_id}')
     kb.button(text='🔙 Назад', callback_data='tg_stars_prize')
     kb.adjust(1)
 
     current_time_now = datetime.datetime.now()
-    current_time_end = datetime.datetime.strptime(prize_data[5], "%H:%M:%S").replace(year=current_time_now.year, month=current_time_now.month, day=current_time_now.day)
+    # print(current_time_now)
+    current_time_end = datetime.datetime.strptime(prize_data[5], "%Y-%m-%d %H:%M:%S.%f").replace(year=current_time_now.year, month=current_time_now.month, day=current_time_now.day, microsecond=current_time_now.microsecond)
     current_time = current_time_end - current_time_now
-    await call.message.edit_text(f'<b>Розыгрыш TG STATS - {prize_data[1]} - {prize_data[3]} победителей</b>\n\nЗавершается через {current_time.seconds // 60} минуты {current_time.seconds % 60} секунд',
+    print(current_time)
+    if current_time.days >= -1:
+        await call.message.edit_text(
+            f'<b>Розыгрыш TG STATS - {prize_data[1]} - {prize_data[3]} победителей</b>\n\nЗавершился в {current_time_end.hour}:{current_time_end.minute}',
+            reply_markup=kb.as_markup())
+    else:
+        await call.message.edit_text(f'<b>Розыгрыш TG STATS - {prize_data[1]} - {prize_data[3]} победителей</b>\n\nЗавершается через {current_time.seconds // 60} минуты {current_time.seconds % 60} секунд',
                                  reply_markup=kb.as_markup())
+
+@dp.callback_query(lambda c: c.data.startswith('get_winners_prize'))
+async def get_winners_prize(call: types.CallbackQuery, state: FSMContext):
+    prize_id = call.data.split(';')[1]
+
+    winners = requests.get(f'{WEB_APP_URL}/prizes/api/get_all_winners_tg?prize_id={prize_id}').json()
+    if len(winners):
+        message_text = '<b>Победители:\n</b>'
+        for index, winner in enumerate(winners):
+
+            print(winner)
+            user_id = winner.get('fields').get('user_id')
+            user_data = await bot.get_chat(chat_id=user_id)
+
+            print(user_data)
+
+            message_text += (f'{index+1}. @{user_data.username} '
+                             f'(https://t.me/@id{user_id})\n')
+
+        await call.message.answer(message_text)
+    else:
+        await call.message.answer('Победители пока не объявлены')
 
 @dp.callback_query(lambda c: c.data.startswith('delete_prize_app_handler'))
 async def delete_prize_app_handler(call: types.CallbackQuery, state: FSMContext):

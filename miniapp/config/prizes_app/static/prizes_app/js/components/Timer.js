@@ -20,12 +20,15 @@ class Timer {
 
     bindEvent() {
         this.timerInterval = setInterval(() => {
-            const currentTime = this.collectTimeToString()
+            let currentTime = this.collectTimeToString()
+            if (currentTime.includes('-')) {
+                currentTime = '00:00:00'
+            }
             const calcedTime = this.calcTime(currentTime);
             this.setTimeAsElement(calcedTime);
         }, 1000)
         if (!this.hoursElement) {
-            clearInterval(this.timerInterval)
+            this.stopInterval()
         }
     }
 
@@ -47,11 +50,13 @@ class Timer {
     setTimeAsElement(time) {
         time = time.replaceAll(':', '')
         time = time.split('')
-        const isEndTimer = time.map(item => Number(item)).reduce((prev, curr) => {
+        const isEndTimer = time.map(item => Number(item))
+            .reduce((prev, curr) => {
             return curr > 0 ? curr + prev : prev;
         }, 0)
 
-        if (!isEndTimer && document.querySelector('.container').classList.contains('winners')) {
+        if (!isEndTimer
+            && document.querySelector('.container').classList.contains('winners')) {
             this.stopInterval()
             return
         }

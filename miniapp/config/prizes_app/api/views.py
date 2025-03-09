@@ -13,7 +13,7 @@ def create_new_prize_app(request):
     winners = data.get('winners')
     time_ = data.get('time')
     endtime = datetime.datetime.now() + datetime.timedelta(minutes=int(time_))
-    endtime = endtime.strftime("%H:%M:%S")
+    print(endtime)
     prize = PrizeAppModel.objects.create(
         id=prize_id,
         tg_stars=tg_stars,
@@ -134,48 +134,63 @@ def collect_winners(request):
     data = request.GET
     prize_id = data.get('prize_id')
 
-    prize_data = PrizeAppModel.objects.get(
-        id=prize_id
-    )
-
-    users = UserPrizeModel.objects.filter(
+    winners_objs = UserWinnersPrizeModel.objects.filter(
         prize_id=prize_id
     )
 
-    participants = [{
-        'name': user.name,
-        'user_id': user.user_id,
-        'invites': UserPrizeModel.calc_len_invites(user.user_id),
-        'photo': user.photo,
-        'chance': user.calc_user_chance(),
-
-    } for user in users]
-
-    winners = []
-    unique_winners = set()
-
-    while len(winners) < prize_data.count_winners and len(winners) < len(users):
-        winner = pick_winner(participants)
-
-        winner_tuple = tuple(winner.items())
-
-        if winner_tuple not in unique_winners:
-            unique_winners.add(winner_tuple)
-            winners.append(winner)
-
-    for winner in winners:
-        winnerObj = UserWinnersPrizeModel(
-            name=winner.get('name'),
-            user_id=winner.get('user_id'),
-            photo=winner.get('photo'),
-
-            prize_id=prize_id,
-
-            chance=winner.get('chance'),
-            invites=winner.get('invites'),
+    if not len(winners_objs):
+        prize_data = PrizeAppModel.objects.get(
+            id=prize_id
         )
 
-        winnerObj.save()
+        users = UserPrizeModel.objects.filter(
+            prize_id=prize_id
+        )
+
+        participants = [{
+            'name': user.name,
+            'user_id': user.user_id,
+            'invites': UserPrizeModel.calc_len_invites(user.user_id),
+            'photo': user.photo,
+            'chance': user.calc_user_chance(),
+
+        } for user in users]
+
+        winners = []
+        unique_winners = set()
+
+        while len(winners) < prize_data.count_winners and len(winners) < len(users):
+            winner = pick_winner(participants)
+
+            winner_tuple = tuple(winner.items())
+
+            if winner_tuple not in unique_winners:
+                unique_winners.add(winner_tuple)
+                winners.append(winner)
+
+        for winner in winners:
+            winnerObj = UserWinnersPrizeModel(
+                name=winner.get('name'),
+                user_id=winner.get('user_id'),
+                photo=winner.get('photo'),
+
+                prize_id=prize_id,
+
+                chance=winner.get('chance'),
+                invites=winner.get('invites'),
+            )
+
+            winnerObj.save()
+    else:
+        winners_serialized = serializers.serialize('json', winners_objs)
+        result = json.loads(winners_serialized)
+        winners = [{
+            'name': winner.name,
+            'user_id': winner.user_id,
+            'invites': UserPrizeModel.calc_len_invites(winner.user_id),
+            'photo': winner.photo,
+            'chance': winner.calc_user_chance(),
+        } for winner in result]
 
     return JsonResponse(winners, safe=False)
 
@@ -221,3 +236,18 @@ def add_invite(request):
         invite.save()
 
     return HttpResponse('added')
+
+def get_all_winners(request):
+    data = request.GET
+
+    prize_id = data.get('prize_id')
+
+    winners = UserWinnersPrizeModel.objects.filter(
+        prize_id = prize_id
+    )
+
+    serialized_winners = serializers.serialize('json', winners)
+
+    winners_list = json.loads(serialized_winners)
+
+    return JsonResponse(winners_list, safe=False)
