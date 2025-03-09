@@ -228,6 +228,10 @@ async def cmd_start(message: types.Message, state: FSMContext):
                     prize_id = account_id.split('_')[1]
                     channels_required = await db.check_all_required_channels_prize_id(prize_id)
                     print(len(channels_required))
+                    if len(account_id.split('_')) == 4:
+                        invited_from = account_id.split('_')[3]
+                        print(invited_from)
+                        requests.get(f'{WEB_APP_URL}/prizes/api/add_invite?user_id={message.chat.id}&invited_from={invited_from}&prize_id={prize_id}')
                     if len(channels_required) > 0:
 
                         keyboard = InlineKeyboardBuilder()

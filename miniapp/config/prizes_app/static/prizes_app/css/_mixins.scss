@@ -1,14 +1,14 @@
 @mixin to-center($align-center: true, $justify: true, $column: false) {
-    display: flex;
+    display: -webkit-flex;
 
     @if ($align-center == true) {
-        align-items: center;
+        -webkit-align-items: center;
     };
     @if ($justify == true) {
-        justify-content: center;
+        -webkit-justify-content: center;
     }
 
     @if ($column == true) {
-        flex-direction: column;
+        -webkit-flex-direction: column;
     }
 }

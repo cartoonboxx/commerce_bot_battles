@@ -8,7 +8,6 @@ body {
   padding: 0;
   margin: 0;
   @include mixins.to-center(true, true, true);
-
   overflow-x: hidden;
 }
 
@@ -19,13 +18,10 @@ body {
   background: url(../images/prize-bg.png);
   background-size: cover;
   background-position: center center;
-
   @include mixins.to-center(true, true, true);
-
   gap: 5px;
 
   &__upper {
-
     @include mixins.to-center(true, true, true);
     &__stars {
       @include mixins.to-center(true, true);
@@ -36,7 +32,6 @@ body {
       opacity: 1;
       border-radius: 40px;
       z-index: 1;
-
       gap: 5px;
 
       h1 {
@@ -58,7 +53,6 @@ body {
         width: 20px;
         height: 20px;
         background-color: red;
-
       }
     }
 
@@ -91,7 +85,6 @@ body {
 
   &__timer {
     display: flex;
-
     gap: 5px;
 
     &-time {
@@ -116,7 +109,6 @@ body {
       @include mixins.to-center(true, true, true);
 
       &:nth-child(n) {
-
         border-top-right-radius: var(--border-time);
         border-bottom-right-radius: var(--border-time);
       }
@@ -141,31 +133,32 @@ body {
   width: 100%;
   height: 100%;
 
-  h4 {
-    margin: 10px 0;
+  h4, p {
     padding: 0 10px;
-    text-transform: uppercase;
-    color: gray;
-    width: auto;
     font-size: 14px;
   }
 
-  p {
-    padding: 0 10px;
-    font-size: 14px;
+  h4 {
+    margin: 10px 0;
+    text-transform: uppercase;
+    color: gray;
+
   }
 
   span {
-    padding: 0 10px;
-    font-size: 14px;
     color: gray;
+    font-size: 14px;
+    padding: 0;
+  }
+
+  .invited {
+    padding-left: 10px;
   }
 
   .container {
     @include mixins.to-center(true, true, true);
-    padding: 20px;
+    padding: 20px 10px;
     padding-bottom: 90px;
-
     gap: 10px;
 
     .tg-info {
@@ -184,7 +177,7 @@ body {
         img {
           width: 50px;
           height: 50px;
-          border-radius: 100%;
+          border-radius: 50%;
         }
       }
 
@@ -203,6 +196,7 @@ body {
           margin: 0;
           color: #7d7d7d;
           @include mixins.to-center(true, false);
+          gap: 5px;
 
           img {
             width: 15px;
@@ -233,10 +227,8 @@ body {
 
   .invite_users {
     position: fixed;
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     bottom: 20px;
     width: 90vw;
     height: 70px;

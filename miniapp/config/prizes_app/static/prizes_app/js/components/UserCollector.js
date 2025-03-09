@@ -1,3 +1,5 @@
+'use strict'
+
 class UserCollector {
 
     containerElement = document.querySelector('.container')
@@ -9,6 +11,7 @@ class UserCollector {
     constructor() {
         this.collectorInerval = null;
         this.bindEvents();
+        this.prizeId = window.location.href.split('/')[4]
     }
 
     bindEvents() {
@@ -20,11 +23,8 @@ class UserCollector {
     }
 
     collectAllUsers() {
-       fetch("api/users", {
-           method: "POST",
-           body: {
-               user_id: 35647463
-           }
+       fetch(`api/users?prize_id=${this.prizeId}`, {
+           method: "GET",
        })
            .then(res => res.json())
        .then(users => {

@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 # from data.constants import *
-WEB_APP_URL = 'https://6c16-185-77-216-7.ngrok-free.app'
+WEB_APP_URL = 'https://54a1-57-129-20-193.ngrok-free.app'
 ALLOWED_HOST = WEB_APP_URL.replace('https://', '')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -123,6 +123,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = '/static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -130,3 +134,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

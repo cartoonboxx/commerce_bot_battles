@@ -1,3 +1,4 @@
+'use strict'
 import {updateDataWinners} from "../utils.js";
 
 class Timer {
@@ -113,7 +114,9 @@ class Timer {
     }
 
     stopInterval() {
-        document.querySelector('[data-js-time]').remove()
+        if (document.querySelector('[data-js-time]')) {
+            document.querySelector('[data-js-time]').remove()
+        }
         clearInterval(this.timerInterval)
     }
 }

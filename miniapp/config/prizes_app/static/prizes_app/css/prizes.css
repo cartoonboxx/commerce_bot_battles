@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&family=Manrope:wght@200..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 :root {
-  --bcolor: #131416;
+  --bcolor: var(--tg-theme-bg-color);
+  --color: #7d7d7d;
   --border-time: 5px;
 }
 
@@ -16,15 +17,20 @@ span {
   color: white;
 }
 
+main p,
+main h3 {
+  color: var(--tg-theme-text-color) !important;
+}
+
 body {
   width: 100%;
   background-color: var(--bcolor);
   padding: 0;
   margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
   overflow-x: hidden;
 }
 
@@ -35,22 +41,22 @@ body {
   background: url(../images/prize-bg.png);
   background-size: cover;
   background-position: center center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
   gap: 5px;
 }
 .header__upper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
 }
 .header__upper__stars {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
   padding: 5px 5px;
   background-color: #F59929;
   width: auto;
@@ -109,10 +115,10 @@ body {
   gap: 5px;
 }
 .header__timer-division {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
   font-family: "M PLUS Rounded 1c", sans-serif;
   color: white;
   font-size: 20px;
@@ -124,10 +130,10 @@ body {
   font-size: 20px;
   padding: 5px;
   height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
 }
 .header__timer-block:nth-child(n) {
   border-top-right-radius: var(--border-time);
@@ -149,29 +155,29 @@ body {
   width: 100%;
   height: 100%;
 }
+.main h4, .main p {
+  padding: 0 10px;
+  font-size: 14px;
+}
 .main h4 {
   margin: 10px 0;
-  padding: 0 10px;
   text-transform: uppercase;
   color: gray;
-  width: auto;
-  font-size: 14px;
-}
-.main p {
-  padding: 0 10px;
-  font-size: 14px;
 }
 .main span {
-  padding: 0 10px;
-  font-size: 14px;
   color: gray;
+  font-size: 14px;
+  padding: 0;
+}
+.main .invited {
+  padding-left: 10px;
 }
 .main .container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 20px;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
+  padding: 20px 10px;
   padding-bottom: 90px;
   gap: 10px;
 }
@@ -185,21 +191,21 @@ body {
   display: flex;
 }
 .main .container .user__img {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
 }
 .main .container .user__img img {
   width: 50px;
   height: 50px;
-  border-radius: 100%;
+  border-radius: 50%;
 }
 .main .container .user__info {
   width: auto;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
   gap: 5px;
 }
 .main .container .user__info h3 {
@@ -210,8 +216,9 @@ body {
 .main .container .user__info p {
   margin: 0;
   color: #7d7d7d;
-  display: flex;
-  align-items: center;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  gap: 5px;
 }
 .main .container .user__info p img {
   width: 15px;
@@ -223,9 +230,9 @@ body {
   right: 20px;
 }
 .main .container .user__invites p {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
   gap: 5px;
   color: #7d7d7d;
   font-size: 16px;
@@ -236,10 +243,8 @@ body {
 }
 .main .invite_users {
   position: fixed;
-  margin-left: auto;
-  margin-right: auto;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 20px;
   width: 90vw;
   height: 70px;
@@ -249,10 +254,10 @@ body {
   border: none;
   font-size: 20px;
   font-family: "M PLUS Rounded 1c", sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: -webkit-flex;
+  -webkit-align-items: center;
+  -webkit-justify-content: center;
+  -webkit-flex-direction: column;
   text-decoration: none;
 }
 

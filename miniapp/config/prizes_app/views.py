@@ -35,18 +35,24 @@ def prize_app_render(request, prize_id: int):
 
     endtime = current_prize_app.endtime
 
-    all_users = UserPrizeModel.objects.all()
+    all_users = UserPrizeModel.objects.filter(
+        prize_id=prize_id
+    )
     print(time)
 
     base_url = 'https://t.me/share/url'
-    share_url = f'https://t.me/vndfkjnkjdfgbknvds_bot?start=b{1}_from{794764771}'
-    text = f"Привет, можешь по-участвовать в фото-батле, приз выдают за победу в финале"
+    share_url = f'https://t.me/vndfkjnkjdfgbknvds_bot?start=prizeApp_{prize_id}_from_{794764771}'
+    text = f"Привет, "
     encoded_text = urllib.parse.quote(text, safe='')
     encoded_url = urllib.parse.quote(share_url, safe='')
     full_url = f"{base_url}?url={encoded_url}&text={encoded_text}"
 
     is_finished = current_prize_app.isFinished
     print(is_finished)
+
+    winners_list = UserWinnersPrizeModel.objects.filter(
+        prize_id=prize_id
+    )
 
     context = {
         'prize_id': prize_id,
@@ -61,7 +67,8 @@ def prize_app_render(request, prize_id: int):
         'ls': time[7],
         'users': all_users,
         'url_button': full_url,
-        'isFinished': is_finished
+        'isFinished': is_finished,
+        'winners': winners_list
     }
     return render(request, 'prizes_app/index.html', context=context)
 

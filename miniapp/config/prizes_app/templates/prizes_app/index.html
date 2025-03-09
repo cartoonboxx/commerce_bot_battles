@@ -14,8 +14,8 @@
             <source srcset="{% static 'prizes_app/images/gift.webp' %}" type="image/webp" />
             <img src="{% static 'prizes_app/images/gift.png' %}" />
         </picture>
-        <h1 class="header__text">Раздача Telegram Stars<br>{{ prizeObj.count_winners }} призов по {{ starsByOne }} Telegram Stars</h1>
         {% if not isFinished %}
+            <h1 class="header__text">Раздача Telegram Stars<br>{{ prizeObj.count_winners }} призов по {{ starsByOne }} Telegram Stars</h1>
             <div class="header__timer" data-js-time>
             <div class="header__timer-time" data-js-hours >
                 <div class="header__timer-block">{{ fh }}</div>
@@ -32,8 +32,12 @@
                 <div class="header__timer-block">{{ ls }}</div>
             </div>
         </div>
+            <p class="header__paragraph">Будьте онлайн на этой странице в {{ timeEnd }},<br>чтобы принять участие в раздаче</p>
+        {% else %}
+            <h1 class="header__text">Раздача Telegram Stars<br>Встречайте победителей!</h1>
+            <p class="header__paragraph">Розыгрыш завершился в {{ timeEnd }}</p>
         {% endif %}
-        <p>Будьте онлайн на этой странице в {{ timeEnd }},<br>чтобы принять участие в раздаче</p>
+
     </header>
     <main class="main">
 
@@ -42,23 +46,41 @@
             <p>Приглашайте друзей и увеличивайте свои шансы на победу.</p>
             <span class="invited">Вы пока не приглашали участников</span>
         {% else %}
-            <h4><span class="winner-count"></span> победителей</h4>
-            <p>Бот автоматически определил 10 победителей среди 15 000 участников.
-                Каждый получил по 100 Telegram Stars.</p>
+            <h4><span class="winner-count">{{ winners|length }}</span> победителей</h4>
+            <p>Бот автоматически определил {{ prizeObj.count_winners }} победителей среди {{ users|length }} участников.
+                Каждый получил по {{ starsByOne }} Telegram Stars.</p>
         {% endif %}
         <div
             class="container {% if isFinished %}winners{% endif %}"
         >
-
+            {% if isFinished %}
+                {% for winner in winners %}
+                    <div class="user">
+                        <div class="user__img">
+                            <img src="{{ winner.photo }}" alt="">
+                        </div>
+                        <div class="user__info">
+                            <h3>{{ winner.name }}</h3>
+                            <p><img src="{% static 'prizes_app/images/chance.png' %}" alt="">{{ winner.chance }}% шанс
+                                 <img src="{% static 'prizes_app/images/user-ico.png' %}"> {{ winner.invites }}</p>
+                        </div>
+                        <div class="user__invites">
+                            <p>+{{ starsByOne }}<img src="{% static 'prizes_app/images/ministar.png' %}"></p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
         <p class="tg-info"></p>
-        <a href="{{ url_button }}" class="invite_users">Пригласить друзей</a>
+        {% if not isFinished %}
+            <a href="{{ url_button }}" class="invite_users">Пригласить друзей</a>
+        {% endif %}
 
     </main>
 {% endblock content %}
 
 {% block scripts %}
-    <script src="{% static 'prizes_app/js/main.js' %}" type="module"></script>
-    <script src="{% static 'prizes_app/js/components/Timer.js' %}" type="module" defer></script>
-    <script src="{% static 'prizes_app/js/components/UserCollector.js' %}" type="module"></script>
+    <script charset="UTF-8" src="{% static 'prizes_app/js/main.js' %}" type="module"></script>
+    <script charset="UTF-8" src="{% static 'prizes_app/js/components/Timer.js' %}" type="module" defer></script>
+    <script charset="UTF-8" src="{% static 'prizes_app/js/components/UserCollector.js' %}" type="module"></script>
 {% endblock scripts %}

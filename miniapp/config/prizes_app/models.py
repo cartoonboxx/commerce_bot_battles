@@ -33,22 +33,15 @@ class UserPrizeModel(models.Model):
     def calc_len_invites(user_id):
         return len(UserPrizeModel.collect_users_invites(user_id))
 
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Пользователь конкурса'
-        verbose_name_plural = 'Пользователи конкурсов'
-
-class UserWinnersPrizeModel(UserPrizeModel):
-
     def calc_user_chance(self):
         base_weight = 1
         coefficient = 1
         participants = [{
             'user_id': user.user_id,
             'invites': UserPrizeModel.calc_len_invites(user.user_id)
-        } for user in UserPrizeModel.objects.all()]
+        } for user in UserPrizeModel.objects.filter(
+            prize_id=self.prize_id
+        )]
 
         total_weight = sum(
             base_weight + participant['invites'] * coefficient
@@ -73,3 +66,39 @@ class UserWinnersPrizeModel(UserPrizeModel):
 
         return 0
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Пользователь конкурса'
+        verbose_name_plural = 'Пользователи конкурсов'
+
+class UserWinnersPrizeModel(models.Model):
+    name = models.CharField(verbose_name='Имя пользователя', max_length=100)
+    user_id = models.IntegerField(verbose_name='Айди пользователя')
+    invited_from = models.IntegerField(verbose_name='Приглашен от айди', blank=True, null=True)
+    photo = models.CharField(verbose_name='Фото', max_length=150)
+
+    prize_id = models.IntegerField(verbose_name='Айди розыгрыша')
+
+    chance = models.IntegerField(verbose_name='Шанс')
+    invites = models.IntegerField(verbose_name='Приглашений')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Победитель конкурса'
+        verbose_name_plural = 'Победители конкурсов'
+
+class InvitedUsersModel(models.Model):
+    prize_id = models.IntegerField(verbose_name='Айди конкурса')
+    user_id = models.IntegerField(verbose_name='Айди пользователя')
+    invited_from = models.IntegerField(verbose_name='Приглашен от', null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user_id}'
+
+    class Meta:
+        verbose_name = 'Приглашенный'
+        verbose_name_plural = 'Приглашенные'

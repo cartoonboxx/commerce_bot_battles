@@ -11,3 +11,10 @@ span {
   font-family: "Open Sans", sans-serif;
   color: white;
 }
+
+main {
+  p,
+  h3 {
+    color: var(--tg-theme-text-color) !important;
+  }
+}
