@@ -153,7 +153,7 @@ async def battle_answer_func_message(message: types.Message, battle_id,state:FSM
         post_start_battle = 'Не нужен'
     else:
         post_start_battle = f'Нужен'
-    await message.answer(f'''<<b>🛠️ Настройки фото-батла</b>\n
+    await message.answer(f'''<b>🛠️ Настройки фото-батла</b>\n
 Ваша ссылка для принятия участников на батл: https://t.me/{bot_name}?start=b{battle_id}''', reply_markup=await create_battle_kb(battle_id, battle_info[5]), disable_web_page_preview=True)
 
 async def kb_return_2page_battlecreate(battle_id):

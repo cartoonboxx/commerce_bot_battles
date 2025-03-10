@@ -524,7 +524,9 @@ async def ContinueCreatePrizeApp_time(message: Message, state: FSMContext):
     kb = InlineKeyboardBuilder()
     kb.button(text='Принять участие', url=f'https://t.me/{bot_name}?start=prizeApp_{prize_id}')
     kb.adjust(1)
-    await bot.send_message(chat_id=prize_info[2], text=f'🎁 Раздача {tg_stars} TG STARS 🌟 для {winners} победителей. '
+    await bot.send_photo(chat_id=prize_info[2],
+                         photo='AgACAgIAAxkBAAI6NmfOyEL_f-EE-SztfdD1BHwcz-fWAAJC8DEbOAt5SpTbN22YgQgRAQADAgADeQADNgQ',
+                         caption=f'🎁 Раздача {tg_stars} TG STARS 🌟 для {winners} победителей. '
     f'Каждому победителю по {tg_stars // winners} TG STARS 🌟 '
     f'\n\nНажмите кнопку «Принять участие» и ожидайте объявления победителя в {converted_time.strftime("%H:%M")} '
                                                        f'по МСК (через {time} минут).',
