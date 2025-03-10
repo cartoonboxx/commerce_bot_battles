@@ -182,15 +182,13 @@ def collect_winners(request):
 
             winnerObj.save()
     else:
-        winners_serialized = serializers.serialize('json', winners_objs)
-        result = json.loads(winners_serialized)
         winners = [{
             'name': winner.name,
             'user_id': winner.user_id,
             'invites': UserPrizeModel.calc_len_invites(winner.user_id),
             'photo': winner.photo,
             'chance': winner.calc_user_chance(),
-        } for winner in result]
+        } for winner in winners_objs]
 
     return JsonResponse(winners, safe=False)
 
