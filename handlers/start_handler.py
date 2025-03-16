@@ -63,14 +63,6 @@ def get_my_voice_kb(id):
     keyboard_main = InlineKeyboardMarkup(inline_keyboard=first_time_kb)
     return keyboard_main
 
-@dp.message(Command("test"))
-async def test(message: types.Message):
-    kb = InlineKeyboardBuilder()
-    webapp = WebAppInfo(url=f"{WEB_APP_URL}/prizes/")
-    kb.button(text='Веб-апп', web_app=webapp)
-    kb.adjust(1)
-    await message.answer('Веб-апп', reply_markup=kb.as_markup())
-
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
     if message.chat.type == 'private':
@@ -306,7 +298,7 @@ async def check_subscribes_required_handler(call: types.CallbackQuery):
 
 async def send_prize_app(message: types.Message, prize_id: [int | str]):
     kb = InlineKeyboardBuilder()
-    web_app = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}')
+    web_app = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}?user_id={message.chat.id}')
     kb.button(text='✅ Принять участие', web_app=web_app)
     kb.adjust(1)
 
@@ -615,7 +607,7 @@ async def check_prize_handler(call: types.CallbackQuery, state: FSMContext):
 
     prize_data = await db.check_prize_app_by_id(prize_id)
     kb = InlineKeyboardBuilder()
-    webapp = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}')
+    webapp = WebAppInfo(url=f'{WEB_APP_URL}/prizes/{prize_id}?user_id={call.from_user.id}')
     kb.button(text='Перейти к розыгрышу', web_app=webapp)
     kb.button(text='🔄 Обновить', callback_data=f'check_prize;{prize_id}')
     kb.button(text='🗑️ Удалить розыгрыш', callback_data=f'delete_prize_app_handler;{prize_id}')
